@@ -1,10 +1,13 @@
 :root {
-  --background: #f8fafc;
-  --foreground: #1f2937;
-  --muted: #6b7280;
-  --panel: #ffffff;
-  --border: #e5e7eb;
-  --accent: #2e86ab;
+  --primary: #2563eb;
+  --primary-dark: #1d4ed8;
+  --background: #f3f6fb;
+  --surface: #ffffff;
+  --text: #172033;
+  --muted: #667085;
+  --border: #d9e2ef;
+  --sidebar: #0f172a;
+  --sidebar-muted: #cbd5e1;
 }
 
 * {
@@ -14,59 +17,200 @@
 body {
   margin: 0;
   background: var(--background);
-  color: var(--foreground);
+  color: var(--text);
   font-family: Arial, Helvetica, sans-serif;
 }
 
-.page {
-  width: min(100% - 32px, 960px);
-  margin: 0 auto;
-  padding: 72px 0;
+.app-shell {
+  display: flex;
+  min-height: 100vh;
 }
 
-.hero {
-  padding: 48px 0;
+.sidebar {
+  width: 260px;
+  flex: 0 0 260px;
+  background: var(--sidebar);
+  color: white;
+  padding: 24px 18px;
+}
+
+.sidebar-title {
+  margin-bottom: 28px;
+  font-size: 1.25rem;
+  font-weight: 800;
+}
+
+.menu {
+  display: grid;
+  gap: 8px;
+}
+
+.menu-item {
+  border-radius: 8px;
+  color: var(--sidebar-muted);
+  padding: 12px 14px;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.menu-item:hover,
+.menu-item.active {
+  background: var(--primary);
+  color: white;
+}
+
+.content-shell {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+}
+
+.top-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 72px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  padding: 0 32px;
+}
+
+.header-brand {
+  font-size: 1.15rem;
+  font-weight: 800;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.organization-name {
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.logout-button {
+  border: 0;
+  border-radius: 8px;
+  background: var(--primary);
+  color: white;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 700;
+  padding: 10px 16px;
+}
+
+.logout-button:hover {
+  background: var(--primary-dark);
+}
+
+.main-content {
+  width: min(100%, 1180px);
+  padding: 32px;
+}
+
+.page-heading {
+  margin-bottom: 28px;
 }
 
 .eyebrow {
-  margin: 0 0 12px;
-  color: var(--accent);
-  font-size: 0.9rem;
-  font-weight: 700;
+  margin: 0 0 8px;
+  color: var(--primary);
+  font-size: 0.85rem;
+  font-weight: 800;
   text-transform: uppercase;
 }
 
 h1 {
-  max-width: 720px;
   margin: 0;
-  font-size: clamp(2.5rem, 8vw, 5rem);
-  line-height: 1;
+  font-size: 2rem;
 }
 
-.intro {
-  max-width: 620px;
-  margin: 24px 0 0;
+.page-heading p:last-child {
+  max-width: 680px;
+  margin: 12px 0 0;
   color: var(--muted);
-  font-size: 1.2rem;
   line-height: 1.6;
 }
 
-.panel {
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  background: var(--panel);
-  padding: 24px;
-}
-
-h2 {
-  margin: 0 0 16px;
-  font-size: 1.25rem;
-}
-
-ul {
+.card-grid {
   display: grid;
-  gap: 12px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.dashboard-card {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  padding: 22px;
+}
+
+.dashboard-card p {
   margin: 0;
-  padding-left: 20px;
   color: var(--muted);
+  font-weight: 700;
+}
+
+.dashboard-card strong {
+  display: block;
+  margin-top: 14px;
+  font-size: 2.25rem;
+}
+
+.dashboard-card span {
+  display: block;
+  margin-top: 10px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+@media (max-width: 900px) {
+  .app-shell {
+    display: block;
+  }
+
+  .sidebar {
+    width: 100%;
+    padding: 18px;
+  }
+
+  .menu {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .top-header {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 12px;
+    padding: 18px;
+  }
+
+  .main-content {
+    padding: 22px 18px;
+  }
+
+  .card-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .menu,
+  .card-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .header-actions {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  h1 {
+    font-size: 1.6rem;
+  }
 }
