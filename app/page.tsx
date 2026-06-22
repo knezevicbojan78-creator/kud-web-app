@@ -55,7 +55,7 @@ export default function Home() {
 
       <div className="content-shell">
         <header className="top-header">
-          <div className="header-brand">App KUD</div>
+          <div className="header-brand">FOLKLORAŠ</div>
 
           <div className="header-actions">
             <span className="organization-name">KUD Mitanče</span>
