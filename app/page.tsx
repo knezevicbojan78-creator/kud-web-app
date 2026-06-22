@@ -1,10 +1,12 @@
 const menuItems = [
   "Dashboard",
-  "Članovi",
-  "Sekcije",
+  "Moje sekcije",
   "Prisustvo",
+  "Članovi",
   "Finansije",
+  "Garderoba",
   "Izveštaji",
+  "Koncerti",
   "Podešavanja",
   "Moji podaci"
 ];
