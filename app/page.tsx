@@ -38,7 +38,7 @@ export default function Home() {
   return (
     <div className="app-shell">
       <aside className="sidebar" aria-label="Glavni meni">
-        <div className="sidebar-title">App KUD</div>
+        <div className="sidebar-title">FOLKLORAŠ</div>
 
         <nav className="menu">
           {menuItems.map((item) => (
