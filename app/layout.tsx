@@ -3,7 +3,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "App KUD",
-  description: "Web aplikacija za upravljanje KUD-ovima."
+  description: "KUD management application layout"
 };
 
 export default function RootLayout({
