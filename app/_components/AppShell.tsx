@@ -3,24 +3,17 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import { getMenuItemsForRole } from "../_lib/navigation";
 import {
   DEFAULT_TEST_ROLE,
   TEST_ROLE_STORAGE_KEY,
+  TEST_ROLES,
   type TestRole
 } from "../_lib/testRoles";
 
-const menuItems = [
-  { label: "Dashboard", href: "/dashboard" },
-  { label: "Moje sekcije", href: "/moje-sekcije" },
-  { label: "Prisustvo", href: "/prisustvo" },
-  { label: "Članovi", href: "/clanovi" },
-  { label: "Finansije", href: "/finansije" },
-  { label: "Garderoba", href: "/garderoba" },
-  { label: "Izveštaji", href: "/izvestaji" },
-  { label: "Koncerti", href: "/koncerti" },
-  { label: "Podešavanja", href: "/podesavanja" },
-  { label: "Moji podaci", href: "/moji-podaci" }
-];
+function isTestRole(value: string): value is TestRole {
+  return TEST_ROLES.includes(value as TestRole);
+}
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -30,10 +23,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const savedRole = localStorage.getItem(TEST_ROLE_STORAGE_KEY);
 
-    if (savedRole) {
-      setSelectedRole(savedRole as TestRole);
+    if (savedRole && isTestRole(savedRole)) {
+      setSelectedRole(savedRole);
     }
   }, []);
+
+  const menuItems = getMenuItemsForRole(selectedRole);
 
   return (
     <div className="app-shell">
