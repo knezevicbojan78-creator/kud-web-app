@@ -1,9 +1,18 @@
 "use client";
 
+import { useState } from "react";
 import { useRouter } from "next/navigation";
+import {
+  DEFAULT_TEST_ROLE,
+  TEST_ROLE_STORAGE_KEY,
+  TEST_ROLES,
+  type TestRole
+} from "./_lib/testRoles";
 
 export default function LoginPage() {
   const router = useRouter();
+  const [selectedRole, setSelectedRole] =
+    useState<TestRole>(DEFAULT_TEST_ROLE);
 
   return (
     <main className="login-page">
@@ -18,6 +27,7 @@ export default function LoginPage() {
           className="form-stack"
           onSubmit={(event) => {
             event.preventDefault();
+            localStorage.setItem(TEST_ROLE_STORAGE_KEY, selectedRole);
             router.push("/dashboard");
           }}
         >
@@ -33,6 +43,23 @@ export default function LoginPage() {
               type="password"
               placeholder="Unesite lozinku"
             />
+          </label>
+
+          <label className="form-field">
+            <span>Test uloga</span>
+            <select
+              className="input"
+              value={selectedRole}
+              onChange={(event) =>
+                setSelectedRole(event.target.value as TestRole)
+              }
+            >
+              {TEST_ROLES.map((role) => (
+                <option key={role} value={role}>
+                  {role}
+                </option>
+              ))}
+            </select>
           </label>
 
           <button className="button button-primary" type="submit">
