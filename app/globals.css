@@ -1,13 +1,29 @@
 :root {
-  --primary: #2563eb;
-  --primary-dark: #1d4ed8;
-  --background: #f3f6fb;
-  --surface: #ffffff;
-  --text: #172033;
-  --muted: #667085;
-  --border: #d9e2ef;
-  --sidebar: #0f172a;
-  --sidebar-muted: #cbd5e1;
+  --color-primary: #2563eb;
+  --color-primary-hover: #1d4ed8;
+  --color-background: #f3f6fb;
+  --color-surface: #ffffff;
+  --color-text: #172033;
+  --color-muted: #667085;
+  --color-border: #d9e2ef;
+  --color-sidebar: #0f172a;
+  --color-sidebar-muted: #cbd5e1;
+
+  --font-family-base: Arial, Helvetica, sans-serif;
+
+  --radius-sm: 8px;
+  --radius-md: 12px;
+
+  --space-1: 8px;
+  --space-2: 12px;
+  --space-3: 16px;
+  --space-4: 18px;
+  --space-5: 22px;
+  --space-6: 24px;
+  --space-7: 28px;
+  --space-8: 32px;
+
+  --shadow-card: 0 20px 60px rgba(15, 23, 42, 0.08);
 }
 
 * {
@@ -16,9 +32,116 @@
 
 body {
   margin: 0;
-  background: var(--background);
-  color: var(--text);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-background);
+  color: var(--color-text);
+  font-family: var(--font-family-base);
+}
+
+a {
+  color: inherit;
+}
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 800;
+  padding: var(--space-2) var(--space-3);
+  text-decoration: none;
+}
+
+.button-primary {
+  border: 0;
+  background: var(--color-primary);
+  color: white;
+}
+
+.button-primary:hover {
+  background: var(--color-primary-hover);
+}
+
+.button-secondary {
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-primary);
+}
+
+.input {
+  width: 100%;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text);
+  font: inherit;
+  padding: var(--space-2) var(--space-3);
+}
+
+.input:focus {
+  border-color: var(--color-primary);
+  outline: 3px solid rgba(37, 99, 235, 0.16);
+}
+
+.card {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.login-page {
+  display: grid;
+  min-height: 100vh;
+  place-items: center;
+  padding: var(--space-6);
+}
+
+.login-card {
+  width: min(100%, 430px);
+  padding: var(--space-8);
+  box-shadow: var(--shadow-card);
+}
+
+.login-brand {
+  margin-bottom: var(--space-7);
+  text-align: center;
+}
+
+.login-brand h1 {
+  margin: 0;
+  font-size: 2.3rem;
+}
+
+.login-brand span {
+  display: block;
+  margin-top: var(--space-1);
+  color: var(--color-muted);
+  font-weight: 700;
+}
+
+.form-stack {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.form-field {
+  display: grid;
+  gap: var(--space-1);
+  color: var(--color-text);
+  font-weight: 700;
+}
+
+.login-links {
+  display: grid;
+  gap: var(--space-2);
+  margin-top: var(--space-5);
+  text-align: center;
+}
+
+.login-links a:not(.button) {
+  color: var(--color-primary);
+  font-weight: 700;
+  text-decoration: none;
 }
 
 .app-shell {
@@ -29,33 +152,33 @@ body {
 .sidebar {
   width: 260px;
   flex: 0 0 260px;
-  background: var(--sidebar);
+  background: var(--color-sidebar);
   color: white;
-  padding: 24px 18px;
+  padding: var(--space-6) var(--space-4);
 }
 
 .sidebar-title {
-  margin-bottom: 28px;
+  margin-bottom: var(--space-7);
   font-size: 1.25rem;
   font-weight: 800;
 }
 
 .menu {
   display: grid;
-  gap: 8px;
+  gap: var(--space-1);
 }
 
 .menu-item {
-  border-radius: 8px;
-  color: var(--sidebar-muted);
-  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+  color: var(--color-sidebar-muted);
+  padding: var(--space-2) var(--space-3);
   text-decoration: none;
   font-weight: 600;
 }
 
 .menu-item:hover,
 .menu-item.active {
-  background: var(--primary);
+  background: var(--color-primary);
   color: white;
 }
 
@@ -71,9 +194,9 @@ body {
   align-items: center;
   justify-content: space-between;
   min-height: 72px;
-  border-bottom: 1px solid var(--border);
-  background: var(--surface);
-  padding: 0 32px;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-surface);
+  padding: 0 var(--space-8);
 }
 
 .header-brand {
@@ -84,41 +207,26 @@ body {
 .header-actions {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: var(--space-3);
 }
 
 .organization-name {
-  color: var(--muted);
+  color: var(--color-muted);
   font-weight: 700;
-}
-
-.logout-button {
-  border: 0;
-  border-radius: 8px;
-  background: var(--primary);
-  color: white;
-  cursor: pointer;
-  font: inherit;
-  font-weight: 700;
-  padding: 10px 16px;
-}
-
-.logout-button:hover {
-  background: var(--primary-dark);
 }
 
 .main-content {
   width: min(100%, 1180px);
-  padding: 32px;
+  padding: var(--space-8);
 }
 
 .page-heading {
-  margin-bottom: 28px;
+  margin-bottom: var(--space-7);
 }
 
 .eyebrow {
-  margin: 0 0 8px;
-  color: var(--primary);
+  margin: 0 0 var(--space-1);
+  color: var(--color-primary);
   font-size: 0.85rem;
   font-weight: 800;
   text-transform: uppercase;
@@ -131,40 +239,37 @@ h1 {
 
 .page-heading p:last-child {
   max-width: 680px;
-  margin: 12px 0 0;
-  color: var(--muted);
+  margin: var(--space-2) 0 0;
+  color: var(--color-muted);
   line-height: 1.6;
 }
 
 .card-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 18px;
+  gap: var(--space-4);
 }
 
 .dashboard-card {
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--surface);
-  padding: 22px;
+  padding: var(--space-5);
 }
 
 .dashboard-card p {
   margin: 0;
-  color: var(--muted);
+  color: var(--color-muted);
   font-weight: 700;
 }
 
 .dashboard-card strong {
   display: block;
-  margin-top: 14px;
+  margin-top: var(--space-3);
   font-size: 2.25rem;
 }
 
 .dashboard-card span {
   display: block;
-  margin-top: 10px;
-  color: var(--muted);
+  margin-top: var(--space-2);
+  color: var(--color-muted);
   line-height: 1.5;
 }
 
@@ -175,7 +280,7 @@ h1 {
 
   .sidebar {
     width: 100%;
-    padding: 18px;
+    padding: var(--space-4);
   }
 
   .menu {
@@ -185,12 +290,12 @@ h1 {
   .top-header {
     align-items: flex-start;
     flex-direction: column;
-    gap: 12px;
-    padding: 18px;
+    gap: var(--space-2);
+    padding: var(--space-4);
   }
 
   .main-content {
-    padding: 22px 18px;
+    padding: var(--space-5) var(--space-4);
   }
 
   .card-grid {
@@ -207,7 +312,7 @@ h1 {
   .header-actions {
     align-items: flex-start;
     flex-direction: column;
-    gap: 10px;
+    gap: var(--space-2);
   }
 
   h1 {
