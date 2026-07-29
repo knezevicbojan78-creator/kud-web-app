@@ -1667,6 +1667,7 @@ h1 {
 .finance-workspace.self { grid-template-columns:1fr; }
 .finance-search-panel, .finance-profile-panel { min-height:0; }
 .finance-search-panel { padding:var(--space-5); }
+.finance-profile-panel { padding:var(--space-5); }
 .finance-search-panel header h2 { margin:0; }
 .finance-search-panel header p, .finance-profile-header p { margin:.2rem 0 0; color:var(--color-muted); }
 .finance-search-results { display:grid; gap:.35rem; margin-top:.65rem; max-height:55vh; overflow:auto; }
@@ -1757,6 +1758,7 @@ h1 {
   .finance-profile-header .header-actions .button { flex:1 1 180px; }
   .finance-workspace { grid-template-columns:1fr; }
   .finance-summary-row { grid-template-columns:1fr; }
+  .finance-profile-panel { padding:var(--space-4); }
   .finance-payment-fields, .finance-credit-fields { grid-template-columns:1fr; }
   .finance-obligations article { align-items:flex-start; }
   .finance-payment-history article { grid-template-columns:1fr auto; gap:.2rem .75rem; }
