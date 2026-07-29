@@ -423,7 +423,10 @@ function formatSerbianDate(value: string) {
 }
 
 function parseSerbianDate(value: string) {
-  const match = value.trim().match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})\.?$/);
+  const normalized = value.trim();
+  const match =
+    normalized.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})\.?$/) ??
+    normalized.match(/^(\d{2})(\d{2})(\d{4})$/);
   if (!match) return null;
   const day = Number(match[1]);
   const month = Number(match[2]);
