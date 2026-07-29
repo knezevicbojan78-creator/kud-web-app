@@ -127,8 +127,12 @@ Naknadna poslovna dopuna primenjena je migracijom
 razlikuju nedostajuće lične podatke, adresu, kontakt, broj pasoša, državu
 izdavanja, datum važenja, nedovoljno trajanje pasoša i roditeljsku saglasnost.
 
-Polja datuma još nisu ocenjena: automatski pregledač ne uspeva da unese vrednost
-u sistemsko polje tipa datum, pa taj korak ostaje za kratku ručnu proveru.
+Polja datuma i vremena su naknadno proverena kroz stvarni obrazac za izmenu.
+Test je otkrio da se vreme iz baze u obrascu prikazivalo dva sata ranije zbog
+direktnog korišćenja UTC vrednosti. Prikaz je ispravljen tako da obrazac koristi
+lokalni datum i vreme, a datum je usklađen sa formatom `dd.mm.yyyy`. Ponovno
+čuvanje polaska 15.08.2026. u 18:00 i povratka 17.08.2026. u 21:00 više ne
+pomera vremena, a sekcije i učesnici ostaju sačuvani.
 
 Odbijanje celog događaja ostaje blokirano bez zasebne prijavljene UR sesije:
 predsednik događaj kreira neposredno kao `APPROVED`, pa u njegovom toku ne
