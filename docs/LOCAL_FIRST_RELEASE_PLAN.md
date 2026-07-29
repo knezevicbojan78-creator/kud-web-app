@@ -78,3 +78,7 @@ korisnički tokovi provere u jednom radnom ciklusu.
 
 Detaljan postupak, granice pristupa, potvrde i pravilo proaktivnog predlaganja
 novih mogućnosti zapisani su u `docs/COLLABORATION_WORKFLOW.md`.
+
+Objedinjeni spisak funkcionalnih testova, pravila jednokratnog odobrenja i
+evidencije svih probnih podataka nalazi se u
+`docs/FUNCTIONAL_TEST_MASTER_PLAN.md`.

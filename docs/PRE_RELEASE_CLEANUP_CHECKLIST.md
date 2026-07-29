@@ -4,6 +4,10 @@ Ovaj dokument je obavezna kontrolna lista pre prve produkcione probe i pre
 uključivanja stvarnih korisnika. Čišćenje se ne pokreće unapred jer se probni
 podaci još koriste za lokalno funkcionalno testiranje.
 
+Svaki novi podatak nastao tokom odobrenog ciklusa iz
+`docs/FUNCTIONAL_TEST_MASTER_PLAN.md` dopisuje se u ovu listu odmah nakon
+nastanka, a ne tek na kraju testiranja.
+
 ## Poznati probni podaci koje trenutno zadržavamo
 
 U aktivnoj Supabase bazi trenutno ostaju:
