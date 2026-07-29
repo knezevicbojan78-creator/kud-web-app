@@ -1426,10 +1426,31 @@ export default function ClanoviPage() {
         throw new Error("U listu „OSOBE“ nema popunjenih redova.");
       }
 
+      let currentPendingImports = pendingImports;
+      if (society) {
+        const { data, error } = await (getSupabaseClient().rpc as any)(
+          "auth_get_pending_member_imports",
+          { p_society_id: society.id }
+        );
+        if (error) throw error;
+        currentPendingImports = (data ?? []) as PendingImportCandidate[];
+        setPendingImports(currentPendingImports);
+      }
+      const pendingEmails = new Set(
+        currentPendingImports
+          .map((candidate) => normalizeEmail(candidate.profile.email ?? ""))
+          .filter(Boolean)
+      );
+
       for (let start = 0; start < parsedRows.length; start += 10) {
         const batch = parsedRows.slice(start, start + 10);
         await Promise.all(batch.map(async (row) => {
           if (!row.email || !isValidEmail(row.email)) return;
+          if (pendingEmails.has(row.email)) {
+            row.skipReason =
+              "Email već postoji među članovima koji čekaju odobrenje.";
+            return;
+          }
           const lookup = await lookupPerson({ email: row.email });
           if (lookup.person) {
             row.skipReason = lookup.already_member
@@ -1494,8 +1515,12 @@ export default function ClanoviPage() {
       setImportRows([]);
       setActiveView("pending");
       await loadPendingImports();
+      const numericPreparedCount = Number(preparedCount);
+      const processedCount = Number.isFinite(numericPreparedCount)
+        ? numericPreparedCount
+        : rowsForImport.length;
       setMessage(
-        `Obrađeno je ${Number(preparedCount) || rowsForImport.length} novih osoba. Preskočeno je ${importRows.length - rowsForImport.length} postojećih email adresa.`
+        `Obrađeno je ${processedCount} novih osoba. Preskočeno je ${importRows.length - processedCount} postojećih email adresa.`
       );
     } catch (error) {
       setImportError(getErrorMessage(error));
