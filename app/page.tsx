@@ -278,6 +278,7 @@ export default function LoginPage() {
             <label className="form-field">
               <span>Master admin email</span>
               <input
+                autoComplete="email"
                 className="input"
                 readOnly
                 type="email"
@@ -288,7 +289,7 @@ export default function LoginPage() {
             <label className="form-field">
               <span>Željena lozinka</span>
               <input
-                autoComplete="new-password"
+                autoComplete="email"
                 className="input"
                 minLength={10}
                 onChange={(event) => setPassword(event.target.value)}
@@ -326,6 +327,7 @@ export default function LoginPage() {
             <label className="form-field">
               <span>Email</span>
               <input
+                autoComplete="new-password"
                 className="input"
                 onChange={(event) => setEmail(event.target.value)}
                 required
@@ -336,6 +338,7 @@ export default function LoginPage() {
             <label className="form-field">
               <span>Željena lozinka</span>
               <input
+                autoComplete="new-password"
                 className="input"
                 minLength={10}
                 onChange={(event) => setPassword(event.target.value)}
@@ -347,6 +350,7 @@ export default function LoginPage() {
             <label className="form-field">
               <span>Potvrdite lozinku</span>
               <input
+                autoComplete="new-password"
                 className="input"
                 minLength={10}
                 onChange={(event) => setConfirmPassword(event.target.value)}
@@ -398,6 +402,9 @@ export default function LoginPage() {
               className="button button-secondary"
               onClick={() => {
                 clearFeedback();
+                setEmail("");
+                setPassword("");
+                setConfirmPassword("");
                 setMode("REGISTER_SOCIETY_USER");
               }}
               type="button"

@@ -112,7 +112,8 @@
     },
     {
       "file": "auth-v1-member-guardian-activation.sql",
-      "status": "prepared",
+      "status": "applied",
+      "applied_on": "2026-07-29",
       "verified_by": "auth-v1-member-guardian-activation-diagnostic.sql",
       "note": "Javna aktivacija prethodno evidentiranog clana ili roditelja, atomska potvrda veza i Auth kontekst za ograniceni licni pristup."
     }
