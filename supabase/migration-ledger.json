@@ -88,6 +88,13 @@
       "applied_on": "2026-07-29",
       "verified_by": "wardrobe-v1-foundation-diagnostic.sql",
       "note": "Garderoba V1: broj obuce osobe, kategorije, kolicinski inventar, kompleti, zaduzenja, koferi, delimični povrati, gubici, popravke, obavestenja i audit."
+    },
+    {
+      "file": "wardrobe-v1-management.sql",
+      "status": "applied",
+      "applied_on": "2026-07-29",
+      "verified_by": "wardrobe-v1-management-diagnostic.sql",
+      "note": "Uredjivanje inventara i kompleta, precizne kolicine, operativni pregled popravki i gubitaka i evidentirana primopredaja kofera."
     }
   ]
 }

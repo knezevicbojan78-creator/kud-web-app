@@ -383,6 +383,37 @@ export type WardrobeWorkspace = {
   events: Array<{ id: string; title: string; return_at: string | null }>;
   repertoire: Array<{ id: string; name: string }>;
 };
+export type WardrobeRepair = {
+  id: string; society_id: string; wardrobe_item_id: string;
+  assignment_item_id: string | null; item_name: string; member_name: string | null;
+  quantity: number; assignee_type: "MEMBER" | "GUARDIAN" | "SOCIETY_PERSON" | "EXTERNAL";
+  assigned_member_id: string | null; assigned_name: string | null;
+  external_name: string | null; external_contact: string | null;
+  description: string; due_date: string | null;
+  status: "WAITING_HANDOVER" | "HANDED_OVER" | "IN_PROGRESS" | "COMPLETED" | "RETURNED_TO_WARDROBE" | "UNREPAIRABLE";
+  cost: number | null; note: string | null; created_at: string;
+};
+export type WardrobeLossCase = {
+  id: string; assignment_item_id: string; assignment_id: string;
+  assignment_title: string; item_name: string; member_name: string;
+  quantity: number; status: "OPEN" | "REPLACEMENT_PENDING" | "RESOLVED";
+  resolution_type: "RETURNED" | "REPLACED" | "FINANCIAL" | "WRITTEN_OFF" | "OTHER" | null;
+  replacement_accepted_quantity: number; resolution_note: string | null;
+  created_at: string; resolved_at: string | null;
+};
+export type WardrobeLuggage = {
+  id: string; assignment_id: string; name: string; assignment_title: string;
+  event_title: string | null; responsible_member_id: string; responsible_name: string;
+  status: "PACKED" | "ISSUED" | "RETURNED" | "INCOMPLETE"; note: string | null;
+  handovers: Array<{
+    id: string; previous_member_id: string | null; new_member_id: string;
+    previous_name: string | null; new_name: string; condition_note: string | null;
+    created_at: string;
+  }>;
+};
+export type WardrobeOperations = {
+  repairs: WardrobeRepair[]; loss_cases: WardrobeLossCase[]; luggage: WardrobeLuggage[];
+};
 
 export type SocietyMemberInsert = Omit<
   SocietyMember,
@@ -1468,6 +1499,14 @@ type Database = {
         Args: { p_society_id: string; p_item: Record<string, unknown> };
         Returns: string;
       };
+      auth_wardrobe_get_item_repertoire: {
+        Args: { p_society_id: string; p_wardrobe_item_id: string };
+        Returns: string[];
+      };
+      auth_get_wardrobe_operations: {
+        Args: { p_society_id: string };
+        Returns: WardrobeOperations;
+      };
       auth_wardrobe_save_kit: {
         Args: { p_society_id: string; p_kit: Record<string, unknown> };
         Returns: string;
@@ -1483,6 +1522,22 @@ type Database = {
       auth_wardrobe_save_settings: {
         Args: { p_society_id: string; p_return_days: number; p_reminder_days: number };
         Returns: WardrobeWorkspace["settings"];
+      };
+      auth_wardrobe_update_repair: {
+        Args: { p_society_id: string; p_repair_id: string; p_changes: Record<string, unknown> };
+        Returns: WardrobeRepair;
+      };
+      auth_wardrobe_resolve_loss: {
+        Args: {
+          p_society_id: string; p_loss_case_id: string;
+          p_resolution: "RETURNED" | "REPLACED" | "FINANCIAL" | "WRITTEN_OFF" | "OTHER";
+          p_note: string; p_replacement_quantity?: number;
+        };
+        Returns: WardrobeLossCase;
+      };
+      auth_wardrobe_handover_luggage: {
+        Args: { p_society_id: string; p_luggage_id: string; p_new_member_id: string; p_condition_note: string };
+        Returns: WardrobeLuggage;
       };
       auth_create_society_member: {
         Args: {

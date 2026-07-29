@@ -140,3 +140,20 @@ deaktiviranjem kategorije, kompleta ili stavke.
 6. gubici, zamene i popravke;
 7. međudruštvene pozajmice;
 8. detaljno podešavanje dozvola.
+
+## Realizacija druge faze
+
+Migracija `wardrobe-v1-management.sql` dodaje:
+
+* uređivanje postojećih kategorija, stavki i kompleta;
+* različitu količinu svakog dela kompleta;
+* zaštitu od smanjenja ukupne količine ispod količine vezane za zaduženja;
+* automatsko otvaranje slučaja gubitka ili naloga za popravku pri razduživanju;
+* dodelu popravke članu, roditelju, drugom članu ili spoljnom saradniku;
+* promenu statusa popravke i povrat popravljene količine u garderobu;
+* trajno rešavanje gubitka vraćanjem, prihvaćenom zamenom, finansijskim
+  rešenjem, otpisom ili drugim obrazloženim rešenjem;
+* promenu odgovornog člana kofera uz istoriju svake primopredaje.
+
+Pozajmice drugim društvima, stvarna in-app obaveštenja i detaljne dozvole ostaju
+naredne celine razvoja.

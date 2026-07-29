@@ -385,3 +385,17 @@ Status: `PROŠAO — OSNOVA MODULA`
 * broj obuće pravilno se prikazuje u obrascu `Moji podaci`;
 * sledeća funkcionalna provera radi se nakon unosa prvih stvarnih kategorija,
   stavki i kompleta.
+
+### 14. Garderoba — upravljanje i posebni slučajevi
+
+Status: `PROŠAO — STRUKTURA I PRAZNA STANJA`
+
+* operativna migracija primenjena je na aktivnu bazu;
+* potvrđeno je postojanje svih funkcija za uređivanje, popravke, gubitke i
+  primopredaju kofera;
+* prijavljeni korisnik ima izvršno pravo, anonimni korisnik nema;
+* stranica pravilno učitava prazan pregled popravki i gubitaka;
+* postojeće kategorije prikazuju komandu za uređivanje;
+* obrazac kompleta podržava zasebnu količinu svakog izabranog dela;
+* potpuna poslovna provera zahteva stvarne stavke, komplet i kontrolisano
+  zaduženje, pa nije unosila privremene podatke u ovoj fazi.
