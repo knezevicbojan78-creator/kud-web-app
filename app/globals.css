@@ -1698,9 +1698,10 @@ h1 {
 
 .my-data-hero { display:grid; grid-template-columns:auto minmax(0,1fr) auto; align-items:center; gap:var(--space-5); padding:var(--space-5); margin-bottom:var(--space-4); }
 .my-data-avatar { width:72px; height:72px; border-radius:50%; display:grid; place-items:center; background:var(--color-primary); color:#fff; font-size:1.45rem; font-weight:800; }
+.my-data-identity { min-width:0; }
 .my-data-identity h1, .my-data-identity p { margin:0; }
 .my-data-identity h1 { margin:.15rem 0 .25rem; }
-.my-data-identity > p:last-of-type { color:var(--color-muted); }
+.my-data-identity > p:last-of-type { color:var(--color-muted); overflow-wrap:anywhere; }
 .my-data-badges { display:flex; flex-wrap:wrap; gap:.5rem; margin-top:.65rem; }
 .my-data-completion { display:inline-flex; align-items:center; border-radius:999px; padding:.28rem .65rem; background:#fff4e9; color:#a54b19; font-size:.78rem; font-weight:800; }
 .my-data-completion.complete { background:#e8f5ed; color:#267247; }
