@@ -61,6 +61,9 @@ export default function ZahtevDetaljiPage() {
   >("BANK_TRANSFER");
   const [paymentReference, setPaymentReference] = useState("");
   const [licenseReason, setLicenseReason] = useState("");
+  const [isRejectOpen, setIsRejectOpen] = useState(false);
+  const [rejectionReason, setRejectionReason] = useState("");
+  const [rejectionError, setRejectionError] = useState("");
 
   useEffect(() => {
     async function loadRequest() {
@@ -188,13 +191,18 @@ export default function ZahtevDetaljiPage() {
     router.push("/odobreni-zahtevi");
   }
 
-  async function updateRequestStatus(status: "REJECTED") {
+  async function rejectRequest() {
     if (!uuidPattern.test(id)) {
       setActionMessage("Neispravan ID zahteva.");
       return;
     }
+    if (!rejectionReason.trim()) {
+      setRejectionError("Razlog odbijanja je obavezan.");
+      return;
+    }
 
     setActionMessage("");
+    setRejectionError("");
     setIsSubmittingAction(true);
 
     try {
@@ -203,7 +211,7 @@ export default function ZahtevDetaljiPage() {
         "master_admin_reject_president_request",
         {
           p_request_id: id,
-          p_reason: null
+          p_reason: rejectionReason.trim()
         }
       );
 
@@ -432,7 +440,11 @@ export default function ZahtevDetaljiPage() {
                 <button
                   className="button button-secondary"
                   disabled={isSubmittingAction}
-                  onClick={() => void updateRequestStatus("REJECTED")}
+                  onClick={() => {
+                    setRejectionReason("");
+                    setRejectionError("");
+                    setIsRejectOpen(true);
+                  }}
                   type="button"
                 >
                   ODBIJ
@@ -441,6 +453,59 @@ export default function ZahtevDetaljiPage() {
             </article>
           )}
         </section>
+      )}
+
+      {isRejectOpen && request && (
+        <div
+          aria-labelledby="reject-president-request-title"
+          aria-modal="true"
+          className="modal-backdrop"
+          role="dialog"
+        >
+          <section className="card modal-card attendance-modal">
+            <p className="eyebrow">Odluka Master admina</p>
+            <h2 id="reject-president-request-title">Odbij zahtev</h2>
+            <p>
+              Navedite razlog odbijanja zahteva za društvo{" "}
+              <strong>{request.societyName}</strong>.
+            </p>
+            <label className="form-field">
+              <span>Razlog odbijanja *</span>
+              <textarea
+                className="input"
+                onChange={(event) => {
+                  setRejectionReason(event.target.value);
+                  setRejectionError("");
+                }}
+                rows={4}
+                value={rejectionReason}
+              />
+            </label>
+            {rejectionError && (
+              <p className="attendance-modal-error" role="alert">
+                {rejectionError}
+              </p>
+            )}
+            <div className="header-actions">
+              <button
+                className="button button-secondary"
+                disabled={isSubmittingAction}
+                onClick={() => setIsRejectOpen(false)}
+                type="button"
+              >
+                OTKAŽI
+              </button>
+              <button
+                className="button button-primary"
+                disabled={isSubmittingAction}
+                onClick={() => void rejectRequest()}
+                type="button"
+              >
+                {isSubmittingAction ? "ODBIJANJE..." : "POTVRDI ODBIJANJE"}
+              </button>
+            </div>
+          </section>
+        </div>
       )}
     </>
   );

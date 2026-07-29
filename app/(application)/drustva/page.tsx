@@ -14,6 +14,12 @@ function formatDate(value: string | null) {
   );
 }
 
+function societyStatusLabel(status: MasterSocietySummary["status"]) {
+  if (status === "ACTIVE") return "AKTIVNO";
+  if (status === "ONBOARDING") return "ČEKA ONBOARDING";
+  return "SUSPENDOVANO";
+}
+
 export default function DrustvaPage() {
   const [societies, setSocieties] = useState<MasterSocietySummary[]>([]);
   const [query, setQuery] = useState("");
@@ -99,6 +105,7 @@ export default function DrustvaPage() {
           <span>Status</span>
           <select className="input" onChange={(event) => setStatusFilter(event.target.value)} value={statusFilter}>
             <option value="ALL">Svi statusi</option>
+            <option value="ONBOARDING">Čeka onboarding</option>
             <option value="ACTIVE">Aktivna</option>
             <option value="SUSPENDED">Suspendovana</option>
           </select>
@@ -144,7 +151,7 @@ export default function DrustvaPage() {
                   <td>{society.license_type ?? "Nije dodeljena"}</td>
                   <td>
                     <span className={`master-status ${society.status.toLowerCase()}`}>
-                      {society.status === "ACTIVE" ? "AKTIVNO" : "SUSPENDOVANO"}
+                      {societyStatusLabel(society.status)}
                     </span>
                   </td>
                   <td>{formatDate(society.registered_at)}</td>

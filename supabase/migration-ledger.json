@@ -67,6 +67,13 @@
       "status": "applied",
       "applied_on": "2026-07-29",
       "note": "Dodaje bezbedan pregled istorije povracaja za finansijski profil osobe ili porodice."
+    },
+    {
+      "file": "auth-v1-president-request-rejection-reason.sql",
+      "status": "applied",
+      "applied_on": "2026-07-29",
+      "verified_by": "auth-v1-president-request-rejection-reason-diagnostic.sql",
+      "note": "Zahteva i trajno cuva razlog odbijanja predsednickog zahteva uz Master admin audit."
     }
   ]
 }

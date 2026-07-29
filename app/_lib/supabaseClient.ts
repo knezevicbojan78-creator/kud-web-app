@@ -25,6 +25,8 @@ export type PresidentRegistration = {
   createdAt: string;
   approvedAt: string | null;
   approvedByEmail: string | null;
+  rejectionReason: string | null;
+  rejectedAt: string | null;
   presidentUserId: string | null;
   societyId: string | null;
   requestedLicensePlanId: string | null;
@@ -120,7 +122,7 @@ export type Society = {
   bank_account: string | null;
   license_type: string | null;
   license_price: number | null;
-  status: "ACTIVE" | "SUSPENDED";
+  status: "ONBOARDING" | "ACTIVE" | "SUSPENDED";
   base_currency?: string;
   default_membership_fee_amount?: number | null;
   finance_start_month?: string | null;
@@ -138,7 +140,7 @@ export type MasterSocietySummary = {
   pib: string;
   registration_number: string;
   license_type: string | null;
-  status: "ACTIVE" | "SUSPENDED";
+  status: "ONBOARDING" | "ACTIVE" | "SUSPENDED";
   active_member_count: number;
   inactive_member_count: number;
   active_section_count: number;
@@ -1653,7 +1655,7 @@ type Database = {
       }; Returns: Society };
       master_admin_reject_president_request: { Args: {
         p_request_id: string;
-        p_reason?: string | null;
+        p_reason: string;
       }; Returns: {
         request_id: string;
         status: "REJECTED";

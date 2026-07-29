@@ -123,10 +123,35 @@ Zadržan je zahtev:
 * tražena licenca `MONTHLY`, paket `Malo društvo`;
 * trenutni status `PENDING`.
 
-Zahtev je namenjen proveri odbijanja u posebnoj Master admin sesiji. Ako taj
-test ne bude izvršen, zahtev i eventualne audit zapise ukloniti neposredno iz
-probnih podataka pre puštanja aplikacije u rad. Ne praviti društvo ili korisnika
-iz ovog zahteva izvan kontrolisanog testa.
+Ovaj prvi zahtev je odbijen pre ispravke obaveznog razloga i nema novi audit
+zapis razloga. Ukloniti ga zajedno sa ostalim probnim zahtevima.
+
+Dodatni odbijeni zahtev posle ispravke:
+
+* `PresidentReg.id = 3de0943b-4989-4e26-b02d-5e32be03ad67`;
+* društvo `CODEX E2E društvo odbijanje sa razlogom`;
+* email `codex.e2e.president.reject.reason.20260729@example.com`;
+* PIB `999999902`, matični broj `99999992`;
+* status `REJECTED`;
+* razlog `CODEX E2E test odbijanja — nepotpuna probna dokumentacija.`;
+* audit ID `25e10205-2ecf-4261-826c-49043bee663e`.
+
+Odobreni zahtev koji čeka onboarding:
+
+* `PresidentReg.id = 8d06a015-9138-4d24-aa12-d76ef3c30e4c`;
+* društvo `CODEX E2E društvo za onboarding`;
+* email `codex.e2e.president.approve.20260729@example.com`;
+* PIB `999999903`, matični broj `99999993`;
+* društvo ID `4e3aa42c-76eb-4b13-b73e-f3bc908a29e5`, status `ONBOARDING`;
+* dodela licence ID `744191da-3b0f-472a-9e8b-b40f5711c77b`;
+* godišnji paket `Malo društvo`, prenos na račun, referenca
+  `CODEX-E2E-20260729`;
+* audit odobravanja ID `96ac1efc-cce2-497f-95eb-6f2f2901bec4`;
+* završno stanje: 0 članova, 0 sekcija i 0 aktivnih licencnih perioda.
+
+Pri čišćenju najpre ukloniti zavisne onboarding, licencne dodele i audit zapise,
+zatim odobreni zahtev i probno društvo. Odbijene zahteve i njihove audite
+ukloniti zasebno. Ne brisati postojeće stvarno društvo.
 
 ## Probni događaj iz ciklusa 29.07.2026.
 

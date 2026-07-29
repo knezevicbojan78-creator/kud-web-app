@@ -258,7 +258,7 @@ Preostala je provera prava prijavljenog UR-a samo u njegovoj dodeljenoj sekciji,
 
 ### 10. Master admin i predsednički zahtevi
 
-Status: `DELIMIČNO PROŠAO — ČEKA MASTER ADMIN SESIJU`
+Status: `PROŠAO U MASTER ADMIN KONTEKSTU — ONBOARDING ČEKA STVARNI EMAIL`
 
 Potvrđeno:
 
@@ -269,17 +269,36 @@ Potvrđeno:
 * jasno označen probni zahtev za mesečni paket `Malo društvo` uspešno je poslat;
 * zahtev je nezavisnim čitanjem baze potvrđen sa statusom `PENDING`;
 * predsednička sesija ne može da čita Master admin listu — pristup je pravilno
-  blokiran RLS pravilom baze.
+  blokiran RLS pravilom baze;
+* Master admin dashboard, liste zahteva na čekanju, odobrenih i odbijenih
+  zahteva učitavaju se ispravno;
+* pretraga zahteva radi, a detalj prikazuje društvo, predsednika, paket i uslove;
+* prvi test je otkrio da je odbijanje prolazilo bez razloga;
+* ekran je dopunjen dijalogom sa obaveznim razlogom, a baza kolonama za razlog i
+  vreme odbijanja i Master admin auditom;
+* prazan razlog je posle ispravke blokiran, a ponovljeni zahtev odbijen je tek
+  posle unosa razloga;
+* drugi probni zahtev odobren je za godišnji paket `Malo društvo`, prenos na
+  račun i jasno označenu probnu referencu;
+* probno društvo je napravljeno sa statusom `ONBOARDING`, bez članova, sekcija i
+  aktivnog licencnog perioda;
+* lista i detalj su ispravljeni da `ONBOARDING` prikazuju kao `ČEKA ONBOARDING`,
+  a ručna aktivacija nije dostupna pre završetka onboardinga;
+* povezani zahtev i audit odobravanja vidljivi su u detalju društva;
+* probno i postojeće društvo imaju različite ID-jeve, PIB, matične brojeve i
+  odvojene članove, sekcije i licence.
 
 Preostalo:
 
-* lista, pretraga i detalj zahteva u stvarnoj Master admin sesiji;
-* odbijanje ovog probnog zahteva uz razlog;
-* odobravanje drugog probnog zahteva, aktivacioni tok i onboarding;
-* provera probnog društva, licence, audita i odvojenosti društava.
+* aktivacioni email, postavljanje lozinke i predsednički onboarding zahtevaju
+  adresu koja stvarno prima email; bezbedna probna adresa `example.com` je
+  očekivano odbijena pri slanju;
+* zbog toga društvo namerno ostaje u statusu `ONBOARDING`, a godišnji licencni
+  period još nije počeo.
 
-Nastavak se izvršava tek kada je u pregledaču prijavljen Master admin, bez
-odjavljivanja ili menjanja postojećeg predsedničkog naloga.
+Završna regresija Master admin izmene je prošla: 195 projektnih fajlova, 12
+evidentiranih migracija, TypeScript, produkcioni build svih 26 ruta i sva 3
+javna automatska testa.
 
 ### 9. Finansije
 

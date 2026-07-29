@@ -71,6 +71,12 @@ function formatDateTime(value: string | null | undefined) {
   }).format(new Date(value));
 }
 
+function societyStatusLabel(status: Society["status"]) {
+  if (status === "ACTIVE") return "AKTIVNO";
+  if (status === "ONBOARDING") return "ČEKA ONBOARDING";
+  return "SUSPENDOVANO";
+}
+
 function auditLabel(action: string) {
   return {
     SOCIETY_SUSPENDED: "Društvo suspendovano",
@@ -325,7 +331,7 @@ export default function DrustvoDetaljiPage() {
               <p>{society.city} · PIB {society.pib}</p>
             </div>
             <span className={`master-status ${society.status.toLowerCase()}`}>
-              {society.status === "ACTIVE" ? "AKTIVNO" : "SUSPENDOVANO"}
+              {societyStatusLabel(society.status)}
             </span>
           </div>
         </div>
@@ -360,14 +366,20 @@ export default function DrustvoDetaljiPage() {
             <article className="card master-detail-panel">
               <header><div><p className="eyebrow">Administracija</p><h2>Status društva</h2></div></header>
               <dl className="master-detail-facts">
-                <div><dt>Trenutni status</dt><dd>{society.status === "ACTIVE" ? "Aktivno" : "Suspendovano"}</dd></div>
+                <div><dt>Trenutni status</dt><dd>{societyStatusLabel(society.status)}</dd></div>
                 <div><dt>Licenca</dt><dd>{license?.plan_name ?? society.license_type ?? "Nije dodeljena"}</dd></div>
                 <div><dt>Matični broj</dt><dd>{society.registration_number}</dd></div>
                 {suspension && <div><dt>Razlog suspenzije</dt><dd>{suspension.reason}</dd></div>}
                 {suspension && <div><dt>Početak suspenzije</dt><dd>{formatDateTime(suspension.suspended_at)}</dd></div>}
               </dl>
 
-              {!statusActionOpen && (
+              {society.status === "ONBOARDING" && (
+                <p className="auth-secondary-note">
+                  Društvo će postati aktivno tek kada predsednik završi onboarding.
+                </p>
+              )}
+
+              {society.status !== "ONBOARDING" && !statusActionOpen && (
                 <button
                   className={`button ${society.status === "ACTIVE" ? "button-secondary danger-action" : "button-primary"}`}
                   onClick={() => setStatusActionOpen(true)}
@@ -377,7 +389,7 @@ export default function DrustvoDetaljiPage() {
                 </button>
               )}
 
-              {statusActionOpen && (
+              {society.status !== "ONBOARDING" && statusActionOpen && (
                 <div className="master-status-action">
                   <label className="form-field">
                     <span>{society.status === "ACTIVE" ? "Razlog suspenzije" : "Razlog reaktivacije"} *</span>
