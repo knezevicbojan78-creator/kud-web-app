@@ -168,7 +168,7 @@ Završna regresija posle tri ispravke je prošla:
 
 ### 5. Sekcije
 
-Status: `U TOKU`
+Status: `DELIMIČNO PROŠAO — PREOSTALA IZMENA NUMERE I POSEBNA UR SESIJA`
 
 Potvrđeno:
 
@@ -184,6 +184,30 @@ Potvrđeno:
 * deaktiviran član sekcije ponovo je dodat, čime je reaktiviran isti zapis;
 * direktna provera baze potvrđuje tačno jedan red članstva, isti ID i status
   `ACTIVE`, bez duplikata.
+* uklanjanje i ponovno dodavanje probnog člana ponovljeno je kroz stvarni ekran;
+  ponovno učitavanje i baza potvrđuju jedan aktivan zapis bez duplikata;
+* probni član bez funkcije `UR` nije ponuđen kao kandidat za umetničkog
+  rukovodioca;
+* važeći kandidat `Bojan Knežević` uspešno je dodeljen probnoj sekciji, pravo
+  upravljanja repertoarom uključeno i isključeno, a dodela zatim uklonjena;
+* postojeća probna osoba uspešno je dodeljena kao korepetitor, uključivanje i
+  isključivanje evidencije prisustva rade, a dodela je zatim deaktivirana;
+* test je otkrio da aktivna verzija `auth_get_section_detail` nije čitala
+  `section_accompanists`, iako je ispravna verzija već postojala u projektu;
+* `supabase/auth-v1-sections-detail-read.sql` ponovo je primenjen na aktivnu
+  bazu; nakon toga se korepetitor pravilno prikazuje i može ukloniti kroz UI;
+* roditeljski kontakt maloletnog člana u `Dečijem ansamblu` označen je kao
+  dostupan u detalju člana, u skladu sa predsedničkim pravima;
+* repertoarska numera je deaktivirana, stanje je potvrđeno posle ponovnog
+  učitavanja i zatim je vraćena u status `ACTIVE`;
+* završna provera baze za probnu sekciju potvrđuje: 1 aktivan član, 0 aktivnih
+  sekcijskih uloga, 0 aktivnih korepetitora i 1 aktivna numera.
+
+Preostalo:
+
+* ekran još nema komandu za izmenu podataka postojeće repertoarske numere;
+* pravo UR-a samo nad dodeljenom sekcijom i zabrana druge sekcije zahtevaju
+  zasebnu prijavljenu UR sesiju.
 
 ### 9. Finansije
 

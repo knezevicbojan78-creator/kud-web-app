@@ -141,6 +141,16 @@ Sekcija je tokom testa deaktivirana i ponovo aktivirana. Isto članstvo je
 reaktivirano bez pravljenja duplikata; u tabeli `member_sections` postoji tačno
 jedan red sa gore navedenim ID-jem i statusom `ACTIVE`.
 
+Tokom dopunskog testa nastao je i zatim deaktiviran zapis korepetitora:
+
+* `section_accompanists.id = bdef2e5f-3eb5-476a-8f4c-4333b64a2e83`;
+* osoba `codex.e2e.member.001@example.com`;
+* završni status `INACTIVE`, evidencija prisustva isključena.
+
+Ovaj zapis ukloniti zajedno sa ostalim zavisnim podacima probne sekcije. Aktivno
+stanje posle testa ostalo je: jedan član, bez UR-a i korepetitora, sa jednom
+aktivnom repertoarskom numerom.
+
 ## Dodatni događaji iz ciklusa 29.07.2026.
 
 * `CODEX E2E događaj za otkazivanje`, ID
