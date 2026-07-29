@@ -209,6 +209,45 @@ Preostalo:
 * pravo UR-a samo nad dodeljenom sekcijom i zabrana druge sekcije zahtevaju
   zasebnu prijavljenu UR sesiju.
 
+### 6. Prisustvo
+
+Status: `PROŠAO U PREDSEDNIČKOM KONTEKSTU`
+
+Ranije potvrđeno:
+
+* otvaranje probe za `Dečiji ansambl` sa jednim aktivnim maloletnim članom;
+* početno stanje `ODSUTAN`, promena u `PRISUTAN` i automatsko čuvanje;
+* ručno zatvaranje i pregled održane probe sa jednim prisutnim;
+* dve naknadne predsedničke ispravke zatvorene probe sa obaveznim razlozima;
+* audit sadrži staru i novu vrednost, razlog, status `CLOSED` i ulogu
+  `Predsednik`;
+* članstvo u sekciji je deaktivirano i reaktivirano bez gubitka istorijske
+  evidencije.
+
+Dopunski test:
+
+* nova proba probne sekcije otvorena je sa jednim članom koji je početno
+  `ODSUTAN`;
+* član je promenjen u `PRISUTAN`, a ekran je potvrdio da su sve promene
+  automatski sačuvane;
+* dok je proba otvorena, izbor sekcije i ponovno otvaranje probe nisu dostupni;
+  baza dodatno ima jedinstvenu zaštitu jedne otvorene probe po sekciji;
+* posle ponovnog učitavanja i izbora iste sekcije otvorena proba, vreme i stanje
+  `PRISUTAN` ostali su sačuvani;
+* proba je kontrolisano otkazana, ostala je u istoriji kao `OTKAZANA` i njen
+  detalj je samo za čitanje;
+* ista probna osoba je zatim privremeno dodeljena kao korepetitor sa uključenom
+  evidencijom prisustva;
+* na drugoj probnoj probi prikazana je tačno jednom, sa oznakom `Korepetitor`,
+  čime je potvrđena zaštita od dupliranja člana i korepetitora;
+* druga proba je otkazana, a korepetitorska dodela ponovo deaktivirana;
+* direktna provera baze potvrđuje po jedan zapis prisustva u obe probe:
+  `PRESENT` bez posebne uloge i `ABSENT` sa ulogom `Korepetitor`;
+* završno stanje nema otvorenu probu za probnu sekciju.
+
+Preostala je provera prava prijavljenog UR-a samo u njegovoj dodeljenoj sekciji,
+što zahteva zasebnu UR sesiju.
+
 ### 9. Finansije
 
 Status: `PROŠAO — KOMPLETNO TESTIRANJE MODULA ZAVRŠENO`

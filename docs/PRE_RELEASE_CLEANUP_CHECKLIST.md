@@ -40,6 +40,19 @@ moraju biti obuhvaćeni završnim čišćenjem. Evidencija sadrži i dva audit z
 naknadne predsedničke ispravke zatvorene probe, sa obaveznim razlozima, koji se
 takođe uklanjaju zajedno sa ovom probnom evidencijom.
 
+Za `CODEX E2E sekcija izmenjena` napravljene su još dve otkazane probe:
+
+* proba ID `b6ed911e-9890-4c32-b73a-afe8987bee32`, status `CANCELLED`;
+* njen zapis prisustva ID `7a59a3df-16db-4a9c-b70b-7e97ab519d80`, završni
+  status `PRESENT`;
+* proba sa korepetitorom ID `235eb81d-8266-4f4f-8e32-03c9e7d8336f`, status
+  `CANCELLED`;
+* njen zapis prisustva ID `b0d14c15-224f-4a25-b6e3-63aefa04b35c`, status
+  `ABSENT`, oznaka uloge `Korepetitor`.
+
+Obe probe, njihove zapise prisustva i pripadajuću istoriju/audit ukloniti sa
+ostalim probnim podacima sekcije. Nijedna probna proba nije ostala otvorena.
+
 Pre produkcije treba ukloniti njihove povezane zapise iz:
 
 * poziva za dopunu podataka i opozvati sve njihove tokene
