@@ -37,6 +37,12 @@
       "status": "applied",
       "applied_on": "2026-07-29",
       "note": "Zahteva da predsednik poveže maloletnog kandidata sa postojećim roditeljem pre slanja poziva."
+    },
+    {
+      "file": "finance-v1-event-participant-actor-role.sql",
+      "status": "applied",
+      "applied_on": "2026-07-29",
+      "note": "Uskladjuje novi sistem dozvola sa starijom proverom uloge pri promeni statusa ucesnika dogadjaja."
     }
   ]
 }

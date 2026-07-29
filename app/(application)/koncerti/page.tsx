@@ -916,8 +916,8 @@ export default function DogadjajiPage() {
             <label className="form-field"><span>Naziv *</span><input className="input" value={eventForm.title} onChange={(e) => setEventForm({ ...eventForm, title: e.target.value })} /></label>
             <label className="form-field"><span>Država</span><input className="input" value={eventForm.country} onChange={(e) => setEventForm({ ...eventForm, country: e.target.value })} /></label>
             <label className="form-field"><span>Mesto *</span><input className="input" value={eventForm.city} onChange={(e) => setEventForm({ ...eventForm, city: e.target.value })} /></label>
-            <DateTimeField label="Polazak" value={eventForm.departure_at} onChange={(value) => setEventForm({ ...eventForm, departure_at: value })} />
-            <DateTimeField label="Povratak" value={eventForm.return_at} onChange={(value) => setEventForm({ ...eventForm, return_at: value })} />
+            <DateTimeField label="Polazak" value={eventForm.departure_at} onChange={(value) => setEventForm((current) => ({ ...current, departure_at: value }))} />
+            <DateTimeField label="Povratak" value={eventForm.return_at} onChange={(value) => setEventForm((current) => ({ ...current, return_at: value }))} />
           </div>
           <fieldset className="event-create-sections">
             <legend>Sekcije koje učestvuju *</legend>
@@ -949,8 +949,8 @@ export default function DogadjajiPage() {
             <label className="form-field"><span>Naziv *</span><input className="input" value={editForm.title} onChange={(e) => setEditForm({ ...editForm, title: e.target.value })} /></label>
             <label className="form-field"><span>Država</span><input className="input" value={editForm.country} onChange={(e) => setEditForm({ ...editForm, country: e.target.value })} /></label>
             <label className="form-field"><span>Mesto *</span><input className="input" value={editForm.city} onChange={(e) => setEditForm({ ...editForm, city: e.target.value })} /></label>
-            <DateTimeField label="Polazak" value={editForm.departure_at} onChange={(value) => setEditForm({ ...editForm, departure_at: value })} />
-            <DateTimeField label="Povratak" value={editForm.return_at} onChange={(value) => setEditForm({ ...editForm, return_at: value })} />
+            <DateTimeField label="Polazak" value={editForm.departure_at} onChange={(value) => setEditForm((current) => ({ ...current, departure_at: value }))} />
+            <DateTimeField label="Povratak" value={editForm.return_at} onChange={(value) => setEditForm((current) => ({ ...current, return_at: value }))} />
           </div>
           <label className="form-field"><span>Opis</span><textarea className="input" rows={3} value={editForm.description} onChange={(e) => setEditForm({ ...editForm, description: e.target.value })} /></label>
           {selectedEvent?.access.can_manage_fee && <label className="guest-toggle"><input checked={editForm.has_participation_fee} onChange={(e) => setEditForm({ ...editForm, has_participation_fee: e.target.checked })} type="checkbox" /> Finansijsko učešće putnika</label>}

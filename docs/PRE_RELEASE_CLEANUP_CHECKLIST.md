@@ -97,3 +97,37 @@ Pre produkcije posebno treba potvrditi da:
 
 Čišćenje još nije izvršeno. Poznati probni podaci namerno ostaju u bazi dok se
 ne završe naredna funkcionalna testiranja.
+
+## Probni događaj iz ciklusa 29.07.2026.
+
+Zadržan je događaj `CODEX E2E događaj`:
+
+* događaj ID `1104573c-8835-467b-93ac-a5277e2ed128`;
+* veza sa sekcijom `Dečiji ansambl` ID
+  `09288c21-8d9f-4158-8099-64ba5698e61a`;
+* privremeno dodata veza sa sekcijom `Narodni orkestar` ID
+  `99f78894-3b58-4973-aece-7b0df5a45775`;
+* učesnik ID `81512696-0f43-4a35-8101-e8798f4893c2`, povezan sa postojećom
+  probnom osobom `codex.e2e.member.001@example.com`;
+* status učesnika je tokom testa promenjen iz `PLANNED` u `CONFIRMED`;
+* postoje i pripadajući zapisi istorije statusa i finansijskog audita.
+
+Pri završnom čišćenju prvo ukloniti zavisne programske, učesničke, finansijske,
+istorijske i audit zapise događaja, zatim veze događaj–sekcija, pa sam događaj.
+Stvarne sekcije se ne brišu.
+
+## Probna sekcija iz ciklusa 29.07.2026.
+
+Zadržani su:
+
+* sekcija `CODEX E2E sekcija`, ID
+  `b750e65f-bb1f-4aff-a131-f0e9db534e17`;
+* članstvo probnog člana u sekciji, ID
+  `de37fd1a-c886-4cd0-83f6-27e6154f8980`;
+* repertoarska numera `CODEX E2E numera`, ID
+  `129616b6-efe9-4edf-950e-8bd374104837`;
+* pripadajuća veza numere i sekcije, kao i audit/istorijski zapisi.
+
+Pri čišćenju najpre ukloniti zavisne uloge, članstva, probe, repertoarske veze i
+audit zapise probne sekcije, zatim probnu numeru ako nije vezana ni za jednu
+drugu sekciju, pa samu sekciju.
