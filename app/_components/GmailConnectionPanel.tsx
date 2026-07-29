@@ -43,8 +43,13 @@ export default function GmailConnectionPanel({ societyId }: { societyId: string 
   }, [societyId]);
 
   const authenticatedRequest = useCallback(async (path: string, body: Record<string, string>) => {
-    const { data } = await getSupabaseClient().auth.getSession();
-    const accessToken = data.session?.access_token;
+    const supabase = getSupabaseClient();
+    const { data: refreshed } = await supabase.auth.refreshSession();
+    let accessToken = refreshed.session?.access_token ?? "";
+    if (!accessToken) {
+      const { data } = await supabase.auth.getSession();
+      accessToken = data.session?.access_token ?? "";
+    }
     if (!accessToken) throw new Error("Prijava je istekla. Prijavite se ponovo.");
     const response = await fetch(path, {
       method: "POST",

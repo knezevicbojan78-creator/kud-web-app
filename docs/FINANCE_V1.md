@@ -209,7 +209,12 @@ Deaktivacija je izuzetak od pravila da finansijske promene važe od narednog mes
 
 * Društvo može opciono povezati svoj Gmail nalog preko Google OAuth-a. Gmail lozinka se nikada ne čuva.
 * Povezivanje, promena i prekid veze dostupni su predsedniku.
-* Ako Gmail nije povezan, koristi se centralna FOLKLORAŠ adresa.
+* OAuth povezivanje jednog Gmail naloga po društvu implementirano je
+  29.07.2026. i dokumentovano u `docs/GMAIL_OAUTH.md`.
+* Trenutna implementacija još nema Gmail servis za slanje ni email outbox;
+  povezivanje naloga ne znači da se finansijske potvrde i opomene već šalju.
+* Planirana centralna FOLKLORAŠ adresa nije implementirana i ne koristi se kao
+  automatski fallback.
 * Ako povezani Gmail privremeno ne pošalje poruku, ne prelazi se automatski na centralnu adresu zbog rizika od duplikata.
 * Poruka ostaje u redu kao neuspešna, a predsednik ili blagajnik mogu ponoviti slanje.
 * Red za slanje čuva primaoca, vrstu poruke, status, broj pokušaja, poslednju grešku, identifikator provajdera i vremena pokušaja/uspeha.

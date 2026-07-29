@@ -105,6 +105,16 @@ Pre produkcije posebno treba potvrditi da:
   artefakti nisu deo objavljene verzije;
 * produkcione promenljive koriste produkcioni Supabase projekat, javnu adresu
   aplikacije i ograničene ključeve email servisa.
+* `.env.local` i preuzeti Google OAuth client JSON nisu deo repozitorijuma,
+  build artefakta niti bilo kog javnog loga;
+* Google OAuth klijent ima tačan produkcijski HTTPS origin i callback
+  `/api/gmail/callback`;
+* Google Auth Platform sadrži politiku privatnosti, uslove korišćenja, kontakt
+  i verifikovan `gmail.send` scope, a aplikacija je prebačena iz `Testing` u
+  `Production`;
+* produkcione Gmail tajne nalaze se samo u serverskim environment variables;
+* Gmail servis za stvarno slanje i email outbox funkcionalno su provereni pre
+  uključivanja automatskih obaveštenja članovima.
 
 ## Trenutni status
 

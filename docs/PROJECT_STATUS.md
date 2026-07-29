@@ -466,3 +466,24 @@ statička provera više ne nalazi direktne `insert`, `update`, `delete` ili
 `upsert` pozive u aplikacionim ekranima; sve poslovne promene prolaze kroz
 kontrolisane Auth V1 RPC funkcije. Produkcioni build je zatim ponovo uspešno
 završen za svih 25 ruta.
+
+## Gmail OAuth status — 29.07.2026.
+
+Predsedničko povezivanje Gmail naloga je implementirano i potvrđeno u lokalnoj
+aplikaciji. Svako društvo ima najviše jednu vezu, samo predsednik može da je
+poveže, zameni ili odjavi, a Google tokeni čuvaju se šifrovano. Migracija
+`supabase/gmail-v1-society-connection.sql` primenjena je na aktivnu bazu i
+dijagnostika je uspešno prošla.
+
+U Google Cloud projektu `folkloras` uključen je Gmail API i napravljen OAuth
+Web application klijent za `http://localhost:3000`. Lokalni callback je
+`http://localhost:3000/api/gmail/callback`, a stvarno povezivanje testnog
+naloga uspešno je završeno. OAuth tajne postoje samo u `.env.local` i nisu deo
+repo-a.
+
+Ovo je trenutno OAuth osnova, ne kompletan email kanal. Sledeće treba
+implementirati serversko osvežavanje Google tokena i `users.messages.send`,
+pouzdani email outbox, šablone i vezu sa konkretnim obaveštenjima članovima.
+Produkcija dodatno zahteva javni HTTPS domen, produkcijski callback i
+environment variables hostinga, Google podatke o aplikaciji i verifikaciju
+`gmail.send` dozvole. Potpuna tačka nastavka je `docs/GMAIL_OAUTH.md`.

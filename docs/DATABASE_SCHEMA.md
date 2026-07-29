@@ -1074,7 +1074,10 @@ Postojeća polja `membership_fee_required` i `membership_fee_amount` ostaju tren
 * `financial_refunds` — povraćaji kredita i njihova poništenja
 * `financial_number_counters` — bezbedna godišnja numeracija po društvu
 * `financial_audit_log` — neizmenjiv audit poslovnih promena
-* `society_email_connections` — opciona Gmail OAuth veza društva
+* `society_gmail_connections` — jedna aktivna, šifrovana Gmail OAuth veza po
+  društvu; direktan klijentski pristup je zabranjen
+* `society_gmail_connection_history` — istorija povezivanja, zamene i odjave
+  Gmail naloga društva
 * `financial_email_outbox` — pouzdan red email potvrda, poništenja i opomena
 * `financial_reminder_runs` — istorija grupnog slanja opomena
 
