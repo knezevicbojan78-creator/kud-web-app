@@ -1290,7 +1290,13 @@ h1 {
 .event-status.approved { background: var(--color-success-soft); color: var(--color-success-text); }
 .event-status.rejected, .event-status.cancelled { background: var(--color-danger-soft); color: var(--color-danger-text); }
 .event-status.completed { background: var(--color-secondary-soft); color: var(--color-secondary); }
-.events-detail { min-width: 0; max-height: calc(100vh - 190px); overflow-y: auto; }
+.events-detail {
+  min-width: 0;
+  max-height: calc(100vh - 190px);
+  padding: var(--space-5);
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+}
 .events-detail-header { display: flex; justify-content: space-between; gap: 1rem; align-items: center; }
 .event-title-line { display: flex; align-items: baseline; gap: 0.65rem; min-width: 0; }
 .event-title-line .eyebrow { flex: 0 0 auto; margin: 0; }
