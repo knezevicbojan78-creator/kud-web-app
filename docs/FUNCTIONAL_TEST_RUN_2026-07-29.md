@@ -95,7 +95,7 @@ prijavljena sesija korisnika koji nije predsednik. Predsednička konfiguracija,
 
 ### 8. Događaji
 
-Status: `U TOKU — TRI GREŠKE ISPRAVLJENE`
+Status: `PROŠAO U PREDSEDNIČKOM KONTEKSTU — TRI GREŠKE ISPRAVLJENE`
 
 Potvrđeno:
 
@@ -125,6 +125,14 @@ Potvrđeno:
 * za polazak 15.08.2026. probni rok pasoša 31.10.2026. pravilno je odbijen uz
   poruku da pasoš mora važiti najmanje do 15.11.2026;
 * nakon vraćanja probnog roka pasoša na 31.12.2030. potvrda putnika je prošla.
+* jedna sekcija odobrenog događaja otkazana je uz obavezan razlog;
+* otkazivanje nije uklonilo učesnika niti finansijsku obavezu koja ne pripada
+  isključivo toj sekciji;
+* uklonjena sekcija je zatim ponovo dodata kroz aplikaciju, uz automatsko
+  formiranje planiranog spiska;
+* finansijski audit čuva tačan razlog otkazivanja i ID uklonjene veze;
+* direktna provera baze potvrđuje nula pogrešnih veza sekcija i učesnika sa
+  drugim društvom.
 
 Pronađena i ispravljena greška: novi sistem dozvola je starijoj proveri slao
 opšti naziv `Ovlašćeni korisnik`, zbog čega je promena statusa bila odbijena i
@@ -160,7 +168,7 @@ postoji stanje `PENDING` koje bi mogao da odbije.
 
 Završna regresija posle tri ispravke je prošla:
 
-* struktura projekta: 192 fajla;
+* struktura projekta: 193 fajla;
 * evidencija baze: 11 ispravnih zapisa migracija;
 * TypeScript: prošao;
 * produkcioni build svih 26 ruta: prošao;

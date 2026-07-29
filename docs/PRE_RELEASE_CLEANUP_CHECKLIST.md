@@ -118,8 +118,13 @@ Zadržan je događaj `CODEX E2E događaj`:
 * događaj ID `1104573c-8835-467b-93ac-a5277e2ed128`;
 * veza sa sekcijom `Dečiji ansambl` ID
   `09288c21-8d9f-4158-8099-64ba5698e61a`;
-* privremeno dodata veza sa sekcijom `Narodni orkestar` ID
+* prvobitna veza sa sekcijom `Narodni orkestar`, otkazana tokom testa, ID
   `99f78894-3b58-4973-aece-7b0df5a45775`;
+* ponovo dodata aktivna veza sa sekcijom `Narodni orkestar` ID
+  `fcf7d3c5-4dbc-473d-859c-69c1bba5ee89`;
+* audit otkazivanja prvobitne veze ID
+  `32842858-ba21-4874-bcb6-f3c5452f9cfe`, sa razlogom
+  `CODEX E2E provera otkazivanja sekcije događaja`;
 * veza sa probnom sekcijom ID
   `4d944809-e2bb-415c-b3ec-eed7d2c50e64`;
 * učesnik ID `81512696-0f43-4a35-8101-e8798f4893c2`, povezan sa postojećom
