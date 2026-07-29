@@ -130,6 +130,13 @@
       "applied_on": "2026-07-29",
       "verified_by": "auth-v1-guardian-existing-pages-diagnostic.sql",
       "note": "Roditeljski read-only pregledi postojeceg Prisustva, Finansija, Dogadjaja, Garderobe, Mojih sekcija i Mojih podataka bez posebne stranice Moja deca."
+    },
+    {
+      "file": "gmail-v1-society-connection.sql",
+      "status": "applied",
+      "applied_on": "2026-07-29",
+      "verified_by": "gmail-v1-society-connection-diagnostic.sql",
+      "note": "Jedno Gmail OAuth povezivanje po drustvu, dostupno samo predsedniku, sa sifrovanim tokenima, zamenom i odjavom naloga."
     }
   ]
 }

@@ -9,6 +9,7 @@ import {
   type PermissionMemberConfiguration,
   type PermissionSettingsData
 } from "../../_lib/supabaseClient";
+import GmailConnectionPanel from "../../_components/GmailConnectionPanel";
 
 const months = [
   "Januar", "Februar", "Mart", "April", "Maj", "Jun",
@@ -49,8 +50,9 @@ function displayDate(value: string) {
 }
 
 export default function PodesavanjaPage() {
-  const [activeTab, setActiveTab] = useState<"membership" | "permissions">("membership");
+  const [activeTab, setActiveTab] = useState<"membership" | "permissions" | "gmail">("membership");
   const [settings, setSettings] = useState<FinanceMembershipSettings | null>(null);
+  const [societyId, setSocietyId] = useState("");
   const [actorMemberId, setActorMemberId] = useState("");
   const [amount, setAmount] = useState("");
   const [chargeableMonths, setChargeableMonths] = useState<number[]>([]);
@@ -95,6 +97,7 @@ export default function PodesavanjaPage() {
       if (!membership?.functions.includes("Predsednik")) {
         throw new Error("Samo predsednik može da menja podešavanja članarine.");
       }
+      setSocietyId(membership.society_id);
       setActorMemberId(membership.society_member_id);
       const { data, error: settingsError } = await supabase.rpc(
         "finance_get_membership_settings",
@@ -177,10 +180,16 @@ export default function PodesavanjaPage() {
   }, []);
 
   useEffect(() => {
-    if (activeTab !== "membership" && !permissionSettings && !isLoadingPermissions && !permissionsRequested) {
+    if (activeTab === "permissions" && !permissionSettings && !isLoadingPermissions && !permissionsRequested) {
       void loadPermissionSettings();
     }
   }, [activeTab, isLoadingPermissions, loadPermissionSettings, permissionSettings, permissionsRequested]);
+
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).has("gmail")) {
+      setActiveTab("gmail");
+    }
+  }, []);
 
   useEffect(() => {
     if (permissionMode !== "member" || !permissionSettings?.selected_function_id || selectedPermissionMember) return;
@@ -474,6 +483,9 @@ export default function PodesavanjaPage() {
           </button>
           <button className={activeTab === "permissions" ? "active" : ""} onClick={() => setActiveTab("permissions")} type="button">
             Dozvole
+          </button>
+          <button className={activeTab === "gmail" ? "active" : ""} onClick={() => setActiveTab("gmail")} type="button">
+            Gmail povezivanje
           </button>
         </nav>
 
@@ -797,6 +809,16 @@ export default function PodesavanjaPage() {
             </>}
           </>}
         </div>}
+
+        {activeTab === "gmail" && (
+          societyId
+            ? <GmailConnectionPanel societyId={societyId} />
+            : <div className="gmail-connection-panel">
+                <p className="program-empty-row">
+                  {isLoading ? "Učitavanje podataka društva..." : error || "Društvo nije dostupno."}
+                </p>
+              </div>
+        )}
       </section>
 
       {editingMember && settings && <div className="modal-backdrop">
