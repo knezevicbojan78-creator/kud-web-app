@@ -186,7 +186,8 @@ export type ApplicationMembership = {
   society_status: "ACTIVE" | "SUSPENDED";
   society_member_id: string;
   person_id: string;
-  member_status: "ACTIVE";
+  member_status: "ACTIVE" | "GUARDIAN";
+  is_guardian?: boolean;
   functions: string[];
 };
 
@@ -1213,11 +1214,37 @@ type Database = {
       auth_get_login_destination: {
         Args: Record<never, never>;
         Returns: {
-          account_type: "MASTER_ADMIN" | "PRESIDENT";
+          account_type: "MASTER_ADMIN" | "PRESIDENT" | "SOCIETY_USER" | "PENDING_ACTIVATION";
           destination: string;
           society_id?: string;
           onboarding_completed?: boolean;
         };
+      };
+      auth_get_account_activation: {
+        Args: Record<never, never>;
+        Returns: {
+          person_name: string;
+          completed: boolean;
+          memberships: Array<{
+            id: string;
+            society_name: string;
+            status: string;
+            decision: "ACCEPTED" | "REJECTED" | null;
+          }>;
+          guardian_links: Array<{
+            id: string;
+            child_name: string;
+            relationship: string;
+            societies: string[];
+            decision: "ACCEPTED" | "REJECTED" | null;
+          }>;
+        };
+      };
+      auth_complete_account_activation: {
+        Args: {
+          p_decisions: Array<{ kind: string; id: string; decision: string }>;
+        };
+        Returns: { completed: boolean; has_access: boolean };
       };
       auth_get_application_context: {
         Args: Record<never, never>;

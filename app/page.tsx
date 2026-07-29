@@ -12,6 +12,7 @@ import { getSupabaseClient } from "./_lib/supabaseClient";
 type AuthMode =
   | "LOGIN"
   | "REGISTER_MASTER"
+  | "REGISTER_SOCIETY_USER"
   | "CHOOSE_REGISTRATION"
   | "RESET_PASSWORD";
 
@@ -142,6 +143,43 @@ export default function LoginPage() {
     }
   }
 
+  async function handleSocietyUserRegistration(
+    event: React.FormEvent<HTMLFormElement>
+  ) {
+    event.preventDefault();
+    clearFeedback();
+    if (password.length < 10) {
+      setError("Lozinka mora imati najmanje 10 karaktera.");
+      return;
+    }
+    if (password !== confirmPassword) {
+      setError("Lozinka i potvrda lozinke nisu iste.");
+      return;
+    }
+    setIsWorking(true);
+    try {
+      const callbackUrl =
+        `${window.location.origin}/auth/callback?next=/auth/activate-account`;
+      const { error: signUpError } = await getSupabaseClient().auth.signUp({
+        email: email.trim().toLowerCase(),
+        password,
+        options: { emailRedirectTo: callbackUrl }
+      });
+      if (signUpError) throw signUpError;
+      setMessage(
+        "Ako ste prethodno evidentirani, poslat je link za aktiviranje naloga."
+      );
+      setPassword("");
+      setConfirmPassword("");
+    } catch {
+      setMessage(
+        "Ako ste prethodno evidentirani, poslat je link za aktiviranje naloga."
+      );
+    } finally {
+      setIsWorking(false);
+    }
+  }
+
   async function handlePasswordReset(
     event: React.FormEvent<HTMLFormElement>
   ) {
@@ -177,6 +215,8 @@ export default function LoginPage() {
   const title =
     mode === "REGISTER_MASTER"
       ? "Aktiviranje sistema"
+      : mode === "REGISTER_SOCIETY_USER"
+        ? "Aktiviranje evidentiranog naloga"
       : mode === "CHOOSE_REGISTRATION"
         ? "Izaberite vrstu registracije"
       : mode === "RESET_PASSWORD"
@@ -281,6 +321,46 @@ export default function LoginPage() {
           </form>
         ) : null}
 
+        {mode === "REGISTER_SOCIETY_USER" ? (
+          <form className="form-stack" onSubmit={handleSocietyUserRegistration}>
+            <label className="form-field">
+              <span>Email</span>
+              <input
+                className="input"
+                onChange={(event) => setEmail(event.target.value)}
+                required
+                type="email"
+                value={email}
+              />
+            </label>
+            <label className="form-field">
+              <span>Željena lozinka</span>
+              <input
+                className="input"
+                minLength={10}
+                onChange={(event) => setPassword(event.target.value)}
+                required
+                type="password"
+                value={password}
+              />
+            </label>
+            <label className="form-field">
+              <span>Potvrdite lozinku</span>
+              <input
+                className="input"
+                minLength={10}
+                onChange={(event) => setConfirmPassword(event.target.value)}
+                required
+                type="password"
+                value={confirmPassword}
+              />
+            </label>
+            <button className="button button-primary" disabled={isWorking} type="submit">
+              {isWorking ? "Slanje..." : "POŠALJI AKTIVACIONI LINK"}
+            </button>
+          </form>
+        ) : null}
+
         {mode === "RESET_PASSWORD" ? (
           <form className="form-stack" onSubmit={handlePasswordReset}>
             <label className="form-field">
@@ -314,11 +394,15 @@ export default function LoginPage() {
             >
               Predsednik društva
             </button>
-            <button className="button button-secondary" disabled type="button">
-              Član — sledeća faza
-            </button>
-            <button className="button button-secondary" disabled type="button">
-              Roditelj / staratelj — sledeća faza
+            <button
+              className="button button-secondary"
+              onClick={() => {
+                clearFeedback();
+                setMode("REGISTER_SOCIETY_USER");
+              }}
+              type="button"
+            >
+              Član ili roditelj / staratelj
             </button>
             <p className="auth-secondary-note">
               Član i roditelj mogu se registrovati tek kada ih predsednik

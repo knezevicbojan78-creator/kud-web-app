@@ -2132,3 +2132,17 @@ h1 {
 .wardrobe-notifications{margin:18px 0;padding:18px;border:1px solid color-mix(in srgb,var(--color-primary) 35%,var(--color-border));border-radius:12px;background:color-mix(in srgb,var(--color-primary) 5%,var(--color-surface))}.wardrobe-notifications header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px}.wardrobe-notifications header h3{margin:0}.wardrobe-notifications header span{min-width:26px;height:26px;border-radius:50%;display:grid;place-items:center;background:var(--color-primary);color:var(--color-on-strong);font-weight:800}.wardrobe-notifications article{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:11px 0;border-top:1px solid var(--color-border)}.wardrobe-notifications article>div{display:grid;gap:3px}.wardrobe-notifications article p,.wardrobe-notifications article small{margin:0;color:var(--color-text-muted)}.wardrobe-loan-row{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;border:1px solid var(--color-border);border-radius:12px;padding:17px 18px}.wardrobe-loan-row.received{border-left:4px solid var(--color-primary)}.wardrobe-loan-row>div:first-child{display:grid;gap:6px}.wardrobe-loan-row small{color:var(--color-text-muted)}.wardrobe-loan-row ul{margin:6px 0;padding-left:18px}.wardrobe-loan-actions{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:8px}
 @media(max-width:1050px){.wardrobe-summary{grid-template-columns:repeat(3,1fr)}.wardrobe-kit-grid{grid-template-columns:repeat(2,1fr)}.wardrobe-settings{grid-template-columns:1fr 1fr}.wardrobe-category-grid{grid-template-columns:repeat(3,1fr)}}
 @media(max-width:700px){.wardrobe-heading,.wardrobe-section-title,.wardrobe-item-row,.wardrobe-assignment,.wardrobe-loan-row,.wardrobe-notifications article{align-items:stretch;flex-direction:column}.wardrobe-summary{grid-template-columns:repeat(2,1fr)}.wardrobe-summary .wardrobe-stat:last-child{grid-column:1/-1}.wardrobe-overview-grid,.wardrobe-kit-grid,.wardrobe-category-grid{grid-template-columns:1fr}.wardrobe-content{padding:15px}.wardrobe-filters,.wardrobe-settings{grid-template-columns:1fr}.wardrobe-quantities{justify-content:space-between}.wardrobe-row-actions,.wardrobe-loan-actions{align-items:stretch;flex-direction:column}.wardrobe-return-list article{grid-template-columns:1fr}.wardrobe-checks{grid-template-columns:1fr}}
+.auth-access-choice {
+  align-items: center;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  cursor: pointer;
+  display: flex;
+  gap: 12px;
+  padding: 12px;
+}
+
+.auth-access-choice span {
+  display: grid;
+  gap: 3px;
+}

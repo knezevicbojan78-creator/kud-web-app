@@ -109,6 +109,12 @@
       "applied_on": "2026-07-29",
       "verified_by": "wardrobe-v1-permissions-diagnostic.sql",
       "note": "Centralne dozvole Garderobe, operativna prava predsednika i garderobera i ogranicen licni odnosno roditeljski pregled zaduzenja."
+    },
+    {
+      "file": "auth-v1-member-guardian-activation.sql",
+      "status": "prepared",
+      "verified_by": "auth-v1-member-guardian-activation-diagnostic.sql",
+      "note": "Javna aktivacija prethodno evidentiranog clana ili roditelja, atomska potvrda veza i Auth kontekst za ograniceni licni pristup."
     }
   ]
 }

@@ -34,7 +34,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           throw destinationError ?? new Error("Pristup aplikaciji nije određen.");
         }
 
-        if (destination.destination !== "/dashboard") {
+        if (
+          destination.account_type === "PENDING_ACTIVATION" ||
+          destination.destination.startsWith("/auth/")
+        ) {
           router.replace(destination.destination);
           return;
         }
@@ -42,7 +45,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         if (destination.account_type === "MASTER_ADMIN") {
           setRole("Master admin");
           setOrganizationName("Administracija sistema");
-        } else {
+        } else if (destination.account_type === "PRESIDENT") {
           const { data: presidentDashboard, error: presidentError } =
             await supabase.rpc("auth_get_president_dashboard");
           if (presidentError || !presidentDashboard) {
@@ -50,6 +53,25 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           }
           setRole("Predsednik");
           setOrganizationName(presidentDashboard.society_name);
+        } else {
+          const { data: context, error: contextError } =
+            await supabase.rpc("auth_get_application_context");
+          const membership = context?.memberships?.[0];
+          if (contextError || !membership) {
+            throw contextError ?? new Error("Društvo nije moguće učitati.");
+          }
+          const functions = membership.functions ?? [];
+          const nextRole: ApplicationRole = membership.is_guardian
+            ? "Roditelj"
+            : functions.includes("UR")
+              ? "UR"
+              : functions.includes("Blagajnik")
+                ? "Blagajnik"
+                : functions.includes("Sekretar")
+                  ? "Sekretar"
+                  : "Član";
+          setRole(nextRole);
+          setOrganizationName(membership.society_name);
         }
 
         if (active) {
