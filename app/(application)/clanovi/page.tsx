@@ -163,6 +163,21 @@ function normalizeEmail(value: string) {
   return value.trim().toLowerCase();
 }
 
+function parseSerbianDate(value: string) {
+  const match = value.trim().match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})\.?$/);
+  if (!match) return null;
+  const day = Number(match[1]);
+  const month = Number(match[2]);
+  const year = Number(match[3]);
+  const date = new Date(Date.UTC(year, month - 1, day));
+  if (
+    date.getUTCFullYear() !== year ||
+    date.getUTCMonth() !== month - 1 ||
+    date.getUTCDate() !== day
+  ) return null;
+  return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+}
+
 function normalizeSearch(value: string) {
   return value.trim().toLowerCase();
 }
@@ -1546,7 +1561,8 @@ export default function ClanoviPage() {
   async function handleApprovePendingImport(candidateId: string) {
     const candidate = pendingImports.find((item) => item.id === candidateId);
     const phone = pendingPhones[candidateId] ?? candidate?.profile.phone ?? "";
-    if (!society || !pendingStartDates[candidateId] || !phone.trim()) return;
+    const startDate = parseSerbianDate(pendingStartDates[candidateId] ?? "");
+    if (!society || !startDate || !phone.trim()) return;
     setApprovingImportId(candidateId);
     setErrorMessage("");
     try {
@@ -1555,7 +1571,7 @@ export default function ClanoviPage() {
         {
           p_society_id: society.id,
           p_candidate_id: candidateId,
-          p_start_date: pendingStartDates[candidateId],
+          p_start_date: startDate,
           p_profile_updates: { phone: phone.trim() }
         }
       );
@@ -2135,7 +2151,9 @@ export default function ClanoviPage() {
                     Datum početka članstva
                     <input
                       className="input"
-                      type="date"
+                      inputMode="numeric"
+                      placeholder="dd.mm.gggg"
+                      type="text"
                       value={pendingStartDates[candidate.id] ?? ""}
                       onChange={(event) => setPendingStartDates((dates) => ({
                         ...dates,
@@ -2162,7 +2180,7 @@ export default function ClanoviPage() {
                     <button
                       className="button button-primary"
                       disabled={
-                        !pendingStartDates[candidate.id] ||
+                        !parseSerbianDate(pendingStartDates[candidate.id] ?? "") ||
                         !(pendingPhones[candidate.id] ?? candidate.profile.phone ?? "").trim() ||
                         candidate.missing_fields.some((field) => field !== "phone") ||
                         approvingImportId === candidate.id ||

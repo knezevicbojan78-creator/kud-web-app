@@ -154,6 +154,18 @@ export default function MemberDataCompletionPage() {
   async function submit() {
     if (saveTimer.current) clearTimeout(saveTimer.current);
     setError("");
+    const missing = getMissingRequiredFields(latestDraft.current);
+    if (missing.length > 0) {
+      setError(`Dopunite obavezna polja: ${missing.join(", ")}.`);
+      return;
+    }
+    if (
+      Boolean(latestDraft.current.passport_number) !==
+      Boolean(latestDraft.current.passport_expiry_date)
+    ) {
+      setError("Broj pasoša i datum važenja moraju biti uneti zajedno.");
+      return;
+    }
     setSaveState("saving");
     try {
       const { error: submitError } = await (getSupabaseClient().rpc as any)(
@@ -211,21 +223,21 @@ export default function MemberDataCompletionPage() {
         <Field label="Ime" value={draft.first_name} onChange={(value) => change("first_name", value)} required />
         <Field label="Prezime" value={draft.last_name} onChange={(value) => change("last_name", value)} required />
         <Field label="Email" value={draft.email} onChange={(value) => change("email", value)} type="email" required disabled />
-        <Field label="Telefon" value={draft.phone} onChange={(value) => change("phone", value)} type="tel" required={!draft.is_minor_member} />
+        <Field label="Telefon" value={draft.phone} onChange={(value) => change("phone", value)} type="tel" required />
         <label className="form-field">
-          <span>Pol</span>
-          <select className="input" value={draft.gender} onChange={(event) => change("gender", event.target.value)}>
+          <span>Pol *</span>
+          <select className="input" required value={draft.gender} onChange={(event) => change("gender", event.target.value)}>
             <option value="">Izaberite</option><option>Muško</option><option>Žensko</option>
           </select>
         </label>
-        <Field label="Datum rođenja" value={draft.birth_date} onChange={(value) => change("birth_date", value)} type="date" required={draft.is_minor_member} />
-        <Field label="Adresa" value={draft.address} onChange={(value) => change("address", value)} />
-        <Field label="Mesto" value={draft.city} onChange={(value) => change("city", value)} />
-        <Field label="Poštanski broj" value={draft.postal_code} onChange={(value) => change("postal_code", value)} />
-        <Field label="Država" value={draft.country} onChange={(value) => change("country", value)} />
+        <DateField label="Datum rođenja" value={draft.birth_date} onChange={(value) => change("birth_date", value)} required />
+        <Field label="Adresa" value={draft.address} onChange={(value) => change("address", value)} required />
+        <Field label="Mesto" value={draft.city} onChange={(value) => change("city", value)} required />
+        <Field label="Poštanski broj" value={draft.postal_code} onChange={(value) => change("postal_code", value)} required />
+        <Field label="Država" value={draft.country} onChange={(value) => change("country", value)} required />
         <Field label="JMBG" value={draft.jmbg} onChange={(value) => change("jmbg", value)} />
         <Field label="Broj pasoša" value={draft.passport_number} onChange={(value) => change("passport_number", value)} />
-        <Field label="Datum važenja pasoša" value={draft.passport_expiry_date} onChange={(value) => change("passport_expiry_date", value)} type="date" />
+        <DateField label="Datum važenja pasoša" value={draft.passport_expiry_date} onChange={(value) => change("passport_expiry_date", value)} />
       </div>
 
       {recipientRole === "MEMBER" && <label className="member-data-minor-toggle">
@@ -268,6 +280,42 @@ function Field({ label, value, onChange, type = "text", required = false, disabl
   label: string; value: string; onChange: (value: string) => void; type?: string; required?: boolean; disabled?: boolean;
 }) {
   return <label className="form-field"><span>{label}{required ? " *" : ""}</span><input className="input" type={type} value={value} required={required} disabled={disabled} onChange={(event) => onChange(event.target.value)} /></label>;
+}
+
+function DateField({ label, value, onChange, required = false }: {
+  label: string; value: string; onChange: (value: string) => void; required?: boolean;
+}) {
+  const [text, setText] = useState(() => formatSerbianDate(value));
+
+  useEffect(() => {
+    setText(formatSerbianDate(value));
+  }, [value]);
+
+  function commit() {
+    if (!text.trim()) {
+      onChange("");
+      return;
+    }
+    const parsed = parseSerbianDate(text);
+    if (parsed) {
+      setText(formatSerbianDate(parsed));
+      onChange(parsed);
+    }
+  }
+
+  return <label className="form-field">
+    <span>{label}{required ? " *" : ""}</span>
+    <input
+      className="input"
+      inputMode="numeric"
+      placeholder="dd.mm.gggg"
+      required={required}
+      type="text"
+      value={text}
+      onBlur={commit}
+      onChange={(event) => setText(event.target.value)}
+    />
+  </label>;
 }
 
 function GuardianFields({ value, onChange, emailDisabled = false }: { value: GuardianDraft; onChange: (field: keyof GuardianDraft, value: string) => void; emailDisabled?: boolean }) {
@@ -332,12 +380,59 @@ function getMessage(error: unknown) {
 }
 
 function getProgress(draft: Draft) {
-  const values = draft.is_minor_member
-    ? [
-        draft.first_name, draft.last_name, draft.email, draft.birth_date,
-        draft.guardian1.first_name, draft.guardian1.last_name,
-        draft.guardian1.email, draft.guardian1.phone
-      ]
-    : [draft.first_name, draft.last_name, draft.email, draft.phone];
+  const values = [
+    draft.first_name, draft.last_name, draft.email, draft.phone, draft.gender,
+    draft.birth_date, draft.address, draft.city, draft.postal_code, draft.country,
+    ...(draft.is_minor_member
+      ? [
+          draft.guardian1.first_name, draft.guardian1.last_name,
+          draft.guardian1.email, draft.guardian1.phone
+        ]
+      : [])
+  ];
   return Math.round((values.filter((value) => value.trim()).length / values.length) * 100);
+}
+
+function getMissingRequiredFields(draft: Draft) {
+  const fields: Array<[string, string]> = [
+    ["Ime", draft.first_name],
+    ["Prezime", draft.last_name],
+    ["Email", draft.email],
+    ["Telefon", draft.phone],
+    ["Pol", draft.gender],
+    ["Datum rođenja", draft.birth_date],
+    ["Adresa", draft.address],
+    ["Mesto", draft.city],
+    ["Poštanski broj", draft.postal_code],
+    ["Država", draft.country]
+  ];
+  if (draft.is_minor_member) {
+    fields.push(
+      ["Ime roditelja/staratelja", draft.guardian1.first_name],
+      ["Prezime roditelja/staratelja", draft.guardian1.last_name],
+      ["Email roditelja/staratelja", draft.guardian1.email],
+      ["Telefon roditelja/staratelja", draft.guardian1.phone]
+    );
+  }
+  return fields.filter(([, value]) => !value.trim()).map(([label]) => label);
+}
+
+function formatSerbianDate(value: string) {
+  const match = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  return match ? `${match[3]}.${match[2]}.${match[1]}` : value;
+}
+
+function parseSerbianDate(value: string) {
+  const match = value.trim().match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})\.?$/);
+  if (!match) return null;
+  const day = Number(match[1]);
+  const month = Number(match[2]);
+  const year = Number(match[3]);
+  const date = new Date(Date.UTC(year, month - 1, day));
+  if (
+    date.getUTCFullYear() !== year ||
+    date.getUTCMonth() !== month - 1 ||
+    date.getUTCDate() !== day
+  ) return null;
+  return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 }

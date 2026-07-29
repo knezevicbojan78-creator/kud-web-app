@@ -19,6 +19,12 @@
       "file": "finance-v1-dev-test-next-month-credit.sql",
       "status": "prepared",
       "note": "Razvojni test; ne primenjivati na produkciji."
+    },
+    {
+      "file": "members-v1-member-data-completeness.sql",
+      "status": "applied",
+      "applied_on": "2026-07-29",
+      "note": "Usklađuje obavezna lična polja javne dopune sa predsedničkom potvrdom."
     }
   ]
 }
