@@ -120,7 +120,7 @@ Stvarne sekcije se ne brišu.
 
 Zadržani su:
 
-* sekcija `CODEX E2E sekcija`, ID
+* sekcija `CODEX E2E sekcija izmenjena`, ID
   `b750e65f-bb1f-4aff-a131-f0e9db534e17`;
 * članstvo probnog člana u sekciji, ID
   `de37fd1a-c886-4cd0-83f6-27e6154f8980`;
@@ -131,3 +131,7 @@ Zadržani su:
 Pri čišćenju najpre ukloniti zavisne uloge, članstva, probe, repertoarske veze i
 audit zapise probne sekcije, zatim probnu numeru ako nije vezana ni za jednu
 drugu sekciju, pa samu sekciju.
+
+Sekcija je tokom testa deaktivirana i ponovo aktivirana. Isto članstvo je
+reaktivirano bez pravljenja duplikata; u tabeli `member_sections` postoji tačno
+jedan red sa gore navedenim ID-jem i statusom `ACTIVE`.

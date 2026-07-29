@@ -48,6 +48,8 @@ Status: `DELIMIČNO PROŠAO`
 * prikazani su tačno društvo i uloga `Predsednik`;
 * osvežavanje dashboarda nije izgubilo sesiju;
 * neprijavljeni pristup zaštićenoj ruti potvrđen je automatskim testom;
+* nepostojeći javni token prikazuje samo poruku `Link nije vazeci.` bez glavnog
+  menija ili mogućnosti odlaska na zaštićene stranice;
 * ručna odjava i ponovna prijava nisu ponavljane jer bi zahtevale korisnikovu
   lozinku; automatska zaštita od povratka bez sesije prolazi.
 
@@ -105,6 +107,11 @@ Potvrđeno:
 * dodavanje repertoarske numere `CODEX E2E numera`, tip koreografija i trajanje
   sedam minuta;
 * svi ID-jevi su nezavisno potvrđeni u bazi i upisani u listu čišćenja.
+* naziv sekcije je uspešno izmenjen u `CODEX E2E sekcija izmenjena`;
+* sekcija je deaktivirana i ponovo aktivirana uz očuvanu istoriju;
+* deaktiviran član sekcije ponovo je dodat, čime je reaktiviran isti zapis;
+* direktna provera baze potvrđuje tačno jedan red članstva, isti ID i status
+  `ACTIVE`, bez duplikata.
 
 ### 9. Finansije
 
