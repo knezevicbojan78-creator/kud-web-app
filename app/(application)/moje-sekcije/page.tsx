@@ -1204,14 +1204,14 @@ export default function MojeSekcijePage() {
             <div className="page-heading" style={{ marginBottom: 0 }}>
               <p className="eyebrow">Sekcije</p>
             </div>
-            <label className="sections-inactive-toggle">
+            {!isGuardian && <label className="sections-inactive-toggle">
               <input
                 checked={showInactiveSections}
                 type="checkbox"
                 onChange={(event) => setShowInactiveSections(event.target.checked)}
               />
               <span>Prikaži neaktivne sekcije</span>
-            </label>
+            </label>}
           </div>
 
           {isLoading && <p>Učitavanje sekcija...</p>}
@@ -1336,7 +1336,7 @@ export default function MojeSekcijePage() {
               <button className={activeDetailTab === "members" ? "active" : ""} type="button" onClick={() => setActiveDetailTab("members")}>Članovi</button>
               <button className={activeDetailTab === "roles" ? "active" : ""} type="button" onClick={() => setActiveDetailTab("roles")}>Uloge</button>
               <button className={activeDetailTab === "repertoire" ? "active" : ""} type="button" onClick={() => setActiveDetailTab("repertoire")}>Repertoar</button>
-              <button className={activeDetailTab === "settings" ? "active" : ""} type="button" onClick={() => setActiveDetailTab("settings")}>Podešavanja</button>
+              {!isGuardian && <button className={activeDetailTab === "settings" ? "active" : ""} type="button" onClick={() => setActiveDetailTab("settings")}>Podešavanja</button>}
             </nav>
 
             {activeDetailTab === "roles" && <section className="section-tab-panel">

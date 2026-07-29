@@ -81,6 +81,10 @@ export default function PrisustvoPage() {
     useState<PendingCorrection>(null);
   const [correctionReason, setCorrectionReason] = useState("");
 
+  useEffect(() => {
+    if (isGuardian) setActiveView("HISTORY");
+  }, [isGuardian]);
+
   const selectedSection = useMemo(
     () => sections.find((item) => item.id === selectedSectionId) ?? null,
     [sections, selectedSectionId]
@@ -364,7 +368,7 @@ export default function PrisustvoPage() {
 
   return (
     <>
-      <div className="attendance-view-tabs" role="tablist" aria-label="Prikaz prisustva">
+      {!isGuardian && <div className="attendance-view-tabs" role="tablist" aria-label="Prikaz prisustva">
         <button
           className={activeView === "CURRENT" ? "active" : ""}
           type="button"
@@ -383,7 +387,7 @@ export default function PrisustvoPage() {
         >
           PREGLED PROBA
         </button>
-      </div>
+      </div>}
 
       {activeView === "CURRENT" ? (
         <>

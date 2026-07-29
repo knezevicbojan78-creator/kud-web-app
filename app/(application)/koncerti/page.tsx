@@ -884,7 +884,9 @@ export default function DogadjajiPage() {
               })}</div>
             </section>}
           </main>
-        ) : <section className="card attendance-empty">Izaberite događaj ili kreirajte novi.</section>}
+        ) : <section className="card attendance-empty">
+          {isGuardian ? "Nema događaja povezanih sa vašom decom." : "Izaberite događaj ili kreirajte novi."}
+        </section>}
       </section>
 
       {performerPickerItem && <div className="modal-backdrop">
