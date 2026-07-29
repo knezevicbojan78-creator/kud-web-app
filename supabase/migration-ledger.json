@@ -43,6 +43,18 @@
       "status": "applied",
       "applied_on": "2026-07-29",
       "note": "Uskladjuje novi sistem dozvola sa starijom proverom uloge pri promeni statusa ucesnika dogadjaja."
+    },
+    {
+      "file": "events-v1-promote-member-participant.sql",
+      "status": "applied",
+      "applied_on": "2026-07-29",
+      "note": "Dopunjava postojeci zapis gosta aktivnim clanstvom kada je ista osoba izabrana kao izvodjac svoje sekcije."
+    },
+    {
+      "file": "events-v1-resolve-authorized-cancel-role.sql",
+      "status": "applied",
+      "applied_on": "2026-07-29",
+      "note": "Razresava Predsednik/UR ulogu u starijem toku otkazivanja kada ga pozove bezbedni Auth finansijski omotac."
     }
   ]
 }

@@ -107,9 +107,14 @@ Zadržan je događaj `CODEX E2E događaj`:
   `09288c21-8d9f-4158-8099-64ba5698e61a`;
 * privremeno dodata veza sa sekcijom `Narodni orkestar` ID
   `99f78894-3b58-4973-aece-7b0df5a45775`;
+* veza sa probnom sekcijom ID
+  `4d944809-e2bb-415c-b3ec-eed7d2c50e64`;
 * učesnik ID `81512696-0f43-4a35-8101-e8798f4893c2`, povezan sa postojećom
   probnom osobom `codex.e2e.member.001@example.com`;
 * status učesnika je tokom testa promenjen iz `PLANNED` u `CONFIRMED`;
+* termin nastupa ID `3ae4078b-d010-44fe-86cb-5b74c1f9d29b`;
+* programska veza numere ID `b55323d2-a1ec-474b-bb1d-b0c933b464b0`;
+* veza izvođača ID `1e0eac2f-c958-4620-8969-4b7ec14b0925`;
 * postoje i pripadajući zapisi istorije statusa i finansijskog audita.
 
 Pri završnom čišćenju prvo ukloniti zavisne programske, učesničke, finansijske,
@@ -135,3 +140,29 @@ drugu sekciju, pa samu sekciju.
 Sekcija je tokom testa deaktivirana i ponovo aktivirana. Isto članstvo je
 reaktivirano bez pravljenja duplikata; u tabeli `member_sections` postoji tačno
 jedan red sa gore navedenim ID-jem i statusom `ACTIVE`.
+
+## Dodatni događaji iz ciklusa 29.07.2026.
+
+* `CODEX E2E događaj za otkazivanje`, ID
+  `196f4efc-a6c2-48bb-9957-1c6013ced60e`, status `CANCELLED`;
+* njegova veza sa probnom sekcijom ID
+  `fc91ffcf-43ac-43ae-8b9f-37f863df32f6`;
+* njegov automatski termin koncerta ID
+  `409bac28-52eb-40b2-bdbc-ed7d51c0e9b2`;
+* `CODEX E2E inostrano putovanje`, ID
+  `9e6dcad5-aa29-403a-a5f0-90ab1c7a0f87`, status `APPROVED`;
+* njegova veza sa probnom sekcijom ID
+  `f755719b-1e6d-447e-bce3-93f5dbc495e1`;
+* odrasli putnik ID `240093c5-f1d7-4349-84e1-90a2d95d819c`,
+  status `DECLINED`;
+* maloletni putnik ID `934b24ca-287d-4f77-81a7-fa203b370b04`,
+  status `CONFIRMED`.
+
+Na probnom inostranom putovanju termini su zbog ograničenja automatizovanog
+sistemskog birača postavljeni kontrolisano u bazi: polazak 15.08.2026. u 18:00,
+povratak 17.08.2026. u 21:00 po lokalnom vremenu.
+
+Za probnu osobu `codex.e2e.minor.001@example.com` tokom testa su dopunjeni
+`nationality = Srpsko`, `passport_issuing_country = Srbija`,
+`parental_travel_consent = true` i važenje saglasnosti do 20.08.2026. Ovi
+podaci pripadaju probnoj osobi i uklanjaju se zajedno sa njom.

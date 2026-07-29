@@ -75,7 +75,7 @@ Status: `U TOKU`
 
 ### 8. Događaji
 
-Status: `U TOKU — JEDNA GREŠKA ISPRAVLJENA`
+Status: `U TOKU — TRI GREŠKE ISPRAVLJENE`
 
 Potvrđeno:
 
@@ -85,14 +85,50 @@ Potvrđeno:
 * druga sekcija je dodata, a obe veze su potvrđene direktnim čitanjem baze;
 * postojeća probna osoba pronađena je po emailu i dodata kao učesnik;
 * status učesnika promenjen je iz `PLANNED` u `CONFIRMED`.
+* probna sekcija i njena repertoarska numera povezane su sa programom;
+* postojeći termin `Glavni nastup`, numera i izvođač ostali su sačuvani posle
+  ponovnog učitavanja;
+* osoba koja je ranije bila dodata kao gost uspešno je prepoznata kao aktivni
+  član sekcije bez dupliranja osobe ili učesnika;
+* posebno odobreno probno dešavanje uspešno je otkazano uz obavezan razlog;
+* inostrano putovanje odbija potvrdu bez polaska i povratka;
+* posle postavljanja termina odrasli putnik bez kompletnih dokumenata je
+  odbijen;
+* maloletni putnik sa dokumentima, ali bez saglasnosti, odbijen je jasnom
+  porukom;
+* nakon evidentirane važeće saglasnosti maloletni putnik je potvrđen;
+* status drugog putnika uspešno je promenjen iz `PLANNED` u `DECLINED`.
 
 Pronađena i ispravljena greška: novi sistem dozvola je starijoj proveri slao
 opšti naziv `Ovlašćeni korisnik`, zbog čega je promena statusa bila odbijena i
 predsedniku. Primenjena je migracija
 `finance-v1-event-participant-actor-role.sql`; ponovljeni test je prošao.
 
+Druga ispravljena greška: postojeća osoba dodata kao gost nije mogla kasnije da
+bude izabrana kao izvođač svoje aktivne sekcije. Migracija
+`events-v1-promote-member-participant.sql` dopunjava isti zapis učesnika
+članstvom pre povezivanja sa sekcijom; ponovljeni test je prošao.
+
+Treća ispravljena greška: bezbedni finansijski tok otkazivanja prosleđivao je
+starijoj funkciji opštu oznaku `Ovlašćeni korisnik`, dok je ona prihvatala samo
+`Predsednik` ili `UR`. Migracija
+`events-v1-resolve-authorized-cancel-role.sql` razrešava stvarnu ulogu i čuva je
+u istoriji; ponovljeni test je prošao.
+
 Polja datuma još nisu ocenjena: automatski pregledač ne uspeva da unese vrednost
 u sistemsko polje tipa datum, pa taj korak ostaje za kratku ručnu proveru.
+
+Odbijanje celog događaja ostaje blokirano bez zasebne prijavljene UR sesije:
+predsednik događaj kreira neposredno kao `APPROVED`, pa u njegovom toku ne
+postoji stanje `PENDING` koje bi mogao da odbije.
+
+Završna regresija posle tri ispravke je prošla:
+
+* struktura projekta: 189 fajlova;
+* evidencija baze: 9 ispravnih zapisa migracija;
+* TypeScript: prošao;
+* produkcioni build svih 26 ruta: prošao;
+* sva 3 javna automatska testa: prošla.
 
 ### 5. Sekcije
 
