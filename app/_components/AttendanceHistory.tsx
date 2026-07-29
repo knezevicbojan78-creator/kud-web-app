@@ -92,9 +92,11 @@ function AttendanceDateField({
 }
 
 export default function AttendanceHistory({
-  society
+  society,
+  isGuardian = false
 }: {
   society: Society | null;
+  isGuardian?: boolean;
 }) {
   const [allowedSections, setAllowedSections] = useState<Section[]>([]);
   const [sectionId, setSectionId] = useState("");
@@ -120,7 +122,9 @@ export default function AttendanceHistory({
     try {
       const supabase = getSupabaseClient();
       const { data, error: historyError } = await supabase.rpc(
-        "auth_get_attendance_history",
+        isGuardian
+          ? "auth_get_guardian_attendance_history"
+          : "auth_get_attendance_history",
         {
           p_society_id: society.id,
           p_section_id: sectionId || null,
@@ -140,7 +144,7 @@ export default function AttendanceHistory({
     } finally {
       setIsLoading(false);
     }
-  }, [dateFrom, dateTo, sectionId, society, status]);
+  }, [dateFrom, dateTo, isGuardian, sectionId, society, status]);
 
   useEffect(() => {
     void loadHistory();
@@ -156,7 +160,9 @@ export default function AttendanceHistory({
       if (!society) throw new Error("Društvo nije dostupno.");
       const supabase = getSupabaseClient();
       const { data, error: historyError } = await supabase.rpc(
-        "auth_get_attendance_history",
+        isGuardian
+          ? "auth_get_guardian_attendance_history"
+          : "auth_get_attendance_history",
         {
           p_society_id: society.id,
           p_section_id: sectionId || null,

@@ -201,6 +201,7 @@ function getValueForInput(value: string | null) {
 
 export default function MojeSekcijePage() {
   const [role, setRole] = useState<ApplicationRole>("Predsednik");
+  const [isGuardian, setIsGuardian] = useState(false);
   const [actorSocietyMemberId, setActorSocietyMemberId] = useState<string | null>(
     null
   );
@@ -304,7 +305,9 @@ export default function MojeSekcijePage() {
 
   const loadSectionDetail = useCallback(async (sectionId: string) => {
     const { data, error } = await getSupabaseClient().rpc(
-      "auth_get_section_detail",
+      isGuardian
+        ? "auth_get_guardian_section_detail"
+        : "auth_get_section_detail",
       { p_section_id: sectionId }
     );
     if (error || !data) {
@@ -313,7 +316,7 @@ export default function MojeSekcijePage() {
     setMembers(data.members ?? []);
     setAccompanists(data.accompanists ?? []);
     setRepertoireItems(data.repertoire ?? []);
-  }, []);
+  }, [isGuardian]);
 
   const loadPageData = useCallback(async () => {
     setIsLoading(true);
@@ -326,7 +329,11 @@ export default function MojeSekcijePage() {
       if (contextError || !context) throw contextError ?? new Error("Korisnički kontekst nije dostupan.");
       const membership = context.memberships[0];
       if (!membership) throw new Error("Korisnik nema aktivno društvo.");
-      const effectiveRole: ApplicationRole = membership.functions.includes("Predsednik")
+      const guardianContext = Boolean(membership.is_guardian);
+      setIsGuardian(guardianContext);
+      const effectiveRole: ApplicationRole = guardianContext
+        ? "Roditelj"
+        : membership.functions.includes("Predsednik")
         ? "Predsednik"
         : membership.functions.includes("UR")
           ? "UR"
@@ -334,7 +341,9 @@ export default function MojeSekcijePage() {
       setRole(effectiveRole);
 
       const { data: workspace, error: workspaceError } =
-        await supabase.rpc("auth_get_sections_workspace", {
+        await supabase.rpc(guardianContext
+          ? "auth_get_guardian_sections_workspace"
+          : "auth_get_sections_workspace", {
           p_society_id: membership.society_id
         });
       if (workspaceError || !workspace) throw workspaceError ?? new Error("Društvo nije dostupno.");

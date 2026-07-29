@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import {
   getSupabaseClient,
@@ -11,9 +10,14 @@ import {
 
 type Tab = "personal" | "documents" | "society" | "family" | "security";
 type Detail = {
-  member: SocietyMember;
+  member: SocietyMember | null;
   person: Person;
   guardians: Array<{ person: Person }>;
+  section_ids: string[];
+};
+type GuardianChild = {
+  person: Person;
+  member: SocietyMember;
   section_ids: string[];
 };
 type Workspace = {
@@ -75,6 +79,8 @@ export default function MojiPodaciPage() {
   const [context, setContext] = useState<ApplicationContext | null>(null);
   const [detail, setDetail] = useState<Detail | null>(null);
   const [workspace, setWorkspace] = useState<Workspace | null>(null);
+  const [guardianChildren, setGuardianChildren] = useState<GuardianChild[]>([]);
+  const [isGuardian, setIsGuardian] = useState(false);
   const [activeTab, setActiveTab] = useState<Tab>("personal");
   const [isEditing, setIsEditing] = useState(false);
   const [form, setForm] = useState<FormValues>(emptyForm);
@@ -105,6 +111,33 @@ export default function MojiPodaciPage() {
       setIsLoading(false);
       return;
     }
+    if (membership.is_guardian) {
+      const { data: guardianProfile, error: guardianError } = await supabase.rpc(
+        "auth_get_guardian_profile",
+        { p_society_id: membership.society_id }
+      );
+      if (guardianError || !guardianProfile) {
+        setError(guardianError?.message || "Roditeljski profil nije učitan.");
+        setIsLoading(false);
+        return;
+      }
+      setContext(contextData);
+      setIsGuardian(true);
+      setGuardianChildren(guardianProfile.children ?? []);
+      setDetail({
+        member: null,
+        person: guardianProfile.person,
+        guardians: [],
+        section_ids: []
+      });
+      setWorkspace({
+        society: { name: guardianProfile.society.name },
+        sections: guardianProfile.sections ?? []
+      });
+      setForm(toForm(guardianProfile.person));
+      setIsLoading(false);
+      return;
+    }
     const [detailResult, workspaceResult] = await Promise.all([
       supabase.rpc("auth_get_member_detail", {
         p_society_member_id: membership.society_member_id
@@ -119,6 +152,8 @@ export default function MojiPodaciPage() {
       return;
     }
     setContext(contextData);
+    setIsGuardian(false);
+    setGuardianChildren([]);
     setDetail(detailResult.data);
     setWorkspace(workspaceResult.data ?? null);
     setForm(toForm(detailResult.data.person));
@@ -162,10 +197,15 @@ export default function MojiPodaciPage() {
     setIsSaving(true);
     setError("");
     setMessage("");
-    const { error: saveError } = await getSupabaseClient().rpc(
-      "auth_update_my_profile",
-      { p_profile: form }
-    );
+    const membership = context?.memberships[0];
+    const { error: saveError } = isGuardian && membership
+      ? await getSupabaseClient().rpc("auth_update_guardian_profile", {
+          p_society_id: membership.society_id,
+          p_profile: form
+        })
+      : await getSupabaseClient().rpc("auth_update_my_profile", {
+          p_profile: form
+        });
     if (saveError) {
       setError(saveError.message || "Podaci nisu sačuvani.");
       setIsSaving(false);
@@ -212,7 +252,9 @@ export default function MojiPodaciPage() {
           <h1>{person.first_name} {person.last_name}</h1>
           <p>{person.email ?? context.email} · {valueOrEmpty(person.phone)}</p>
           <div className="my-data-badges">
-            <span className="master-status active">AKTIVAN ČLAN</span>
+            <span className="master-status active">
+              {isGuardian ? "RODITELJ / STARATELJ" : "AKTIVAN ČLAN"}
+            </span>
             <span className={`my-data-completion ${completion === 100 ? "complete" : ""}`}>
               Profil {completion}%
             </span>
@@ -243,12 +285,12 @@ export default function MojiPodaciPage() {
         </article>
         <article className="card">
           <span>Društvo</span>
-          <strong>{membership?.functions.join(", ") || "Član"}</strong>
-          <small>{sectionNames.length} aktivnih sekcija</small>
+          <strong>{isGuardian ? "Roditeljski pristup" : membership?.functions.join(", ") || "Član"}</strong>
+          <small>{isGuardian ? `${guardianChildren.length} povezane dece` : `${sectionNames.length} aktivnih sekcija`}</small>
         </article>
         <article className="card">
           <span>Porodica</span>
-          <strong>{detail.guardians.length ? `${detail.guardians.length} povezanih` : "Pregled porodice"}</strong>
+          <strong>{isGuardian ? `${guardianChildren.length} dece` : detail.guardians.length ? `${detail.guardians.length} povezanih` : "Pregled porodice"}</strong>
           <small>Roditelji, staratelji i deca</small>
         </article>
       </section>
@@ -357,11 +399,21 @@ export default function MojiPodaciPage() {
               <header className="my-data-section-heading"><div><p className="eyebrow">Članstvo</p><h2>Podaci u društvu</h2></div></header>
               <dl className="my-data-grid">
                 <InfoRow label="Društvo" value={workspace?.society.name ?? membership?.society_name ?? "Nije dostupno"} />
-                <InfoRow label="Status članstva" value={detail.member.status === "ACTIVE" ? "Aktivan član" : detail.member.status} />
-                <InfoRow label="Početak članstva" value={formatDate(detail.member.start_date)} />
-                <InfoRow label="Funkcije" value={membership?.functions.join(", ") || "Član"} />
-                <InfoRow label="Sekcije" value={sectionNames.join(", ") || "Nema aktivnih sekcija"} />
-                <InfoRow label="Članarina" value={detail.member.membership_fee_required ? "Obračunava se" : "Ne obračunava se"} />
+                {isGuardian ? (
+                  <>
+                    <InfoRow label="Vrsta pristupa" value="Roditelj / staratelj" />
+                    <InfoRow label="Povezana deca" value={guardianChildren.map((child) => `${child.person.first_name} ${child.person.last_name}`).join(", ") || "Nema povezane dece"} />
+                    <InfoRow label="Opseg" value="Samo podaci povezane dece" />
+                  </>
+                ) : detail.member ? (
+                  <>
+                    <InfoRow label="Status članstva" value={detail.member.status === "ACTIVE" ? "Aktivan član" : detail.member.status} />
+                    <InfoRow label="Početak članstva" value={formatDate(detail.member.start_date)} />
+                    <InfoRow label="Funkcije" value={membership?.functions.join(", ") || "Član"} />
+                    <InfoRow label="Sekcije" value={sectionNames.join(", ") || "Nema aktivnih sekcija"} />
+                    <InfoRow label="Članarina" value={detail.member.membership_fee_required ? "Obračunava se" : "Ne obračunava se"} />
+                  </>
+                ) : null}
               </dl>
               <p className="my-data-note">Ove podatke uređuje predsednik društva.</p>
             </section>
@@ -369,10 +421,21 @@ export default function MojiPodaciPage() {
 
           {activeTab === "family" && (
             <section>
-              <header className="my-data-section-heading"><div><p className="eyebrow">Porodica</p><h2>Povezane osobe</h2></div><Link className="button button-secondary" href="/moja-deca">MOJA DECA</Link></header>
-              {detail.guardians.length ? detail.guardians.map(({ person: guardian }) => (
+              <header className="my-data-section-heading"><div><p className="eyebrow">Porodica</p><h2>Povezane osobe</h2></div></header>
+              {isGuardian ? guardianChildren.map((child) => {
+                const childSections = workspace?.sections
+                  .filter((section) => child.section_ids.includes(section.id))
+                  .map((section) => section.name) ?? [];
+                return (
+                  <article className="my-data-family-card" key={child.person.id}>
+                    <strong>{child.person.first_name} {child.person.last_name}</strong>
+                    <span>{child.member.status === "ACTIVE" ? "Aktivan član" : child.member.status}</span>
+                    <small>{childSections.join(", ") || "Nema aktivnih sekcija"}</small>
+                  </article>
+                );
+              }) : detail.guardians.length ? detail.guardians.map(({ person: guardian }) => (
                 <article className="my-data-family-card" key={guardian.id}><strong>{guardian.first_name} {guardian.last_name}</strong><span>Roditelj / staratelj</span><small>{guardian.email ?? "Email nije unet"} · {guardian.phone ?? "Telefon nije unet"}</small></article>
-              )) : <p className="my-data-empty">Na ovom profilu nema prikazanih roditelja ili staratelja. Povezana deca su dostupna na stranici „Moja deca“.</p>}
+              )) : <p className="my-data-empty">Na ovom profilu nema povezanih porodičnih osoba.</p>}
             </section>
           )}
 

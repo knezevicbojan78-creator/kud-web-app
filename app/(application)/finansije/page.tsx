@@ -118,7 +118,9 @@ export default function FinansijePage() {
       const membership = context?.memberships?.[0] ?? null;
       if (!membership) throw new Error("Aktivno članstvo nije pronađeno.");
       const { data: workspace, error: workspaceError } =
-        await supabase.rpc("auth_get_finance_workspace", {
+        await supabase.rpc(membership.is_guardian
+          ? "auth_get_guardian_finance_workspace"
+          : "auth_get_finance_workspace", {
           p_society_id: membership.society_id
         });
       if (workspaceError) throw workspaceError;

@@ -45,7 +45,6 @@ export const MENU_ITEMS: MenuItem[] = [
     href: "/podesavanja",
     permissionKey: "organizacija.settings.view"
   },
-  { label: "Moja deca", href: "/moja-deca", permissionKey: "deca.view" },
   { label: "Moji podaci", href: "/moji-podaci", permissionKey: "profile.view" }
 ];
 
@@ -87,7 +86,14 @@ export const ROLE_MENU_LABELS: Record<ApplicationRole, string[]> = {
   ],
   Sekretar: ["Dashboard", "Članovi", "Izveštaji", "Događaji", "Moji podaci"],
   Član: ["Moje sekcije", "Događaji", "Garderoba", "Moji podaci"],
-  Roditelj: ["Moja deca", "Prisustvo", "Finansije", "Garderoba", "Moji podaci"]
+  Roditelj: [
+    "Moje sekcije",
+    "Prisustvo",
+    "Finansije",
+    "Garderoba",
+    "Događaji",
+    "Moji podaci"
+  ]
 };
 
 export function getMenuItemsForRole(role: ApplicationRole) {

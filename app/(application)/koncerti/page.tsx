@@ -37,7 +37,7 @@ type EventWorkspaceItem = SocietyEvent & {
   };
 };
 type DetailTab = "overview" | "participants" | "program";
-type EventRole = "Predsednik" | "UR" | "Član";
+type EventRole = "Predsednik" | "UR" | "Član" | "Roditelj";
 const PARTICIPANT_STATUSES: Array<{
   value: EventParticipant["participation_status"];
   label: string;
@@ -188,6 +188,7 @@ function statusLabel(status: SocietyEvent["status"]) {
 
 export default function DogadjajiPage() {
   const [role, setRole] = useState<EventRole | null>(null);
+  const [isGuardian, setIsGuardian] = useState(false);
   const [society, setSociety] = useState<Society | null>(null);
   const [actorMemberId, setActorMemberId] = useState<string | null>(null);
   const [sections, setSections] = useState<Section[]>([]);
@@ -235,7 +236,9 @@ export default function DogadjajiPage() {
     const supabase = getSupabaseClient();
     if (!society) return;
     const { data: workspace, error: workspaceError } = await supabase.rpc(
-      "auth_get_events_workspace",
+      isGuardian
+        ? "auth_get_guardian_events_workspace"
+        : "auth_get_events_workspace",
       { p_society_id: society.id, p_event_id: eventId }
     );
     if (workspaceError) throw workspaceError;
@@ -246,7 +249,7 @@ export default function DogadjajiPage() {
     setAppearances(detail?.appearances ?? []);
     setProgram(detail?.program ?? []);
     setPerformerLinks(detail?.performer_links ?? []);
-  }, [society?.id]);
+  }, [isGuardian, society?.id]);
 
   const loadPage = useCallback(async () => {
     setIsLoading(true);
@@ -258,27 +261,28 @@ export default function DogadjajiPage() {
       if (contextError) throw contextError;
       const membership = context?.memberships?.[0] ?? null;
       if (!membership) throw new Error("Aktivno članstvo nije pronađeno.");
-      const actualRole: EventRole = membership.functions.includes("Predsednik")
+      const guardianContext = Boolean(membership.is_guardian);
+      setIsGuardian(guardianContext);
+      const actualRole: EventRole = guardianContext
+        ? "Roditelj"
+        : membership.functions.includes("Predsednik")
         ? "Predsednik"
         : membership.functions.includes("UR")
           ? "UR"
           : "Član";
       setRole(actualRole);
-      const { data: workspace, error: workspaceError } =
-        await supabase.rpc("auth_get_society_workspace", {
-          p_society_id: membership.society_id
-        });
-      if (workspaceError) throw workspaceError;
-      const activeSociety = workspace?.society ?? null;
-      setSociety(activeSociety);
-      if (!activeSociety) return;
-      setActorMemberId(membership.society_member_id);
       const { data: eventsWorkspace, error: eventsWorkspaceError } =
-        await supabase.rpc("auth_get_events_workspace", {
-          p_society_id: activeSociety.id,
+        await supabase.rpc(guardianContext
+          ? "auth_get_guardian_events_workspace"
+          : "auth_get_events_workspace", {
+          p_society_id: membership.society_id,
           p_event_id: null
         });
       if (eventsWorkspaceError) throw eventsWorkspaceError;
+      const activeSociety = eventsWorkspace.society ?? null;
+      setSociety(activeSociety);
+      if (!activeSociety) return;
+      setActorMemberId(eventsWorkspace.actor_society_member_id ?? null);
       setSections(eventsWorkspace.sections ?? []);
       setEvents(eventsWorkspace.events ?? []);
       setCanCreateEvent(Boolean(eventsWorkspace.access?.can_create));

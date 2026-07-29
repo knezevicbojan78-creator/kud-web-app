@@ -57,6 +57,7 @@ function formatDateTime(value: string) {
 export default function PrisustvoPage() {
   const [activeView, setActiveView] = useState<"CURRENT" | "HISTORY">("CURRENT");
   const [role, setRole] = useState<ApplicationRole | null>(null);
+  const [isGuardian, setIsGuardian] = useState(false);
   const [actorSocietyMemberId, setActorSocietyMemberId] = useState<string | null>(
     null
   );
@@ -137,7 +138,9 @@ export default function PrisustvoPage() {
       try {
         const supabase = getSupabaseClient();
         const { data: workspace, error: workspaceError } = await supabase.rpc(
-          "auth_get_attendance_workspace",
+          isGuardian
+            ? "auth_get_guardian_attendance_workspace"
+            : "auth_get_attendance_workspace",
           { p_society_id: society.id, p_section_id: sectionId }
         );
         if (workspaceError) throw workspaceError;
@@ -153,7 +156,7 @@ export default function PrisustvoPage() {
         if (!silent) setIsLoading(false);
       }
     },
-    [society]
+    [isGuardian, society]
   );
 
   useEffect(() => {
@@ -166,7 +169,11 @@ export default function PrisustvoPage() {
         if (contextError || !context) throw contextError ?? new Error("Korisnički kontekst nije dostupan.");
         const membership = context.memberships[0];
         if (!membership) throw new Error("Korisnik nema aktivno društvo.");
-        const actualRole: ApplicationRole = membership.functions.includes("Predsednik")
+        const guardianContext = Boolean(membership.is_guardian);
+        setIsGuardian(guardianContext);
+        const actualRole: ApplicationRole = guardianContext
+          ? "Roditelj"
+          : membership.functions.includes("Predsednik")
           ? "Predsednik"
           : membership.functions.includes("UR")
             ? "UR"
@@ -174,7 +181,9 @@ export default function PrisustvoPage() {
         setRole(actualRole);
 
         const { data: workspace, error: workspaceError } =
-          await supabase.rpc("auth_get_attendance_workspace", {
+          await supabase.rpc(guardianContext
+            ? "auth_get_guardian_attendance_workspace"
+            : "auth_get_attendance_workspace", {
             p_society_id: membership.society_id,
             p_section_id: null
           });
@@ -612,6 +621,7 @@ export default function PrisustvoPage() {
         </>
       ) : (
         <AttendanceHistory
+          isGuardian={isGuardian}
           society={society}
         />
       )}

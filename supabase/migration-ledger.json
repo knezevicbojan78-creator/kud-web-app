@@ -123,6 +123,13 @@
       "applied_on": "2026-07-29",
       "verified_by": "auth-v1-society-selection-diagnostic.sql",
       "note": "Bezbedan izbor i pamcenje aktivnog drustva za korisnika sa vise clanstava ili roditeljskih konteksta."
+    },
+    {
+      "file": "auth-v1-guardian-existing-pages.sql",
+      "status": "applied",
+      "applied_on": "2026-07-29",
+      "verified_by": "auth-v1-guardian-existing-pages-diagnostic.sql",
+      "note": "Roditeljski read-only pregledi postojeceg Prisustva, Finansija, Dogadjaja, Garderobe, Mojih sekcija i Mojih podataka bez posebne stranice Moja deca."
     }
   ]
 }

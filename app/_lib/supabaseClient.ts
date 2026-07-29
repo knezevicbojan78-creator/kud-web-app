@@ -1321,6 +1321,14 @@ type Database = {
           repertoire: RepertoireItem[];
         };
       };
+      auth_get_guardian_sections_workspace: {
+        Args: { p_society_id: string };
+        Returns: Database["public"]["Functions"]["auth_get_sections_workspace"]["Returns"];
+      };
+      auth_get_guardian_section_detail: {
+        Args: { p_section_id: string };
+        Returns: Database["public"]["Functions"]["auth_get_section_detail"]["Returns"];
+      };
       auth_get_attendance_workspace: {
         Args: { p_society_id: string; p_section_id?: string | null };
         Returns: {
@@ -1370,6 +1378,21 @@ type Database = {
           can_edit_detail: boolean;
         };
       };
+      auth_get_guardian_attendance_workspace: {
+        Args: { p_society_id: string; p_section_id?: string | null };
+        Returns: Database["public"]["Functions"]["auth_get_attendance_workspace"]["Returns"];
+      };
+      auth_get_guardian_attendance_history: {
+        Args: {
+          p_society_id: string;
+          p_section_id?: string | null;
+          p_status?: "ALL" | "CLOSED" | "CANCELLED";
+          p_date_from?: string | null;
+          p_date_to?: string | null;
+          p_session_id?: string | null;
+        };
+        Returns: Database["public"]["Functions"]["auth_get_attendance_history"]["Returns"];
+      };
       auth_get_events_workspace: {
         Args: { p_society_id: string; p_event_id?: string | null };
         Returns: {
@@ -1407,6 +1430,10 @@ type Database = {
           };
         };
       };
+      auth_get_guardian_events_workspace: {
+        Args: { p_society_id: string; p_event_id?: string | null };
+        Returns: Database["public"]["Functions"]["auth_get_events_workspace"]["Returns"];
+      };
       auth_search_event_people: {
         Args: { p_event_id: string; p_query: string };
         Returns: Person[];
@@ -1431,6 +1458,27 @@ type Database = {
           };
           initial_entity: FinanceSearchEntity;
         };
+      };
+      auth_get_guardian_finance_workspace: {
+        Args: { p_society_id: string };
+        Returns: Database["public"]["Functions"]["auth_get_finance_workspace"]["Returns"];
+      };
+      auth_get_guardian_profile: {
+        Args: { p_society_id: string };
+        Returns: {
+          person: Person;
+          society: { id: string; name: string; status: string };
+          sections: Array<{ id: string; name: string }>;
+          children: Array<{
+            person: Person;
+            member: SocietyMember;
+            section_ids: string[];
+          }>;
+        };
+      };
+      auth_update_guardian_profile: {
+        Args: { p_society_id: string; p_profile: Record<string, string> };
+        Returns: Person;
       };
       auth_get_president_dashboard: {
         Args: Record<never, never>;
