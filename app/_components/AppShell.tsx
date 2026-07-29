@@ -4,7 +4,10 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { getMenuItemsForRole } from "../_lib/navigation";
-import { getSupabaseClient } from "../_lib/supabaseClient";
+import {
+  getSupabaseClient,
+  type ApplicationMembership
+} from "../_lib/supabaseClient";
 import type { ApplicationRole } from "../_lib/roles";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
@@ -14,6 +17,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const [authError, setAuthError] = useState("");
   const [role, setRole] = useState<ApplicationRole>("Predsednik");
   const [organizationName, setOrganizationName] = useState("");
+  const [societies, setSocieties] = useState<ApplicationMembership[]>([]);
+  const [selectedSocietyId, setSelectedSocietyId] = useState("");
+  const [isSwitchingSociety, setIsSwitchingSociety] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -72,6 +78,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   : "Član";
           setRole(nextRole);
           setOrganizationName(membership.society_name);
+          setSocieties(context.memberships);
+          setSelectedSocietyId(membership.society_id);
         }
 
         if (active) {
@@ -99,6 +107,21 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   async function signOut() {
     await getSupabaseClient().auth.signOut();
     router.replace("/");
+  }
+
+  async function changeSociety(societyId: string) {
+    if (!societyId || societyId === selectedSocietyId) return;
+    setIsSwitchingSociety(true);
+    setAuthError("");
+    const { error } = await getSupabaseClient().rpc("auth_select_society", {
+      p_society_id: societyId
+    });
+    if (error) {
+      setAuthError(error.message);
+      setIsSwitchingSociety(false);
+      return;
+    }
+    window.location.reload();
   }
 
   if (authError) {
@@ -153,6 +176,22 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <div className="header-brand">{organizationName}</div>
 
           <div className="header-actions">
+            {societies.length > 1 ? (
+              <label className="header-society-picker">
+                <span>Društvo</span>
+                <select
+                  disabled={isSwitchingSociety}
+                  onChange={(event) => void changeSociety(event.target.value)}
+                  value={selectedSocietyId}
+                >
+                  {societies.map((society) => (
+                    <option key={society.society_id} value={society.society_id}>
+                      {society.society_name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            ) : null}
             <span className="organization-name">Uloga: {role}</span>
             <button
               className="button button-primary"

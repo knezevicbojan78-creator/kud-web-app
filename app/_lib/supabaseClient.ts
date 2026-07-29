@@ -196,6 +196,7 @@ export type ApplicationContext = {
   user_id: string;
   email: string;
   is_master_admin: boolean;
+  selected_society_id?: string | null;
   memberships: ApplicationMembership[];
 };
 
@@ -1249,6 +1250,10 @@ type Database = {
       auth_get_application_context: {
         Args: Record<never, never>;
         Returns: ApplicationContext;
+      };
+      auth_select_society: {
+        Args: { p_society_id: string };
+        Returns: { society_id: string; society_name: string };
       };
       auth_get_society_workspace: {
         Args: { p_society_id: string };

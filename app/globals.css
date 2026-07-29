@@ -2146,3 +2146,29 @@ h1 {
   display: grid;
   gap: 3px;
 }
+.header-society-picker {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+}
+
+.header-society-picker span {
+  font-size: 0.75rem;
+  font-weight: 800;
+  opacity: 0.8;
+  text-transform: uppercase;
+}
+
+.header-society-picker select {
+  max-width: 230px;
+  min-height: 36px;
+  border: 1px solid color-mix(in srgb, var(--color-on-strong) 45%, transparent);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--color-on-strong) 12%, transparent);
+  color: var(--color-on-strong);
+  padding: 0 32px 0 10px;
+}
+
+.header-society-picker option {
+  color: var(--color-text);
+}
