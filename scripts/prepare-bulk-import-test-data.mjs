@@ -4,6 +4,7 @@ import XLSX from "xlsx";
 
 const outputDirectory = resolve(".test-data");
 const outputFile = resolve(outputDirectory, "codex-e2e-bulk-import-v2.xlsx");
+const minorOutputFile = resolve(outputDirectory, "codex-e2e-minor-member.xlsx");
 const templateFile = resolve(
   "public/templates/Sablon-za-masovni-unos-osoba-v2.xlsx"
 );
@@ -19,20 +20,29 @@ const rows = [
   ]
 ];
 
-const workbook = XLSX.readFile(templateFile, {
-  cellFormula: true,
-  cellStyles: true
-});
-const worksheet = workbook.Sheets.OSOBE;
+function createFixture(outputPath, fixtureRows) {
+  const workbook = XLSX.readFile(templateFile, {
+    cellFormula: true,
+    cellStyles: true
+  });
+  const worksheet = workbook.Sheets.OSOBE;
 
-rows.forEach(([personType, firstName, lastName, email], index) => {
-  const rowNumber = index + 6;
-  worksheet[`A${rowNumber}`] = { t: "s", v: personType };
-  worksheet[`B${rowNumber}`] = { t: "s", v: firstName };
-  worksheet[`C${rowNumber}`] = { t: "s", v: lastName };
-  worksheet[`F${rowNumber}`] = { t: "s", v: email };
-});
+  fixtureRows.forEach(([personType, firstName, lastName, email], index) => {
+    const rowNumber = index + 6;
+    worksheet[`A${rowNumber}`] = { t: "s", v: personType };
+    worksheet[`B${rowNumber}`] = { t: "s", v: firstName };
+    worksheet[`C${rowNumber}`] = { t: "s", v: lastName };
+    worksheet[`F${rowNumber}`] = { t: "s", v: email };
+  });
 
-XLSX.writeFile(workbook, outputFile);
+  XLSX.writeFile(workbook, outputPath);
+}
 
-console.log(`Kontrolisani test fajl je napravljen: ${outputFile}`);
+createFixture(outputFile, rows);
+createFixture(minorOutputFile, [
+  ["Član", "Test", "Maloletni Član", "codex.e2e.minor.001@example.com"]
+]);
+
+console.log(`Kontrolisani test fajlovi su napravljeni:
+- ${outputFile}
+- ${minorOutputFile}`);

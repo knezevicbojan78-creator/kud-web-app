@@ -25,6 +25,12 @@
       "status": "applied",
       "applied_on": "2026-07-29",
       "note": "Usklađuje obavezna lična polja javne dopune sa predsedničkom potvrdom."
+    },
+    {
+      "file": "members-v1-sync-existing-guardian-profile.sql",
+      "status": "applied",
+      "applied_on": "2026-07-29",
+      "note": "Dopunjava profil postojećeg roditelja podacima iz odobrenog nacrta."
     }
   ]
 }
