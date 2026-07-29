@@ -6,7 +6,13 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "check:project": "node scripts/check-project.mjs",
+    "check:migrations": "node scripts/check-migration-ledger.mjs",
+    "test:e2e": "node scripts/run-e2e.mjs",
+    "test:e2e:smoke": "node scripts/run-e2e.mjs tests/e2e/public-smoke.spec.ts",
+    "test:data:prepare": "node scripts/prepare-bulk-import-test-data.mjs",
+    "verify": "node scripts/verify.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.108.2",
@@ -16,6 +22,7 @@
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
+    "@playwright/test": "^1.54.1",
     "@types/node": "latest",
     "@types/react": "latest",
     "@types/react-dom": "latest",

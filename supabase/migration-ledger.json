@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "entries": [
+    {
+      "file": "members-v1-bulk-import-approval.sql",
+      "status": "applied",
+      "applied_on": "2026-07-28",
+      "verified_by": "members-v1-bulk-import-approval-diagnostic.sql",
+      "note": "Masovni unos, red za potvrdu i javna dopuna podataka."
+    },
+    {
+      "file": "permissions-v1-members-bulk-import.sql",
+      "status": "applied",
+      "applied_on": "2026-07-28",
+      "verified_by": "permissions-v1-members-bulk-import-diagnostic.sql",
+      "note": "Dozvole za masovni unos članova."
+    },
+    {
+      "file": "finance-v1-dev-test-next-month-credit.sql",
+      "status": "prepared",
+      "note": "Razvojni test; ne primenjivati na produkciji."
+    }
+  ]
+}
