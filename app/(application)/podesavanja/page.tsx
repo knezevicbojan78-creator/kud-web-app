@@ -405,7 +405,7 @@ export default function PodesavanjaPage() {
       setAmount(String(data.standard_amount));
       setChargeableMonths(data.chargeable_months ?? []);
       setReason("");
-      setMessage(`Izmene su sačuvane i važe od ${displayDate(data.effective_from)}.`);
+      setMessage(`Izmene su sačuvane i važe od ${displayDate(data.effective_from)}`);
     } catch (saveError) {
       setError(errorMessage(saveError));
     } finally {

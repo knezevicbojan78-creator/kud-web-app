@@ -182,10 +182,21 @@ zaduženje `CODEX E2E test članarina 07/2026` od 100 RSD:
 * poništen povraćaj ID `de70e97c-3d56-46ec-b08f-790f41711f26`;
 * broj povraćaja `POV-2026-000001`, iznos 50 RSD, način `BANK_TRANSFER`, status
   `VOIDED`;
-* konačno stanje probnog člana je plaćena obaveza i raspoloživi kredit 50 RSD;
+* dodatna obaveza `CODEX E2E test korišćenja kredita 08/2026`, ID
+  `4f009257-6e4f-429e-97fb-3cae6c6911d2`, iznos 100 RSD, status `PAID`;
+* treća uplata ID `72d8f232-cb44-442b-bb65-701b8ffd059c`, potvrda
+  `UPL-2026-000003`, iznos 50 RSD, način `CASH`, status `POSTED`;
+* ta uplata je zajedno sa postojećim kreditom od 50 RSD zatvorila dodatnu
+  obavezu, pa je konačni raspoloživi kredit probnog člana 0 RSD;
+* istorija podešavanja sadrži probne promene sa razlozima koji počinju sa
+  `CODEX E2E`: privremeno uključivanje avgusta, njegovo vraćanje, kao i promene
+  probnog člana `CUSTOM`, `EXEMPT` i povratak na `STANDARD`;
+* završno stanje podešavanja je standardna članarina 3.000 RSD, bez obračuna za
+  jul i avgust, a probni član je u režimu `STANDARD`;
 * postoje i pripadajuća procena članarine, raspodela uplate, audit i eventualni
   brojački zapisi, kreditne stavke i reverzije.
 
 Pri čišćenju ukloniti zavisne raspodele, povraćaje, kreditne stavke, audit i
-procenu članarine, zatim obe uplate i obavezu. Pre uklanjanja proveriti da svi
+procene članarine, zatim sve tri uplate i obe obaveze. Ukloniti i navedenu probnu
+istoriju podešavanja prema tačnim `CODEX E2E` razlozima. Pre uklanjanja proveriti da svi
 zapisi pripadaju isključivo navedenom probnom članu i navedenim test iznosima.

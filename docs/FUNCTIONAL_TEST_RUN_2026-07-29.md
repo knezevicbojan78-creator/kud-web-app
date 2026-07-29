@@ -167,7 +167,7 @@ Potvrđeno:
 
 ### 9. Finansije
 
-Status: `DELIMIČNO PROŠAO — PREOSTALE VARIJANTE UPLATE I PORODICE PROŠLE`
+Status: `PROŠAO — KOMPLETNO TESTIRANJE MODULA ZAVRŠENO`
 
 * pretraga i finansijski profil probnog člana rade;
 * početno stanje je tačno: 0 otvorenih obaveza, 0 dospelih i 0 kredita;
@@ -199,3 +199,19 @@ Status: `DELIMIČNO PROŠAO — PREOSTALE VARIJANTE UPLATE I PORODICE PROŠLE`
   `PONIŠTEN` i vratilo kredit od 50 RSD;
 * read-only provera baze potvrdila je oba statusa `VOIDED`, aktivnu uplatu
   `POSTED`, sve iznose, načine plaćanja i razloge.
+* promena opšteg kalendara članarine je sačuvana, proverena i vraćena na početno
+  stanje: jul i avgust se ne obračunavaju, ostali meseci se obračunavaju;
+* probni član je kroz stvarni ekran uspešno promenjen iz režima `STANDARD` u
+  `CUSTOM` sa 2.500 RSD, zatim u `EXEMPT`, pa vraćen u `STANDARD`;
+* završno podešavanje ostalo je 3.000 RSD i standardni režim probnog člana;
+* drugo kontrolisano zaduženje
+  `CODEX E2E test korišćenja kredita 08/2026` od 100 RSD zatvoreno je kombinacijom
+  nove gotovinske uplate od 50 RSD i postojećeg kredita od 50 RSD;
+* potvrda `UPL-2026-000003` ima status `POSTED`, obaveza je `PAID`, a konačni
+  raspoloživi kredit probnog člana je 0 RSD;
+* finansijski audit sadrži 11 zapisa za probnog člana;
+* pokušaj fizičkog brisanja tačno određene probne uplate blokiran je očekivanom
+  porukom baze `Finansijski zapisi se ne brisu fizicki.`;
+* pregled pravila za manje ekrane potvrđuje slaganje polja u jednu kolonu, a
+  zaglavlja, dugmad i komande istorije dodatno su prilagođeni da se ne preklapaju;
+* u poruci o uspešnom čuvanju podešavanja uklonjena je dupla tačka posle datuma.

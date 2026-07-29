@@ -1706,12 +1706,15 @@ h1 {
 .finance-allocation-preview small { color:var(--color-muted); }
 @media (max-width: 760px) {
   .finance-heading, .finance-profile-header { align-items:stretch; flex-direction:column; }
+  .finance-profile-header .header-actions, .finance-action-modal .header-actions { width:100%; flex-wrap:wrap; }
+  .finance-profile-header .header-actions .button { flex:1 1 180px; }
   .finance-workspace { grid-template-columns:1fr; }
   .finance-summary-row { grid-template-columns:1fr; }
   .finance-payment-fields, .finance-credit-fields { grid-template-columns:1fr; }
   .finance-obligations article { align-items:flex-start; }
   .finance-payment-history article { grid-template-columns:1fr auto; gap:.2rem .75rem; }
   .finance-payment-history article > span { grid-column:1 / -1; }
+  .finance-payment-history article > button { grid-column:2; justify-self:end; }
 }
 
 /* Master admin */
