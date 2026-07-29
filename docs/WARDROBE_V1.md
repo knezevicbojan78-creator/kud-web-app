@@ -155,5 +155,23 @@ Migracija `wardrobe-v1-management.sql` dodaje:
   rešenjem, otpisom ili drugim obrazloženim rešenjem;
 * promenu odgovornog člana kofera uz istoriju svake primopredaje.
 
-Pozajmice drugim društvima, stvarna in-app obaveštenja i detaljne dozvole ostaju
-naredne celine razvoja.
+## Realizacija treće faze
+
+Migracija `wardrobe-v1-loans-notifications.sql` i nova kartica `Pozajmice`
+dodaju:
+
+* izdavanje više kompleta društvu na Folklorašu ili spoljnom primaocu;
+* naziv, odgovornu osobu i kontakt za primaoca van platforme;
+* prikaz pozajmljene garderobe i kod vlasnika i kod društva primaoca;
+* odvojene potvrde izdavanja, prijema, najave vraćanja, razduženja delova i
+  konačnog prijema kod vlasnika;
+* in-app obaveštenja o približavanju roka, roku koji je danas i kašnjenju;
+* obaveštenje roditelju za garderobu maloletnog člana;
+* obaveštenje članu kada postane odgovoran za zajednički kofer ili mu se dodeli
+  popravka;
+* zaštitu poziva tako da ih koristi samo prijavljeni korisnik sa odgovarajućom
+  ulogom.
+
+Detaljno podešavanje dozvola i otvaranje ličnog prikaza garderobe članovima i
+roditeljima ostaje poslednja celina ove verzije. Email obaveštenja ostaju za
+fazu kada aplikacija bude javno dostupna.

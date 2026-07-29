@@ -95,6 +95,13 @@
       "applied_on": "2026-07-29",
       "verified_by": "wardrobe-v1-management-diagnostic.sql",
       "note": "Uredjivanje inventara i kompleta, precizne kolicine, operativni pregled popravki i gubitaka i evidentirana primopredaja kofera."
+    },
+    {
+      "file": "wardrobe-v1-loans-notifications.sql",
+      "status": "applied",
+      "applied_on": "2026-07-29",
+      "verified_by": "wardrobe-v1-loans-notifications-diagnostic.sql",
+      "note": "Pozajmice spoljnim i drugim drustvima na platformi, potvrde prijema i vracanja i in-app obavestenja za rokove, kofere i popravke."
     }
   ]
 }

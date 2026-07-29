@@ -399,3 +399,20 @@ Status: `PROŠAO — STRUKTURA I PRAZNA STANJA`
 * obrazac kompleta podržava zasebnu količinu svakog izabranog dela;
 * potpuna poslovna provera zahteva stvarne stavke, komplet i kontrolisano
   zaduženje, pa nije unosila privremene podatke u ovoj fazi.
+
+### 15. Garderoba — pozajmice i obaveštenja
+
+Status: `PROŠAO — STRUKTURA, OVLAŠĆENJA I PRAZNA STANJA`
+
+* migracija za pozajmice i obaveštenja primenjena je na aktivnu bazu;
+* potvrđeno je postojanje tabele i svih funkcija za čitanje, kreiranje i
+  promenu statusa pozajmice;
+* prijavljeni korisnik ima izvršno pravo, anonimni korisnik nema;
+* uvedena su obaveštenja za rokove, roditelje maloletnika, primopredaju kofera
+  i dodelu popravke;
+* nova kartica razlikuje garderobu koju je društvo izdalo i garderobu koju je
+  primilo od drugog društva na platformi;
+* forma podržava spoljnog primaoca ili izbor postojećeg društva, odgovornog
+  člana, događaj, rok i više kompleta;
+* potpuna poslovna provera toka sa dva društva radiće se kada postoje stvarni
+  inventar i kompleti; u ovoj proveri nisu unoseni probni poslovni podaci.

@@ -414,6 +414,36 @@ export type WardrobeLuggage = {
 export type WardrobeOperations = {
   repairs: WardrobeRepair[]; loss_cases: WardrobeLossCase[]; luggage: WardrobeLuggage[];
 };
+export type WardrobeLoan = {
+  id: string; assignment_id: string; owner_society_id: string;
+  loan_type: "EXTERNAL" | "PLATFORM"; recipient_society_id: string | null;
+  recipient_name?: string; owner_name?: string;
+  external_recipient_name: string | null; external_responsible_name: string | null;
+  external_contact: string | null;
+  assignment_title: string; responsible_member_name: string;
+  event_title: string | null; due_date: string | null;
+  assignment_status?: string;
+  status: "ISSUED" | "RECEIVED" | "RETURN_PENDING" | "RETURNED" | "CANCELLED";
+  issued_at: string; received_at: string | null; return_announced_at: string | null;
+  returned_at: string | null; note: string | null;
+  items: Array<{
+    assignment_item_id: string; item_name: string; shoe_size: number | null;
+    issued_quantity: number; returned_quantity: number; remaining_quantity: number;
+  }>;
+};
+export type WardrobeLoanWorkspace = {
+  platform_societies: Array<{ id: string; name: string; city: string | null }>;
+  owned: WardrobeLoan[]; received: WardrobeLoan[];
+};
+export type WardrobeNotification = {
+  id: string; society_id: string; society_member_id: string | null;
+  person_id: string | null; assignment_id: string | null; repair_id: string | null;
+  notification_type: string; title: string; body: string;
+  scheduled_for: string; read_at: string | null;
+};
+export type WardrobeNotificationCenter = {
+  unread_count: number; notifications: WardrobeNotification[];
+};
 
 export type SocietyMemberInsert = Omit<
   SocietyMember,
@@ -1538,6 +1568,26 @@ type Database = {
       auth_wardrobe_handover_luggage: {
         Args: { p_society_id: string; p_luggage_id: string; p_new_member_id: string; p_condition_note: string };
         Returns: WardrobeLuggage;
+      };
+      auth_get_wardrobe_loans: {
+        Args: { p_society_id: string };
+        Returns: WardrobeLoanWorkspace;
+      };
+      auth_wardrobe_create_loan: {
+        Args: { p_society_id: string; p_loan: Record<string, unknown> };
+        Returns: string;
+      };
+      auth_wardrobe_transition_loan: {
+        Args: { p_society_id: string; p_loan_id: string; p_action: "CONFIRM_RECEIPT" | "ANNOUNCE_RETURN" | "CONFIRM_RETURN"; p_note?: string | null };
+        Returns: WardrobeLoan;
+      };
+      auth_get_wardrobe_notifications: {
+        Args: { p_society_id: string };
+        Returns: WardrobeNotificationCenter;
+      };
+      auth_wardrobe_mark_notification_read: {
+        Args: { p_society_id: string; p_notification_id: string };
+        Returns: string;
       };
       auth_create_society_member: {
         Args: {

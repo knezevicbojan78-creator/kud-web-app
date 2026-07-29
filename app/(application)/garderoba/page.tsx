@@ -6,16 +6,19 @@ import {
   type WardrobeAssignment,
   type WardrobeItem,
   type WardrobeLossCase,
+  type WardrobeLoanWorkspace,
+  type WardrobeNotificationCenter,
   type WardrobeOperations,
   type WardrobeRepair,
   type WardrobeWorkspace
 } from "../../_lib/supabaseClient";
 
-type Tab = "overview" | "inventory" | "kits" | "assignments" | "repairs" | "categories";
+type Tab = "overview" | "inventory" | "kits" | "assignments" | "loans" | "repairs" | "categories";
 
 const tabLabels: Array<[Tab, string]> = [
   ["overview", "Pregled"], ["inventory", "Inventar"], ["kits", "Kompleti"],
-  ["assignments", "Zaduženja"], ["repairs", "Popravke"], ["categories", "Kategorije"]
+  ["assignments", "Zaduženja"], ["loans", "Pozajmice"],
+  ["repairs", "Popravke"], ["categories", "Kategorije"]
 ];
 const ageLabels = { CHILD: "Dečje", ADULT: "Odraslo", UNIVERSAL: "Univerzalno" };
 const genderLabels = { MALE: "Muško", FEMALE: "Žensko", UNISEX: "Univerzalno" };
@@ -27,6 +30,10 @@ const repairStatusLabels: Record<string, string> = {
   WAITING_HANDOVER: "Čeka predaju", HANDED_OVER: "Predato",
   IN_PROGRESS: "Popravka u toku", COMPLETED: "Završeno",
   RETURNED_TO_WARDROBE: "Vraćeno u garderobu", UNREPAIRABLE: "Nije moguće popraviti"
+};
+const loanStatusLabels: Record<string, string> = {
+  ISSUED: "Izdato", RECEIVED: "Preuzeto", RETURN_PENDING: "Vraćanje najavljeno",
+  RETURNED: "Vraćeno", CANCELLED: "Otkazano"
 };
 
 function errorMessage(error: unknown) {
@@ -47,6 +54,12 @@ export default function GarderobaPage() {
   const [workspace, setWorkspace] = useState<WardrobeWorkspace | null>(null);
   const [operations, setOperations] = useState<WardrobeOperations>({
     repairs: [], loss_cases: [], luggage: []
+  });
+  const [loans, setLoans] = useState<WardrobeLoanWorkspace>({
+    platform_societies: [], owned: [], received: []
+  });
+  const [notifications, setNotifications] = useState<WardrobeNotificationCenter>({
+    unread_count: 0, notifications: []
   });
   const [activeTab, setActiveTab] = useState<Tab>("overview");
   const [isLoading, setIsLoading] = useState(true);
@@ -95,6 +108,13 @@ export default function GarderobaPage() {
   const [handoverLuggageId, setHandoverLuggageId] = useState("");
   const [handoverMemberId, setHandoverMemberId] = useState("");
   const [handoverNote, setHandoverNote] = useState("");
+  const [showLoanForm, setShowLoanForm] = useState(false);
+  const [loanForm, setLoanForm] = useState({
+    loan_type: "EXTERNAL", recipient_society_id: "",
+    external_recipient_name: "", external_responsible_name: "", external_contact: "",
+    assigned_member_id: "", event_id: "", title: "", due_date: "", note: "",
+    kit_ids: [] as string[]
+  });
 
   async function load() {
     setIsLoading(true);
@@ -105,15 +125,21 @@ export default function GarderobaPage() {
       if (contextError) throw contextError;
       const membership = context?.memberships?.[0];
       if (!membership) throw new Error("Aktivno članstvo nije pronađeno.");
-      const [workspaceResult, operationsResult] = await Promise.all([
+      const [workspaceResult, operationsResult, loansResult, notificationsResult] = await Promise.all([
         supabase.rpc("auth_get_wardrobe_workspace", { p_society_id: membership.society_id }),
-        supabase.rpc("auth_get_wardrobe_operations", { p_society_id: membership.society_id })
+        supabase.rpc("auth_get_wardrobe_operations", { p_society_id: membership.society_id }),
+        supabase.rpc("auth_get_wardrobe_loans", { p_society_id: membership.society_id }),
+        supabase.rpc("auth_get_wardrobe_notifications", { p_society_id: membership.society_id })
       ]);
       if (workspaceResult.error) throw workspaceResult.error;
       if (operationsResult.error) throw operationsResult.error;
+      if (loansResult.error) throw loansResult.error;
+      if (notificationsResult.error) throw notificationsResult.error;
       const data = workspaceResult.data;
       setWorkspace(data);
       setOperations(operationsResult.data);
+      setLoans(loansResult.data);
+      setNotifications(notificationsResult.data);
       setReturnDays(String(data.settings.return_days_after_event));
       setReminderDays(String(data.settings.reminder_days_before_due));
       setItemForm((current) => ({
@@ -361,6 +387,46 @@ export default function GarderobaPage() {
     }), "Primopredaja kofera je evidentirana.");
     setHandoverLuggageId(""); setHandoverMemberId(""); setHandoverNote("");
   }
+  function openNewLoan() {
+    setLoanForm({
+      loan_type: "EXTERNAL", recipient_society_id: "",
+      external_recipient_name: "", external_responsible_name: "", external_contact: "",
+      assigned_member_id: "", event_id: "", title: "", due_date: "", note: "",
+      kit_ids: []
+    });
+    setShowLoanForm(true);
+  }
+  async function saveLoan() {
+    if (!workspace) return;
+    await perform(() => getSupabaseClient().rpc("auth_wardrobe_create_loan", {
+      p_society_id: workspace.society_id,
+      p_loan: { ...loanForm, lines: [] }
+    }), "Pozajmica garderobe je evidentirana.");
+    setShowLoanForm(false);
+    setActiveTab("loans");
+  }
+  async function transitionLoan(
+    loanId: string,
+    action: "CONFIRM_RECEIPT" | "ANNOUNCE_RETURN" | "CONFIRM_RETURN"
+  ) {
+    if (!workspace) return;
+    await perform(() => getSupabaseClient().rpc("auth_wardrobe_transition_loan", {
+      p_society_id: workspace.society_id, p_loan_id: loanId,
+      p_action: action, p_note: null
+    }), action === "CONFIRM_RECEIPT" ? "Prijem je potvrđen."
+      : action === "ANNOUNCE_RETURN" ? "Vraćanje je najavljeno vlasniku."
+      : "Pozajmica je završena.");
+  }
+  async function markNotificationRead(notificationId: string) {
+    if (!workspace) return;
+    setError("");
+    const { error: readError } = await getSupabaseClient().rpc(
+      "auth_wardrobe_mark_notification_read",
+      { p_society_id: workspace.society_id, p_notification_id: notificationId }
+    );
+    if (readError) setError(readError.message);
+    else await load();
+  }
 
   if (isLoading) return <section className="card dashboard-card">Učitavanje garderobe...</section>;
   if (!workspace) return <section className="card dashboard-card"><p className="alert alert-error">{error}</p></section>;
@@ -398,6 +464,10 @@ export default function GarderobaPage() {
 
         {activeTab === "overview" && <div className="wardrobe-content">
           <div className="wardrobe-section-title"><div><p className="eyebrow">Trenutno stanje</p><h2>Šta zahteva pažnju</h2></div></div>
+          {notifications.notifications.length > 0 && <section className="wardrobe-notifications">
+            <div className="wardrobe-notification-title"><h3>Obaveštenja</h3><span>{notifications.unread_count} nepročitanih</span></div>
+            {notifications.notifications.slice(0, 6).map((notification) => <article className={notification.read_at ? "read" : ""} key={notification.id}><div><strong>{notification.title}</strong><p>{notification.body}</p><small>{date(notification.scheduled_for)}</small></div>{!notification.read_at && <button onClick={() => void markNotificationRead(notification.id)} type="button">OZNAČI KAO PROČITANO</button>}</article>)}
+          </section>}
           <div className="wardrobe-overview-grid">
             <article><strong>{overdueAssignments.length}</strong><span>zaduženja sa isteklim rokom</span><button onClick={() => setActiveTab("assignments")} type="button">Pregledaj</button></article>
             <article><strong>{partialAssignments.length}</strong><span>delimično vraćenih zaduženja</span><button onClick={() => setActiveTab("assignments")} type="button">Pregledaj</button></article>
@@ -439,6 +509,14 @@ export default function GarderobaPage() {
               {workspace.is_manager && ["OPEN", "PARTIALLY_RETURNED", "OVERDUE"].includes(assignment.status) && <button className="button button-secondary" onClick={() => openReturn(assignment)} type="button">RAZDUŽI</button>}</div>
           </article>)}{workspace.assignments.length === 0 && <p className="wardrobe-empty">Još nema zaduženja.</p>}</div>
           {operations.luggage.length > 0 && <><h3 className="wardrobe-subtitle">Zajednički koferi i primopredaje</h3><div className="wardrobe-list">{operations.luggage.map((luggage) => <article className="wardrobe-operation-row" key={luggage.id}><div><span className="master-status onboarding">{luggage.status}</span><strong>{luggage.assignment_title}</strong><small>Odgovoran: {luggage.responsible_name}{luggage.event_title ? ` · ${luggage.event_title}` : ""}</small>{luggage.handovers.length > 0 && <details><summary>Istorija primopredaje ({luggage.handovers.length})</summary><ul>{luggage.handovers.map((handover) => <li key={handover.id}>{handover.previous_name || "Početno stanje"} → {handover.new_name} · {date(handover.created_at)}{handover.condition_note ? ` · ${handover.condition_note}` : ""}</li>)}</ul></details>}</div>{workspace.is_manager && <button className="button button-secondary" onClick={() => { setHandoverLuggageId(luggage.id); setHandoverMemberId(""); setHandoverNote(""); }} type="button">PROMENI ODGOVORNOG</button>}</article>)}</div></>}
+        </div>}
+
+        {activeTab === "loans" && <div className="wardrobe-content">
+          <div className="wardrobe-section-title"><div><p className="eyebrow">Razmena garderobe</p><h2>Pozajmice</h2></div>{workspace.is_manager && <button className="button button-primary" onClick={openNewLoan} type="button">+ NOVA POZAJMICA</button>}</div>
+          <h3 className="wardrobe-subtitle">Garderoba koju smo pozajmili drugima</h3>
+          <div className="wardrobe-list">{loans.owned.map((loan) => <article className="wardrobe-loan-row" key={loan.id}><div><span className={`master-status ${loan.status === "RETURNED" ? "active" : "onboarding"}`}>{loanStatusLabels[loan.status]}</span><strong>{loan.assignment_title}</strong><small>Primalac: {loan.recipient_name} · odgovoran: {loan.responsible_member_name} · rok {date(loan.due_date)}</small><ul>{loan.items.map((item) => <li key={item.assignment_item_id}>{item.issued_quantity} × {item.item_name}{item.shoe_size ? ` · broj ${item.shoe_size}` : ""}</li>)}</ul></div><div className="wardrobe-loan-actions">{loan.loan_type === "EXTERNAL" && loan.status === "ISSUED" && <button className="button button-secondary" onClick={() => void transitionLoan(loan.id, "CONFIRM_RECEIPT")} type="button">EVIDENTIRAJ PRIJEM</button>}{loan.loan_type === "EXTERNAL" && loan.status === "RECEIVED" && <button className="button button-secondary" onClick={() => void transitionLoan(loan.id, "ANNOUNCE_RETURN")} type="button">NAJAVI VRAĆANJE</button>}{loan.status === "RETURN_PENDING" && loan.assignment_status === "RETURNED" && <button className="button button-primary" onClick={() => void transitionLoan(loan.id, "CONFIRM_RETURN")} type="button">POTVRDI ZAVRŠETAK</button>}{loan.status === "RETURN_PENDING" && loan.assignment_status !== "RETURNED" && <button className="button button-secondary" onClick={() => setActiveTab("assignments")} type="button">RAZDUŽI DELOVE</button>}</div></article>)}{loans.owned.length === 0 && <p className="wardrobe-empty">Nismo evidentirali pozajmice drugim društvima ili spoljnim primaocima.</p>}</div>
+          <h3 className="wardrobe-subtitle">Pozajmljeno od drugih društava na Folklorašu</h3>
+          <div className="wardrobe-list">{loans.received.map((loan) => <article className="wardrobe-loan-row received" key={loan.id}><div><span className={`master-status ${loan.status === "RETURNED" ? "active" : "onboarding"}`}>{loanStatusLabels[loan.status]}</span><strong>{loan.assignment_title}</strong><small>Vlasnik: {loan.owner_name} · rok {date(loan.due_date)}</small><ul>{loan.items.map((item) => <li key={item.assignment_item_id}>{item.issued_quantity} × {item.item_name}{item.shoe_size ? ` · broj ${item.shoe_size}` : ""}</li>)}</ul></div><div className="wardrobe-loan-actions">{loan.status === "ISSUED" && <button className="button button-primary" onClick={() => void transitionLoan(loan.id, "CONFIRM_RECEIPT")} type="button">POTVRDI PRIJEM</button>}{loan.status === "RECEIVED" && <button className="button button-secondary" onClick={() => void transitionLoan(loan.id, "ANNOUNCE_RETURN")} type="button">NAJAVI VRAĆANJE</button>}</div></article>)}{loans.received.length === 0 && <p className="wardrobe-empty">Trenutno nemamo garderobu pozajmljenu od drugog društva na platformi.</p>}</div>
         </div>}
 
         {activeTab === "repairs" && <div className="wardrobe-content"><div className="wardrobe-section-title"><div><p className="eyebrow">Posebni slučajevi</p><h2>Popravke i nedostajući delovi</h2></div></div>
@@ -485,6 +563,20 @@ export default function GarderobaPage() {
           {!assignmentForm.event_id && <label className="form-field"><span>Rok vraćanja</span><input className="input" type="date" value={assignmentForm.due_date} onChange={(e) => setAssignmentForm({ ...assignmentForm, due_date: e.target.value })} /></label>}
           <fieldset className="wardrobe-checks wardrobe-wide"><legend>Kompleti — može se izabrati više</legend>{workspace.kits.filter((k) => k.is_active).map((kit) => <label key={kit.id}><input type="checkbox" checked={assignmentForm.kit_ids.includes(kit.id)} onChange={() => setAssignmentForm({ ...assignmentForm, kit_ids: assignmentForm.kit_ids.includes(kit.id) ? assignmentForm.kit_ids.filter((id) => id !== kit.id) : [...assignmentForm.kit_ids, kit.id] })} /> {kit.name}</label>)}</fieldset><label className="form-field wardrobe-wide"><span>Napomena</span><textarea className="input" value={assignmentForm.note} onChange={(e) => setAssignmentForm({ ...assignmentForm, note: e.target.value })} /></label></div>
         <footer><button className="button button-secondary" onClick={() => setShowAssignmentForm(false)} type="button">OTKAŽI</button><button className="button button-primary" onClick={() => void saveAssignment()} type="button">POTVRDI ZADUŽENJE</button></footer>
+      </section></div>}
+
+      {showLoanForm && <div className="modal-backdrop"><section className="card modal-card wardrobe-modal"><header><div><p className="eyebrow">Razmena garderobe</p><h2>Nova pozajmica</h2></div><button onClick={() => setShowLoanForm(false)} type="button">×</button></header>
+        <div className="my-data-form">
+          <label className="form-field"><span>Primalac garderobe</span><select className="input" value={loanForm.loan_type} onChange={(e) => setLoanForm({ ...loanForm, loan_type: e.target.value, recipient_society_id: "", external_recipient_name: "", external_responsible_name: "", external_contact: "" })}><option value="EXTERNAL">Drugo društvo van Folkloraša</option><option value="PLATFORM">Društvo koje koristi Folkloraš</option></select></label>
+          {loanForm.loan_type === "PLATFORM" ? <label className="form-field"><span>Društvo primalac</span><select className="input" value={loanForm.recipient_society_id} onChange={(e) => setLoanForm({ ...loanForm, recipient_society_id: e.target.value })}><option value="">Izaberite društvo</option>{loans.platform_societies.map((society) => <option key={society.id} value={society.id}>{society.name}</option>)}</select></label> : <><label className="form-field"><span>Naziv društva ili primaoca</span><input className="input" value={loanForm.external_recipient_name} onChange={(e) => setLoanForm({ ...loanForm, external_recipient_name: e.target.value })} /></label><label className="form-field"><span>Odgovorna osoba kod primaoca</span><input className="input" value={loanForm.external_responsible_name} onChange={(e) => setLoanForm({ ...loanForm, external_responsible_name: e.target.value })} /></label><label className="form-field"><span>Kontakt</span><input className="input" value={loanForm.external_contact} onChange={(e) => setLoanForm({ ...loanForm, external_contact: e.target.value })} /></label></>}
+          <label className="form-field"><span>Odgovorni član našeg društva</span><select className="input" value={loanForm.assigned_member_id} onChange={(e) => setLoanForm({ ...loanForm, assigned_member_id: e.target.value })}><option value="">Izaberite člana</option>{workspace.members.map((member) => <option key={member.id} value={member.id}>{member.name}</option>)}</select></label>
+          <label className="form-field"><span>Događaj</span><select className="input" value={loanForm.event_id} onChange={(e) => setLoanForm({ ...loanForm, event_id: e.target.value, due_date: "" })}><option value="">Nije povezano sa događajem</option>{workspace.events.map((event) => <option key={event.id} value={event.id}>{event.title}</option>)}</select></label>
+          <label className="form-field"><span>Naziv pozajmice</span><input className="input" value={loanForm.title} onChange={(e) => setLoanForm({ ...loanForm, title: e.target.value })} placeholder="Na primer: Nošnja za gostovanje" /></label>
+          {!loanForm.event_id && <label className="form-field"><span>Rok vraćanja</span><input className="input" type="date" value={loanForm.due_date} onChange={(e) => setLoanForm({ ...loanForm, due_date: e.target.value })} /></label>}
+          <fieldset className="wardrobe-checks wardrobe-wide"><legend>Kompleti za pozajmicu — može se izabrati više</legend>{workspace.kits.filter((kit) => kit.is_active).map((kit) => <label key={kit.id}><input type="checkbox" checked={loanForm.kit_ids.includes(kit.id)} onChange={() => setLoanForm({ ...loanForm, kit_ids: loanForm.kit_ids.includes(kit.id) ? loanForm.kit_ids.filter((id) => id !== kit.id) : [...loanForm.kit_ids, kit.id] })} /> {kit.name}</label>)}</fieldset>
+          <label className="form-field wardrobe-wide"><span>Napomena</span><textarea className="input" value={loanForm.note} onChange={(e) => setLoanForm({ ...loanForm, note: e.target.value })} /></label>
+        </div>
+        <footer><button className="button button-secondary" onClick={() => setShowLoanForm(false)} type="button">OTKAŽI</button><button className="button button-primary" disabled={isSaving} onClick={() => void saveLoan()} type="button">EVIDENTIRAJ POZAJMICU</button></footer>
       </section></div>}
 
       {editingRepair && <div className="modal-backdrop"><section className="card modal-card wardrobe-modal"><header><div><p className="eyebrow">Popravka</p><h2>{editingRepair.item_name}</h2></div><button onClick={() => setEditingRepair(null)} type="button">×</button></header>
