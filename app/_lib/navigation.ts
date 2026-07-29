@@ -1,4 +1,4 @@
-import type { TestRole } from "./testRoles";
+import type { ApplicationRole } from "./roles";
 
 export type MenuItem = {
   label: string;
@@ -15,6 +15,16 @@ export const MENU_ITEMS: MenuItem[] = [
     permissionKey: "zahtevi.view"
   },
   {
+    label: "Odobreni zahtevi",
+    href: "/odobreni-zahtevi",
+    permissionKey: "zahtevi.approved.view"
+  },
+  {
+    label: "Odbijeni zahtevi",
+    href: "/odbijeni-zahtevi",
+    permissionKey: "zahtevi.rejected.view"
+  },
+  {
     label: "Podešavanja sistema",
     href: "/podesavanja-sistema",
     permissionKey: "sistem.settings.view"
@@ -29,7 +39,7 @@ export const MENU_ITEMS: MenuItem[] = [
   { label: "Finansije", href: "/finansije", permissionKey: "finansije.view" },
   { label: "Garderoba", href: "/garderoba", permissionKey: "garderoba.view" },
   { label: "Izveštaji", href: "/izvestaji", permissionKey: "izvestaji.view" },
-  { label: "Koncerti", href: "/koncerti", permissionKey: "koncerti.view" },
+  { label: "Događaji", href: "/koncerti", permissionKey: "koncerti.view" },
   {
     label: "Podešavanja",
     href: "/podesavanja",
@@ -39,11 +49,13 @@ export const MENU_ITEMS: MenuItem[] = [
   { label: "Moji podaci", href: "/moji-podaci", permissionKey: "profile.view" }
 ];
 
-export const ROLE_MENU_LABELS: Record<TestRole, string[]> = {
+export const ROLE_MENU_LABELS: Record<ApplicationRole, string[]> = {
   "Master admin": [
     "Dashboard",
     "Društva",
     "Zahtevi na čekanju",
+    "Odobreni zahtevi",
+    "Odbijeni zahtevi",
     "Podešavanja sistema"
   ],
   Predsednik: [
@@ -54,7 +66,7 @@ export const ROLE_MENU_LABELS: Record<TestRole, string[]> = {
     "Finansije",
     "Garderoba",
     "Izveštaji",
-    "Koncerti",
+    "Događaji",
     "Podešavanja",
     "Moji podaci"
   ],
@@ -63,7 +75,7 @@ export const ROLE_MENU_LABELS: Record<TestRole, string[]> = {
     "Moje sekcije",
     "Prisustvo",
     "Članovi",
-    "Koncerti",
+    "Događaji",
     "Moji podaci"
   ],
   Blagajnik: [
@@ -73,12 +85,12 @@ export const ROLE_MENU_LABELS: Record<TestRole, string[]> = {
     "Izveštaji",
     "Moji podaci"
   ],
-  Sekretar: ["Dashboard", "Članovi", "Izveštaji", "Koncerti", "Moji podaci"],
-  Član: ["Moje sekcije", "Koncerti", "Moji podaci"],
+  Sekretar: ["Dashboard", "Članovi", "Izveštaji", "Događaji", "Moji podaci"],
+  Član: ["Moje sekcije", "Događaji", "Moji podaci"],
   Roditelj: ["Moja deca", "Prisustvo", "Finansije", "Moji podaci"]
 };
 
-export function getMenuItemsForRole(role: TestRole) {
+export function getMenuItemsForRole(role: ApplicationRole) {
   const allowedLabels = ROLE_MENU_LABELS[role];
 
   return allowedLabels

@@ -1,18 +1,187 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
-  DEFAULT_TEST_ROLE,
-  TEST_ROLE_STORAGE_KEY,
-  TEST_ROLES,
-  type TestRole
-} from "./_lib/testRoles";
+  getAuthBootstrapStatus,
+  MASTER_ADMIN_EMAIL,
+  type AuthBootstrapStatus
+} from "./_lib/auth";
+import { getSupabaseClient } from "./_lib/supabaseClient";
+
+type AuthMode =
+  | "LOGIN"
+  | "REGISTER_MASTER"
+  | "CHOOSE_REGISTRATION"
+  | "RESET_PASSWORD";
 
 export default function LoginPage() {
   const router = useRouter();
-  const [selectedRole, setSelectedRole] =
-    useState<TestRole>(DEFAULT_TEST_ROLE);
+  const [mode, setMode] = useState<AuthMode>("LOGIN");
+  const [bootstrap, setBootstrap] = useState<AuthBootstrapStatus | null>(null);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [isWorking, setIsWorking] = useState(false);
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    let active = true;
+
+    async function load() {
+      try {
+        const status = await getAuthBootstrapStatus();
+        if (active) {
+          setBootstrap(status);
+        }
+      } catch (loadError) {
+        if (active) {
+          setError(
+            loadError instanceof Error
+              ? loadError.message
+              : "Auth status nije moguće učitati."
+          );
+        }
+      }
+    }
+
+    void load();
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  function clearFeedback() {
+    setError("");
+    setMessage("");
+  }
+
+  async function handleLogin(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    clearFeedback();
+    setIsWorking(true);
+
+    try {
+      const supabase = getSupabaseClient();
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: email.trim().toLowerCase(),
+        password
+      });
+
+      if (signInError) {
+        throw signInError;
+      }
+
+      const { data: destination, error: destinationError } =
+        await supabase.rpc("auth_get_login_destination");
+
+      if (destinationError || !destination) {
+        await supabase.auth.signOut();
+        throw destinationError ?? new Error("Pristup nalogu nije određen.");
+      }
+
+      router.replace(destination.destination);
+    } catch (loginError) {
+      setError(
+        loginError instanceof Error
+          ? loginError.message
+          : "Prijavljivanje nije uspelo."
+      );
+    } finally {
+      setIsWorking(false);
+    }
+  }
+
+  async function handleMasterRegistration(
+    event: React.FormEvent<HTMLFormElement>
+  ) {
+    event.preventDefault();
+    clearFeedback();
+
+    if (password.length < 10) {
+      setError("Lozinka mora imati najmanje 10 karaktera.");
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setError("Lozinka i potvrda lozinke nisu iste.");
+      return;
+    }
+
+    setIsWorking(true);
+
+    try {
+      const supabase = getSupabaseClient();
+      const callbackUrl = `${window.location.origin}/auth/callback`;
+      const { error: signUpError } = await supabase.auth.signUp({
+        email: MASTER_ADMIN_EMAIL,
+        password,
+        options: {
+          emailRedirectTo: callbackUrl
+        }
+      });
+
+      if (signUpError) {
+        throw signUpError;
+      }
+
+      setMessage(
+        "Aktivacioni link je poslat. Otvorite email i potvrdite Master admin nalog."
+      );
+      setPassword("");
+      setConfirmPassword("");
+    } catch (registrationError) {
+      setError(
+        registrationError instanceof Error
+          ? registrationError.message
+          : "Registracija Master admina nije uspela."
+      );
+    } finally {
+      setIsWorking(false);
+    }
+  }
+
+  async function handlePasswordReset(
+    event: React.FormEvent<HTMLFormElement>
+  ) {
+    event.preventDefault();
+    clearFeedback();
+    setIsWorking(true);
+
+    try {
+      const supabase = getSupabaseClient();
+      const callbackUrl =
+        `${window.location.origin}/auth/callback?next=/auth/reset-password`;
+      const { error: resetError } = await supabase.auth.resetPasswordForEmail(
+        email.trim().toLowerCase(),
+        { redirectTo: callbackUrl }
+      );
+
+      if (resetError) {
+        throw resetError;
+      }
+
+      setMessage(
+        "Ako nalog postoji, poslat je link za postavljanje nove lozinke."
+      );
+    } catch {
+      setMessage(
+        "Ako nalog postoji, poslat je link za postavljanje nove lozinke."
+      );
+    } finally {
+      setIsWorking(false);
+    }
+  }
+
+  const title =
+    mode === "REGISTER_MASTER"
+      ? "Aktiviranje sistema"
+      : mode === "CHOOSE_REGISTRATION"
+        ? "Izaberite vrstu registracije"
+      : mode === "RESET_PASSWORD"
+        ? "Nova lozinka"
+        : "Prijavljivanje";
 
   return (
     <main className="login-page">
@@ -20,58 +189,199 @@ export default function LoginPage() {
         <div className="login-brand">
           <p className="eyebrow">Dobrodošli</p>
           <h1>FOLKLORAŠ</h1>
-          <span>KUD Mitanče</span>
+          <span>{title}</span>
         </div>
 
-        <form
-          className="form-stack"
-          onSubmit={(event) => {
-            event.preventDefault();
-            localStorage.setItem(TEST_ROLE_STORAGE_KEY, selectedRole);
-            router.push("/dashboard");
-          }}
-        >
-          <label className="form-field">
-            <span>Email</span>
-            <input className="input" type="email" placeholder="ime@email.com" />
-          </label>
+        {error ? <div className="auth-message error">{error}</div> : null}
+        {message ? <div className="auth-message success">{message}</div> : null}
 
-          <label className="form-field">
-            <span>Lozinka</span>
-            <input
-              className="input"
-              type="password"
-              placeholder="Unesite lozinku"
-            />
-          </label>
+        {mode === "LOGIN" ? (
+          <form className="form-stack" onSubmit={handleLogin}>
+            <label className="form-field">
+              <span>Email</span>
+              <input
+                autoComplete="email"
+                className="input"
+                onChange={(event) => setEmail(event.target.value)}
+                placeholder="ime@email.com"
+                required
+                type="email"
+                value={email}
+              />
+            </label>
 
-          <label className="form-field">
-            <span>Test uloga</span>
-            <select
-              className="input"
-              value={selectedRole}
-              onChange={(event) =>
-                setSelectedRole(event.target.value as TestRole)
-              }
+            <label className="form-field">
+              <span>Lozinka</span>
+              <input
+                autoComplete="current-password"
+                className="input"
+                onChange={(event) => setPassword(event.target.value)}
+                placeholder="Unesite lozinku"
+                required
+                type="password"
+                value={password}
+              />
+            </label>
+
+            <button
+              className="button button-primary"
+              disabled={isWorking}
+              type="submit"
             >
-              {TEST_ROLES.map((role) => (
-                <option key={role} value={role}>
-                  {role}
-                </option>
-              ))}
-            </select>
-          </label>
+              {isWorking ? "Prijavljivanje..." : "Prijavi se"}
+            </button>
+          </form>
+        ) : null}
 
-          <button className="button button-primary" type="submit">
-            Prijavi se
-          </button>
-        </form>
+        {mode === "REGISTER_MASTER" ? (
+          <form className="form-stack" onSubmit={handleMasterRegistration}>
+            <label className="form-field">
+              <span>Master admin email</span>
+              <input
+                className="input"
+                readOnly
+                type="email"
+                value={MASTER_ADMIN_EMAIL}
+              />
+            </label>
+
+            <label className="form-field">
+              <span>Željena lozinka</span>
+              <input
+                autoComplete="new-password"
+                className="input"
+                minLength={10}
+                onChange={(event) => setPassword(event.target.value)}
+                required
+                type="password"
+                value={password}
+              />
+            </label>
+
+            <label className="form-field">
+              <span>Potvrdite lozinku</span>
+              <input
+                autoComplete="new-password"
+                className="input"
+                minLength={10}
+                onChange={(event) => setConfirmPassword(event.target.value)}
+                required
+                type="password"
+                value={confirmPassword}
+              />
+            </label>
+
+            <button
+              className="button button-primary"
+              disabled={isWorking}
+              type="submit"
+            >
+              {isWorking ? "Slanje..." : "Pošalji aktivacioni link"}
+            </button>
+          </form>
+        ) : null}
+
+        {mode === "RESET_PASSWORD" ? (
+          <form className="form-stack" onSubmit={handlePasswordReset}>
+            <label className="form-field">
+              <span>Email</span>
+              <input
+                autoComplete="email"
+                className="input"
+                onChange={(event) => setEmail(event.target.value)}
+                required
+                type="email"
+                value={email}
+              />
+            </label>
+
+            <button
+              className="button button-primary"
+              disabled={isWorking}
+              type="submit"
+            >
+              {isWorking ? "Slanje..." : "Pošalji link"}
+            </button>
+          </form>
+        ) : null}
+
+        {mode === "CHOOSE_REGISTRATION" ? (
+          <div className="form-stack auth-registration-options">
+            <button
+              className="button button-primary"
+              onClick={() => router.push("/registracija-drustva")}
+              type="button"
+            >
+              Predsednik društva
+            </button>
+            <button className="button button-secondary" disabled type="button">
+              Član — sledeća faza
+            </button>
+            <button className="button button-secondary" disabled type="button">
+              Roditelj / staratelj — sledeća faza
+            </button>
+            <p className="auth-secondary-note">
+              Član i roditelj mogu se registrovati tek kada ih predsednik
+              prethodno evidentira u društvu.
+            </p>
+          </div>
+        ) : null}
 
         <div className="login-links">
-          <a href="#">Zaboravljena lozinka?</a>
-          <a className="button button-secondary" href="#">
-            Registracija društva
-          </a>
+          {mode === "LOGIN" ? (
+            <>
+              <button
+                className="auth-text-button"
+                onClick={() => {
+                  clearFeedback();
+                  setMode("RESET_PASSWORD");
+                }}
+                type="button"
+              >
+                Zaboravljena lozinka?
+              </button>
+
+              {bootstrap?.master_admin_registration_available ? (
+                <button
+                  className="button button-secondary"
+                  onClick={() => {
+                    clearFeedback();
+                    setPassword("");
+                    setMode("REGISTER_MASTER");
+                  }}
+                  type="button"
+                >
+                  Registracija Master admina
+                </button>
+              ) : null}
+
+              {bootstrap?.master_admin_active ? (
+                <button
+                  className="button button-secondary"
+                  onClick={() => {
+                    clearFeedback();
+                    setMode("CHOOSE_REGISTRATION");
+                  }}
+                  type="button"
+                >
+                  Registracija novog korisnika
+                </button>
+              ) : null}
+            </>
+          ) : (
+            <button
+              className="auth-text-button"
+              onClick={() => {
+                clearFeedback();
+                setPassword("");
+                setConfirmPassword("");
+                setMode("LOGIN");
+              }}
+              type="button"
+            >
+              Nazad na prijavljivanje
+            </button>
+          )}
         </div>
       </section>
     </main>
