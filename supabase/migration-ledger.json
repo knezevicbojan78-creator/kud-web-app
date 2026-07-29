@@ -55,6 +55,12 @@
       "status": "applied",
       "applied_on": "2026-07-29",
       "note": "Razresava Predsednik/UR ulogu u starijem toku otkazivanja kada ga pozove bezbedni Auth finansijski omotac."
+    },
+    {
+      "file": "events-v1-detailed-travel-document-validation.sql",
+      "status": "applied",
+      "applied_on": "2026-07-29",
+      "note": "Dodaje precizne poruke za putna dokumenta, saglasnost i najmanje tri meseca vazenja pasosa od polaska."
     }
   ]
 }

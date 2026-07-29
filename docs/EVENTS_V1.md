@@ -137,6 +137,8 @@ Za inostrano putovanje, pre prelaska učesnika u `CONFIRMED`, obavezni su:
 
 Ako je putnik maloletan na datum polaska, dodatno su obavezni:
 
+* pasoš koji na dan polaska ima još najmanje tri meseca važenja i svakako važi
+  najmanje do povratka
 * evidentirana overena saglasnost oba roditelja za put u inostranstvo
 * datum važenja saglasnosti koji pokriva najmanje datum povratka
 

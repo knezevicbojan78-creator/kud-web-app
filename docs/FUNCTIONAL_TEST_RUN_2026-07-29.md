@@ -98,6 +98,13 @@ Potvrđeno:
   porukom;
 * nakon evidentirane važeće saglasnosti maloletni putnik je potvrđen;
 * status drugog putnika uspešno je promenjen iz `PLANNED` u `DECLINED`.
+* uvedene su precizne poruke za svako nedostajuće putno polje umesto opšte
+  poruke o nekompletnoj dokumentaciji;
+* pasoš sada mora važiti najmanje tri meseca od datuma polaska i svakako do
+  povratka;
+* za polazak 15.08.2026. probni rok pasoša 31.10.2026. pravilno je odbijen uz
+  poruku da pasoš mora važiti najmanje do 15.11.2026;
+* nakon vraćanja probnog roka pasoša na 31.12.2030. potvrda putnika je prošla.
 
 Pronađena i ispravljena greška: novi sistem dozvola je starijoj proveri slao
 opšti naziv `Ovlašćeni korisnik`, zbog čega je promena statusa bila odbijena i
@@ -115,6 +122,11 @@ starijoj funkciji opštu oznaku `Ovlašćeni korisnik`, dok je ona prihvatala sa
 `events-v1-resolve-authorized-cancel-role.sql` razrešava stvarnu ulogu i čuva je
 u istoriji; ponovljeni test je prošao.
 
+Naknadna poslovna dopuna primenjena je migracijom
+`events-v1-detailed-travel-document-validation.sql`. Poruke sada posebno
+razlikuju nedostajuće lične podatke, adresu, kontakt, broj pasoša, državu
+izdavanja, datum važenja, nedovoljno trajanje pasoša i roditeljsku saglasnost.
+
 Polja datuma još nisu ocenjena: automatski pregledač ne uspeva da unese vrednost
 u sistemsko polje tipa datum, pa taj korak ostaje za kratku ručnu proveru.
 
@@ -124,8 +136,8 @@ postoji stanje `PENDING` koje bi mogao da odbije.
 
 Završna regresija posle tri ispravke je prošla:
 
-* struktura projekta: 189 fajlova;
-* evidencija baze: 9 ispravnih zapisa migracija;
+* struktura projekta: 190 fajlova;
+* evidencija baze: 10 ispravnih zapisa migracija;
 * TypeScript: prošao;
 * produkcioni build svih 26 ruta: prošao;
 * sva 3 javna automatska testa: prošla.

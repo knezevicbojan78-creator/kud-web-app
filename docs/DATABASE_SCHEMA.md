@@ -136,6 +136,8 @@ Pravila:
 * Saglasnost oba roditelja za put maloletne osobe u inostranstvo čuva se na `people`, nezavisno od članstva.
 * Kada `parental_travel_consent = true`, unosi se i `parental_travel_consent_valid_until`.
 * Kod inostranog putovanja potvrda maloletnog putnika zahteva saglasnost koja važi najmanje do povratka.
+* Kod inostranog putovanja pasoš mora važiti najmanje tri meseca od datuma
+  polaska i svakako najmanje do datuma povratka.
 * Datum važenja pasoša je osetljiv podatak sa istim pravima kao broj pasoša.
 * Budući servis obaveštenja koristi datum za istekli pasoš i period od tri meseca pre isteka; za maloletnika primalac je primarni roditelj/staratelj.
 * Email je glavni praktični identifikator za pronalaženje postojećeg `people` zapisa.
