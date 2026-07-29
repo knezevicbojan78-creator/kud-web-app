@@ -74,6 +74,13 @@
       "applied_on": "2026-07-29",
       "verified_by": "auth-v1-president-request-rejection-reason-diagnostic.sql",
       "note": "Zahteva i trajno cuva razlog odbijanja predsednickog zahteva uz Master admin audit."
+    },
+    {
+      "file": "auth-v1-my-profile.sql",
+      "status": "applied",
+      "applied_on": "2026-07-29",
+      "verified_by": "auth-v1-my-profile-diagnostic.sql",
+      "note": "Bezbedno citanje postojeceg profila i uska izmena sopstvenih licnih podataka uz audit promenjenih polja."
     }
   ]
 }

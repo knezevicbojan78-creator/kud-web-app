@@ -1407,6 +1407,10 @@ type Database = {
           updated: boolean;
         };
       };
+      auth_update_my_profile: {
+        Args: { p_profile: Record<string, string | null> };
+        Returns: Person;
+      };
       auth_create_society_member: {
         Args: {
           p_society_id: string;

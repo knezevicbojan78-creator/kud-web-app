@@ -6,6 +6,26 @@ Status ciklusa: `U TOKU`
 
 ## Rezultati
 
+### 12. Moji podaci
+
+Status: `PROŠAO U PREDSEDNIČKOM KONTEKSTU`
+
+* stranica učitava profil prijavljenog korisnika bez izbora osobe;
+* kompaktno zaglavlje, četiri statusne kartice i pet tabova koriste postojeći
+  vizuelni sistem aplikacije;
+* lični podaci, dokumenta, članstvo, funkcije i porodica prikazuju se u odvojenim
+  kratkim celinama;
+* režim izmene se otvara tek na zahtev, email je zaključan, a društveni podaci i
+  saglasnost su samo za čitanje;
+* forma koristi vrednosti `Muško` i `Žensko` i datum u standardnom biraču;
+* pasoš i datum važenja moraju biti uneti zajedno;
+* čuvanje nepromenjenog profila uspešno je prošlo bez promene stvarnih podataka;
+* bezbedna funkcija dozvoljava samo izmenu sopstvenog profila i nema anonimno
+  pravo poziva;
+* audit čuva samo nazive promenjenih polja, bez kopiranja osetljivih vrednosti;
+* tab za lozinku nudi postojeći bezbedni email tok, ali poruka nije slata tokom
+  testa.
+
 ### 1. Automatska tehnička provera
 
 Status: `PROŠAO`
