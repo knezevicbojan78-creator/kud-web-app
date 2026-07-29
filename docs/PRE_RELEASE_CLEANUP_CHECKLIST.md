@@ -111,6 +111,23 @@ Pre produkcije posebno treba potvrditi da:
 Čišćenje još nije izvršeno. Poznati probni podaci namerno ostaju u bazi dok se
 ne završe naredna funkcionalna testiranja.
 
+## Probni predsednički zahtev iz ciklusa 29.07.2026.
+
+Zadržan je zahtev:
+
+* `PresidentReg.id = 1cec940c-bdf2-4805-aa41-cb2607e929ed`;
+* društvo `CODEX E2E društvo za odbijanje`;
+* email `codex.e2e.president.reject.20260729@example.com`;
+* PIB `999999901`;
+* matični broj `99999991`;
+* tražena licenca `MONTHLY`, paket `Malo društvo`;
+* trenutni status `PENDING`.
+
+Zahtev je namenjen proveri odbijanja u posebnoj Master admin sesiji. Ako taj
+test ne bude izvršen, zahtev i eventualne audit zapise ukloniti neposredno iz
+probnih podataka pre puštanja aplikacije u rad. Ne praviti društvo ili korisnika
+iz ovog zahteva izvan kontrolisanog testa.
+
 ## Probni događaj iz ciklusa 29.07.2026.
 
 Zadržan je događaj `CODEX E2E događaj`:

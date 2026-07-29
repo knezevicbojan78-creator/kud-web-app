@@ -256,6 +256,31 @@ Dopunski test:
 Preostala je provera prava prijavljenog UR-a samo u njegovoj dodeljenoj sekciji,
 što zahteva zasebnu UR sesiju.
 
+### 10. Master admin i predsednički zahtevi
+
+Status: `DELIMIČNO PROŠAO — ČEKA MASTER ADMIN SESIJU`
+
+Potvrđeno:
+
+* javni obrazac prikazuje sva obavezna polja, izbor vrste licence, izbor paketa
+  i potvrdu tačnosti podataka;
+* slanje praznog obrasca daje jasne poruke za sva obavezna polja, paket i
+  potvrdu;
+* jasno označen probni zahtev za mesečni paket `Malo društvo` uspešno je poslat;
+* zahtev je nezavisnim čitanjem baze potvrđen sa statusom `PENDING`;
+* predsednička sesija ne može da čita Master admin listu — pristup je pravilno
+  blokiran RLS pravilom baze.
+
+Preostalo:
+
+* lista, pretraga i detalj zahteva u stvarnoj Master admin sesiji;
+* odbijanje ovog probnog zahteva uz razlog;
+* odobravanje drugog probnog zahteva, aktivacioni tok i onboarding;
+* provera probnog društva, licence, audita i odvojenosti društava.
+
+Nastavak se izvršava tek kada je u pregledaču prijavljen Master admin, bez
+odjavljivanja ili menjanja postojećeg predsedničkog naloga.
+
 ### 9. Finansije
 
 Status: `PROŠAO — KOMPLETNO TESTIRANJE MODULA ZAVRŠENO`
