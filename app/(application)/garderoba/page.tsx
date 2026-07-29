@@ -125,17 +125,23 @@ export default function GarderobaPage() {
       if (contextError) throw contextError;
       const membership = context?.memberships?.[0];
       if (!membership) throw new Error("Aktivno članstvo nije pronađeno.");
-      const [workspaceResult, operationsResult, loansResult, notificationsResult] = await Promise.all([
-        supabase.rpc("auth_get_wardrobe_workspace", { p_society_id: membership.society_id }),
-        supabase.rpc("auth_get_wardrobe_operations", { p_society_id: membership.society_id }),
-        supabase.rpc("auth_get_wardrobe_loans", { p_society_id: membership.society_id }),
+      const workspaceResult = await supabase.rpc(
+        "auth_get_wardrobe_page", { p_society_id: membership.society_id }
+      );
+      if (workspaceResult.error) throw workspaceResult.error;
+      const data = workspaceResult.data;
+      const [operationsResult, loansResult, notificationsResult] = await Promise.all([
+        data.is_manager
+          ? supabase.rpc("auth_get_wardrobe_operations", { p_society_id: membership.society_id })
+          : Promise.resolve({ data: { repairs: [], loss_cases: [], luggage: [] }, error: null }),
+        data.is_manager
+          ? supabase.rpc("auth_get_wardrobe_loans", { p_society_id: membership.society_id })
+          : Promise.resolve({ data: { platform_societies: [], owned: [], received: [] }, error: null }),
         supabase.rpc("auth_get_wardrobe_notifications", { p_society_id: membership.society_id })
       ]);
-      if (workspaceResult.error) throw workspaceResult.error;
       if (operationsResult.error) throw operationsResult.error;
       if (loansResult.error) throw loansResult.error;
       if (notificationsResult.error) throw notificationsResult.error;
-      const data = workspaceResult.data;
       setWorkspace(data);
       setOperations(operationsResult.data);
       setLoans(loansResult.data);
@@ -443,7 +449,7 @@ export default function GarderobaPage() {
       {message && <p className="alert alert-success">{message}</p>}
       {error && <p className="alert alert-error">{error}</p>}
 
-      <section className="wardrobe-summary">
+      {workspace.is_manager && <section className="wardrobe-summary">
         {[
           ["kits", "Spremni kompleti", readyKitCount, ""],
           ["assignments", "Zaduženo", activeAssignments.length, ""],
@@ -455,11 +461,11 @@ export default function GarderobaPage() {
             setActiveTab(tab as Tab); if (filter === "AVAILABLE") setStatusFilter("AVAILABLE");
           }} type="button"><span>{label}</span><strong>{value}</strong><small>Otvori pregled →</small></button>
         ))}
-      </section>
+      </section>}
 
       <section className="card wardrobe-panel">
         <nav className="wardrobe-tabs">
-          {tabLabels.map(([id, label]) => <button className={activeTab === id ? "active" : ""} key={id} onClick={() => setActiveTab(id)} type="button">{label}</button>)}
+          {tabLabels.filter(([id]) => workspace.is_manager || ["overview", "assignments"].includes(id)).map(([id, label]) => <button className={activeTab === id ? "active" : ""} key={id} onClick={() => setActiveTab(id)} type="button">{label}</button>)}
         </nav>
 
         {activeTab === "overview" && <div className="wardrobe-content">
@@ -468,10 +474,10 @@ export default function GarderobaPage() {
             <div className="wardrobe-notification-title"><h3>Obaveštenja</h3><span>{notifications.unread_count} nepročitanih</span></div>
             {notifications.notifications.slice(0, 6).map((notification) => <article className={notification.read_at ? "read" : ""} key={notification.id}><div><strong>{notification.title}</strong><p>{notification.body}</p><small>{date(notification.scheduled_for)}</small></div>{!notification.read_at && <button onClick={() => void markNotificationRead(notification.id)} type="button">OZNAČI KAO PROČITANO</button>}</article>)}
           </section>}
-          <div className="wardrobe-overview-grid">
+          <div className={`wardrobe-overview-grid${workspace.is_manager ? "" : " personal"}`}>
             <article><strong>{overdueAssignments.length}</strong><span>zaduženja sa isteklim rokom</span><button onClick={() => setActiveTab("assignments")} type="button">Pregledaj</button></article>
             <article><strong>{partialAssignments.length}</strong><span>delimično vraćenih zaduženja</span><button onClick={() => setActiveTab("assignments")} type="button">Pregledaj</button></article>
-            <article><strong>{workspace.kits.length}</strong><span>definisanih kompleta</span><button onClick={() => setActiveTab("kits")} type="button">Pregledaj</button></article>
+            {workspace.is_manager && <article><strong>{workspace.kits.length}</strong><span>definisanih kompleta</span><button onClick={() => setActiveTab("kits")} type="button">Pregledaj</button></article>}
           </div>
           {workspace.is_manager && <div className="wardrobe-settings">
             <div><p className="eyebrow">Automatski rokovi</p><h3>Podešavanja vraćanja</h3></div>

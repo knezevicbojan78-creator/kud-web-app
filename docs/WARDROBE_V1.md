@@ -175,3 +175,24 @@ dodaju:
 Detaljno podešavanje dozvola i otvaranje ličnog prikaza garderobe članovima i
 roditeljima ostaje poslednja celina ove verzije. Email obaveštenja ostaju za
 fazu kada aplikacija bude javno dostupna.
+
+## Realizacija četvrte faze — dozvole
+
+Migracija `wardrobe-v1-permissions.sql` povezuje Garderobu sa centralnim
+sistemom dozvola:
+
+* `wardrobe.view` određuje pregled sopstvenih, dečjih ili svih zaduženja;
+* `wardrobe.manage` obuhvata operativni rad sa inventarom, kompletima,
+  izdavanjem, povratima, koferima, popravkama, gubicima, pozajmicama i rokovima;
+* `wardrobe.view_audit` je posebno osetljivo pravo za detaljnu istoriju;
+* predsednik početno ima sva tri prava za celo društvo;
+* garderober početno ima pregled i operativno upravljanje, ali ne i detaljni
+  audit;
+* član vidi samo svoja i zaduženja svoje povezane dece;
+* roditelj koji nije član vidi samo zaduženja povezane dece;
+* član i roditelj ne dobijaju inventar, spisak drugih članova, pozajmice,
+  popravke, gubitke niti komande za razduživanje;
+* ograničenje se primenjuje u kontrolisanoj baznoj funkciji, a zatim i u
+  interfejsu.
+
+Email obaveštenja ostaju za fazu javnog objavljivanja aplikacije.

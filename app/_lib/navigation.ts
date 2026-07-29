@@ -86,8 +86,8 @@ export const ROLE_MENU_LABELS: Record<ApplicationRole, string[]> = {
     "Moji podaci"
   ],
   Sekretar: ["Dashboard", "Članovi", "Izveštaji", "Događaji", "Moji podaci"],
-  Član: ["Moje sekcije", "Događaji", "Moji podaci"],
-  Roditelj: ["Moja deca", "Prisustvo", "Finansije", "Moji podaci"]
+  Član: ["Moje sekcije", "Događaji", "Garderoba", "Moji podaci"],
+  Roditelj: ["Moja deca", "Prisustvo", "Finansije", "Garderoba", "Moji podaci"]
 };
 
 export function getMenuItemsForRole(role: ApplicationRole) {

@@ -416,3 +416,24 @@ Status: `PROŠAO — STRUKTURA, OVLAŠĆENJA I PRAZNA STANJA`
   člana, događaj, rok i više kompleta;
 * potpuna poslovna provera toka sa dva društva radiće se kada postoje stvarni
   inventar i kompleti; u ovoj proveri nisu unoseni probni poslovni podaci.
+
+### 16. Garderoba — centralne dozvole
+
+Status: `PROŠAO — BAZA, PREDSEDNIČKI PRIKAZ I STRUKTURNA ZAŠTITA`
+
+* centralni katalog sadrži tri aktivna prava Garderobe;
+* predsednik ima zaključan pregled, upravljanje i detaljni audit;
+* garderober ima zaključan pregled i operativno upravljanje bez detaljnog
+  audita;
+* funkcija ličnog pregleda postoji i dostupna je prijavljenom, ali ne i
+  anonimnom korisniku;
+* odgovor baze za člana ili roditelja uklanja inventar, komplete, druge
+  članove, događaje i repertoar i vraća samo sopstvena ili dečja zaduženja;
+* interfejs ima uslovni lični prikaz sa samo karticama `Pregled` i `Zaduženja`,
+  bez komandi za izdavanje ili razduživanje;
+* predsednički pregled je ponovo otvoren u lokalnoj aplikaciji i učitao je sve
+  operativne kartice i podešavanja bez greške;
+* zasebna prijava člana i roditelja još nije mogla biti izvršena jer postojeći
+  centralni login trenutno pušta samo predsednika i Master admina; to je
+  sledeća opšta Auth faza, a bazna ograničenja Garderobe su unapred pripremljena;
+* nisu menjani niti dodavani poslovni podaci garderobe.

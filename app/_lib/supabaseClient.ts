@@ -375,7 +375,8 @@ export type WardrobeAssignment = {
   note: string | null; items: WardrobeAssignmentItem[];
 };
 export type WardrobeWorkspace = {
-  society_id: string; actor_member_id: string; is_manager: boolean;
+  society_id: string; actor_member_id: string | null; is_manager: boolean;
+  access?: { scope: "SOCIETY" | "SELF_AND_CHILDREN" | "CHILDREN"; can_manage: boolean };
   settings: { return_days_after_event: number; reminder_days_before_due: number };
   categories: WardrobeCategory[]; items: WardrobeItem[]; kits: WardrobeKit[];
   assignments: WardrobeAssignment[];
@@ -1518,6 +1519,10 @@ type Database = {
         Returns: Person;
       };
       auth_get_wardrobe_workspace: {
+        Args: { p_society_id: string };
+        Returns: WardrobeWorkspace;
+      };
+      auth_get_wardrobe_page: {
         Args: { p_society_id: string };
         Returns: WardrobeWorkspace;
       };
