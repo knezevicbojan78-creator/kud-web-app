@@ -16,7 +16,9 @@ U aktivnoj Supabase bazi trenutno ostaju:
 Probni maloletni član je 29.07.2026. dodat u sekciju `Dečiji ansambl`. Istog
 dana je za tu sekciju napravljena i zatvorena kontrolisana proba sa jednim
 prisustvom tog člana. I sekcijsko članstvo i cela povezana evidencija te probe
-moraju biti obuhvaćeni završnim čišćenjem.
+moraju biti obuhvaćeni završnim čišćenjem. Evidencija sadrži i dva audit zapisa
+naknadne predsedničke ispravke zatvorene probe, sa obaveznim razlozima, koji se
+takođe uklanjaju zajedno sa ovom probnom evidencijom.
 
 Pre produkcije treba ukloniti njihove povezane zapise iz:
 
