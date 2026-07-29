@@ -64,7 +64,7 @@ Status: `PROŠAO`
 
 ### 7. Funkcije i dozvole
 
-Status: `U TOKU`
+Status: `PROŠAO U PREDSEDNIČKOM KONTEKSTU`
 
 * ekran je dostupan samo u predsedničkom kontekstu;
 * katalog sadrži 69 prava;
@@ -72,6 +72,26 @@ Status: `U TOKU`
 * 68 predsedničkih prava je uključeno;
 * jedino `members.request_change` nije uključeno, što odgovara modelu: to je
   zahtev člana/roditelja za izmenu, dok predsednik podatke menja direktno.
+* pravilo funkcije `Sekretar` za detaljni audit prisustva kontrolisano je
+  uključeno, sačuvano i potvrđeno posle ponovnog učitavanja;
+* isto pravilo je zatim vraćeno na početno isključeno stanje i vraćanje je
+  potvrđeno posle ponovnog učitavanja;
+* matrica svih funkcija učitava tačno 69 kataloških prava, odnosno 68 za
+  funkcije kojima zahtev člana nije primenljiv;
+* potvrđena početna matrica uključenih obaveznih prava:
+  `Sekretar` 15, `Blagajnik` 6, `Upravnik` 15, `UR` 23,
+  `Korepetitor` 1 i `Član` 14;
+* sva navedena obavezna prava su zaključana, dok opciona isključena polja ostaju
+  dostupna za promenu;
+* pojedinačni izuzeci prijavljenog predsednika prikazani su kao `Nasleđeno` i
+  sva polja su zaključana, pa predsednička prava nije moguće oslabiti ni tim
+  putem;
+* na širini ekrana od 390 px nema horizontalnog prelivanja; matrica prelazi u
+  jednu kolonu, a širina sadržaja ostaje unutar ekrana.
+
+Za konačnu proveru stvarnog menija i zabrana po funkciji biće potrebna zasebna
+prijavljena sesija korisnika koji nije predsednik. Predsednička konfiguracija,
+čuvanje, vraćanje, zaključana prava i mobilni prikaz ovim ciklusom su prošli.
 
 ### 8. Događaji
 

@@ -200,3 +200,15 @@ Pri čišćenju ukloniti zavisne raspodele, povraćaje, kreditne stavke, audit i
 procene članarine, zatim sve tri uplate i obe obaveze. Ukloniti i navedenu probnu
 istoriju podešavanja prema tačnim `CODEX E2E` razlozima. Pre uklanjanja proveriti da svi
 zapisi pripadaju isključivo navedenom probnom članu i navedenim test iznosima.
+
+## Probna istorija funkcija i dozvola
+
+Test podešavanja funkcije `Sekretar` ostavio je dve jasno označene istorijske
+promene, dok je aktivno pravilo vraćeno na početno isključeno stanje:
+
+* `CODEX E2E test prava funkcije Sekretar`;
+* `CODEX E2E vraćanje prava funkcije Sekretar`.
+
+Pre puštanja ukloniti samo istorijske zapise sa ova dva tačna razloga, nakon
+provere da je pravo `Detaljni audit prisustva` za funkciju `Sekretar` i dalje
+isključeno. Nije ostavljen nijedan aktivan pojedinačni izuzetak.
