@@ -174,6 +174,7 @@ begin
         else nullif(lower(btrim(p_profile ->> 'email')), '')
       end,
       phone = nullif(btrim(p_profile ->> 'phone'), '')
+      ,shoe_size = nullif(p_profile ->> 'shoe_size', '')::integer
   where id = v_person_id;
 
   update public.society_members

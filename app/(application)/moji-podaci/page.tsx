@@ -25,6 +25,7 @@ type FormValues = {
   address: string; city: string; postal_code: string; country: string;
   nationality: string; phone: string; jmbg: string; passport_number: string;
   passport_issuing_country: string; passport_expiry_date: string;
+  shoe_size: string;
 };
 
 const tabs: Array<{ id: Tab; label: string }> = [
@@ -39,7 +40,7 @@ const emptyForm: FormValues = {
   first_name: "", last_name: "", gender: "", birth_date: "", address: "",
   city: "", postal_code: "", country: "Srbija", nationality: "", phone: "",
   jmbg: "", passport_number: "", passport_issuing_country: "",
-  passport_expiry_date: ""
+  passport_expiry_date: "", shoe_size: ""
 };
 
 function toForm(person: Person): FormValues {
@@ -152,6 +153,10 @@ export default function MojiPodaciPage() {
     }
     if (!!form.passport_number.trim() !== !!form.passport_expiry_date) {
       setError("Broj pasoša i datum važenja moraju biti uneti zajedno.");
+      return;
+    }
+    if (form.shoe_size && (!Number.isInteger(Number(form.shoe_size)) || Number(form.shoe_size) < 15 || Number(form.shoe_size) > 55)) {
+      setError("Broj obuće mora biti ceo broj od 15 do 55.");
       return;
     }
     setIsSaving(true);
@@ -274,7 +279,7 @@ export default function MojiPodaciPage() {
                   {([
                     ["first_name", "Ime"], ["last_name", "Prezime"],
                     ["birth_date", "Datum rođenja"], ["gender", "Pol"],
-                    ["phone", "Telefon"], ["address", "Adresa"],
+                    ["phone", "Telefon"], ["shoe_size", "Broj obuće"], ["address", "Adresa"],
                     ["city", "Grad"], ["postal_code", "Poštanski broj"],
                     ["country", "Država"], ["nationality", "Državljanstvo"]
                   ] as Array<[keyof FormValues, string]>).map(([key, label]) => (
@@ -287,7 +292,9 @@ export default function MojiPodaciPage() {
                       ) : (
                         <input
                           className="input"
-                          type={key === "birth_date" ? "date" : "text"}
+                          type={key === "birth_date" ? "date" : key === "shoe_size" ? "number" : "text"}
+                          min={key === "shoe_size" ? 15 : undefined}
+                          max={key === "shoe_size" ? 55 : undefined}
                           value={form[key]}
                           onChange={(event) => setForm({ ...form, [key]: event.target.value })}
                         />
@@ -310,6 +317,7 @@ export default function MojiPodaciPage() {
                   <InfoRow label="Država" value={valueOrEmpty(person.country)} />
                   <InfoRow label="Državljanstvo" value={valueOrEmpty(person.nationality)} />
                   <InfoRow label="Telefon" value={valueOrEmpty(person.phone)} />
+                  <InfoRow label="Broj obuće" value={person.shoe_size ? String(person.shoe_size) : "Nije uneto"} />
                   <InfoRow label="Email" value={person.email ?? context.email} />
                 </dl>
               )}

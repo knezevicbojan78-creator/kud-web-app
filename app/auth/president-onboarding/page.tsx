@@ -51,6 +51,7 @@ function initialProfile(): UFMemberFormValues {
     parental_travel_consent_valid_until: "",
     email: "",
     phone: "",
+    shoe_size: "",
     status: "ACTIVE",
     start_date: today,
     membership_fee_required: false,

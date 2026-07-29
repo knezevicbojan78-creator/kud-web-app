@@ -370,3 +370,18 @@ Status: `PROŠAO — KOMPLETNO TESTIRANJE MODULA ZAVRŠENO`
 * pregled pravila za manje ekrane potvrđuje slaganje polja u jednu kolonu, a
   zaglavlja, dugmad i komande istorije dodatno su prilagođeni da se ne preklapaju;
 * u poruci o uspešnom čuvanju podešavanja uklonjena je dupla tačka posle datuma.
+
+### 13. Garderoba — početna funkcionalna faza
+
+Status: `PROŠAO — OSNOVA MODULA`
+
+* migracija je primenjena na aktivnu bazu;
+* potvrđeno je 14 novih tabela sa uključenim RLS pravilima;
+* prijavljeni korisnik može da pozove radni pregled, anonimni korisnik ne može;
+* početnih 12 kategorija prikazano je u aplikaciji;
+* kartice pregleda, tabovi, pretraga i filteri pravilno se prikazuju;
+* otvoreni su obrasci za novu stavku inventara i broj obuće, bez čuvanja
+  probnih poslovnih podataka;
+* broj obuće pravilno se prikazuje u obrascu `Moji podaci`;
+* sledeća funkcionalna provera radi se nakon unosa prvih stvarnih kategorija,
+  stavki i kompleta.

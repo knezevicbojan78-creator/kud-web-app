@@ -172,6 +172,7 @@ function createInitialMemberFormValues(): UFMemberFormValues {
     parental_travel_consent_valid_until: "",
     email: "",
     phone: "",
+    shoe_size: "",
     status: "ACTIVE",
     start_date: "",
     membership_fee_required: true,

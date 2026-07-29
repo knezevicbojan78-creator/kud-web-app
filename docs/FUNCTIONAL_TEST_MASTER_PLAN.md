@@ -22,9 +22,9 @@ Odobrenje ovog plana ne obuhvata:
 
 ## Stranice koje se sada ne testiraju
 
-`Garderoba` i `Izveštaji` nisu funkcionalno izrađeni i izuzeti su iz ovog
-ciklusa. Stranica `Moji podaci` je u međuvremenu izrađena i njen rezultat
-provere je zabeležen u `FUNCTIONAL_TEST_RUN_2026-07-29.md`.
+`Izveštaji` još nisu funkcionalno izrađeni i izuzeti su iz ovog ciklusa.
+Stranice `Moji podaci` i osnovni modul `Garderoba` izrađeni su naknadno; njihov
+rezultat provere beleži se odvojeno.
 
 Stvarno slanje email poziva za dopunu podataka takođe se ne testira dok
 aplikacija ne dobije javnu adresu i podešen email servis. Lokalni probni linkovi

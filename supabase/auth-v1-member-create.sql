@@ -120,7 +120,7 @@ begin
       first_name, last_name, gender, birth_date, address, city,
       postal_code, country, jmbg, passport_number,
       passport_expiry_date, parental_travel_consent,
-      parental_travel_consent_valid_until, email, phone
+      parental_travel_consent_valid_until, email, phone, shoe_size
     ) values (
       btrim(p_profile ->> 'first_name'),
       btrim(p_profile ->> 'last_name'),
@@ -142,7 +142,8 @@ begin
         p_profile ->> 'parental_travel_consent_valid_until', ''
       )::date else null end,
       nullif(lower(btrim(p_profile ->> 'email')), ''),
-      nullif(btrim(p_profile ->> 'phone'), '')
+      nullif(btrim(p_profile ->> 'phone'), ''),
+      nullif(p_profile ->> 'shoe_size', '')::integer
     )
     returning id into v_person_id;
   end if;

@@ -25,7 +25,8 @@ export type UFMemberPersonField =
   | "parental_travel_consent"
   | "parental_travel_consent_valid_until"
   | "email"
-  | "phone";
+  | "phone"
+  | "shoe_size";
 
 export type UFMemberMembershipField =
   | "status"
@@ -60,6 +61,7 @@ export type UFMemberFormValues = {
   parental_travel_consent_valid_until: string;
   email: string;
   phone: string;
+  shoe_size: string;
   status: UFMemberStatus;
   start_date: string;
   membership_fee_required: boolean;
@@ -791,6 +793,7 @@ export function UF_MEMBER_FORM({
         <CompactDateField label={memberMinor ?"Datum rođenja člana" : "Datum rođenja"} value={values.birth_date} error={visibleErrors.birth_date} readOnly={isPersonFieldReadOnly("birth_date")} onChange={(value) => onFieldChange("birth_date", value)} />
 
         {isPersonCreate && <TextField required={!minor} label="Telefon" value={values.phone} error={visibleErrors.phone} readOnly={isPersonFieldReadOnly("phone")} onChange={(value) => onFieldChange("phone", value)} />}
+        <TextField label="Broj obuće" type="number" value={values.shoe_size} error={visibleErrors.shoe_size} readOnly={isPersonFieldReadOnly("shoe_size")} onChange={(value) => onFieldChange("shoe_size", value)} />
 
         {showGuardian1 && !showGuardian2 && (
           <div className="header-actions">

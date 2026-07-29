@@ -98,7 +98,7 @@ function emptyPassengerPerson(email = ""): UFMemberFormValues {
   return {
     is_minor_member: false, first_name: "", last_name: "", gender: "", birth_date: "",
     address: "", city: "", postal_code: "", country: "Srbija", jmbg: "",
-    passport_number: "", passport_expiry_date: "", email, phone: "", status: "ACTIVE",
+    passport_number: "", passport_expiry_date: "", email, phone: "", shoe_size: "", status: "ACTIVE",
     parental_travel_consent: false, parental_travel_consent_valid_until: "",
     start_date: "", membership_fee_required: false, membership_fee_amount: "",
     guardian1: { first_name: "", last_name: "", email: "", phone: "" },

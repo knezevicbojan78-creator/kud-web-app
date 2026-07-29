@@ -28,7 +28,7 @@ declare
   v_key text;
   v_allowed_keys constant text[] := array[
     'first_name', 'last_name', 'gender', 'birth_date', 'address', 'city',
-    'postal_code', 'country', 'nationality', 'phone', 'jmbg',
+    'postal_code', 'country', 'nationality', 'phone', 'shoe_size', 'jmbg',
     'passport_number', 'passport_issuing_country', 'passport_expiry_date'
   ];
 begin
@@ -74,6 +74,7 @@ begin
     country = coalesce(nullif(btrim(p_profile->>'country'), ''), 'Srbija'),
     nationality = nullif(btrim(p_profile->>'nationality'), ''),
     phone = nullif(btrim(p_profile->>'phone'), ''),
+    shoe_size = nullif(p_profile->>'shoe_size', '')::integer,
     jmbg = nullif(btrim(p_profile->>'jmbg'), ''),
     passport_number = nullif(btrim(p_profile->>'passport_number'), ''),
     passport_issuing_country = nullif(btrim(p_profile->>'passport_issuing_country'), ''),

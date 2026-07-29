@@ -81,6 +81,13 @@
       "applied_on": "2026-07-29",
       "verified_by": "auth-v1-my-profile-diagnostic.sql",
       "note": "Bezbedno citanje postojeceg profila i uska izmena sopstvenih licnih podataka uz audit promenjenih polja."
+    },
+    {
+      "file": "wardrobe-v1-foundation.sql",
+      "status": "applied",
+      "applied_on": "2026-07-29",
+      "verified_by": "wardrobe-v1-foundation-diagnostic.sql",
+      "note": "Garderoba V1: broj obuce osobe, kategorije, kolicinski inventar, kompleti, zaduzenja, koferi, delimični povrati, gubici, popravke, obavestenja i audit."
     }
   ]
 }

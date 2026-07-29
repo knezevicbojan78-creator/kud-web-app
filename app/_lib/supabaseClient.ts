@@ -305,6 +305,7 @@ export type Person = {
   passport_issuing_country: string | null;
   email: string | null;
   phone: string | null;
+  shoe_size: number | null;
   birth_date: string | null;
   user_id: string | null;
   created_at: string | null;
@@ -337,6 +338,50 @@ export type SocietyMember = {
   membership_fee_amount: number | null;
   created_at: string | null;
   updated_at: string | null;
+};
+
+export type WardrobeCategory = {
+  id: string; society_id: string; name: string; code: string | null;
+  is_footwear: boolean; is_active: boolean; sort_order: number;
+};
+export type WardrobeItem = {
+  id: string; society_id: string; category_id: string; category_name: string;
+  is_footwear: boolean; name: string; internal_code: string | null;
+  age_group: "CHILD" | "ADULT" | "UNIVERSAL";
+  gender_group: "MALE" | "FEMALE" | "UNISEX";
+  shoe_size: number | null; total_quantity: number;
+  assigned_quantity: number; unavailable_quantity: number; available_quantity: number;
+  repertoire_names: string[]; note: string | null; is_active: boolean;
+};
+export type WardrobeKit = {
+  id: string; society_id: string; name: string; internal_code: string | null;
+  age_group: "CHILD" | "ADULT" | "UNIVERSAL";
+  gender_group: "MALE" | "FEMALE" | "UNISEX";
+  note: string | null; is_active: boolean;
+  items: Array<{ wardrobe_item_id: string; name: string; shoe_size: number | null; quantity: number }>;
+};
+export type WardrobeAssignmentItem = {
+  id: string; wardrobe_item_id: string; kit_id: string | null;
+  item_name: string; kit_name: string | null; shoe_size: number | null;
+  issued_quantity: number; returned_quantity: number; laundry_quantity: number;
+  repair_quantity: number; lost_quantity: number; damaged_quantity: number;
+};
+export type WardrobeAssignment = {
+  id: string; assignment_type: "MEMBER" | "LUGGAGE" | "EXTERNAL_LOAN" | "PLATFORM_LOAN";
+  assigned_member_id: string | null; member_name: string | null;
+  event_id: string | null; event_title: string | null; title: string | null;
+  issued_at: string; due_date: string | null;
+  status: "OPEN" | "PARTIALLY_RETURNED" | "RETURNED" | "OVERDUE" | "CANCELLED";
+  note: string | null; items: WardrobeAssignmentItem[];
+};
+export type WardrobeWorkspace = {
+  society_id: string; actor_member_id: string; is_manager: boolean;
+  settings: { return_days_after_event: number; reminder_days_before_due: number };
+  categories: WardrobeCategory[]; items: WardrobeItem[]; kits: WardrobeKit[];
+  assignments: WardrobeAssignment[];
+  members: Array<{ id: string; person_id: string; name: string; shoe_size: number | null }>;
+  events: Array<{ id: string; title: string; return_at: string | null }>;
+  repertoire: Array<{ id: string; name: string }>;
 };
 
 export type SocietyMemberInsert = Omit<
@@ -1408,8 +1453,36 @@ type Database = {
         };
       };
       auth_update_my_profile: {
-        Args: { p_profile: Record<string, string | null> };
+        Args: { p_profile: Record<string, string | number | null> };
         Returns: Person;
+      };
+      auth_get_wardrobe_workspace: {
+        Args: { p_society_id: string };
+        Returns: WardrobeWorkspace;
+      };
+      auth_wardrobe_save_category: {
+        Args: { p_society_id: string; p_category: Record<string, unknown> };
+        Returns: string;
+      };
+      auth_wardrobe_save_item: {
+        Args: { p_society_id: string; p_item: Record<string, unknown> };
+        Returns: string;
+      };
+      auth_wardrobe_save_kit: {
+        Args: { p_society_id: string; p_kit: Record<string, unknown> };
+        Returns: string;
+      };
+      auth_wardrobe_create_assignment: {
+        Args: { p_society_id: string; p_assignment: Record<string, unknown> };
+        Returns: string;
+      };
+      auth_wardrobe_record_return: {
+        Args: { p_society_id: string; p_assignment_id: string; p_returns: Array<Record<string, unknown>>; p_note?: string | null };
+        Returns: string;
+      };
+      auth_wardrobe_save_settings: {
+        Args: { p_society_id: string; p_return_days: number; p_reminder_days: number };
+        Returns: WardrobeWorkspace["settings"];
       };
       auth_create_society_member: {
         Args: {

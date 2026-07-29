@@ -104,6 +104,7 @@ const pendingPersonalFields = [
   ["birth_date", "Datum rođenja", "date"],
   ["email", "Email", "email"],
   ["phone", "Telefon", "tel"],
+  ["shoe_size", "Broj obuće", "number"],
   ["address", "Adresa", "text"],
   ["city", "Mesto", "text"],
   ["postal_code", "Poštanski broj", "text"],
@@ -131,6 +132,7 @@ function createInitialValues(): UFMemberFormValues {
     parental_travel_consent_valid_until: "",
     email: "",
     phone: "",
+    shoe_size: "",
     status: "ACTIVE",
     start_date: "",
     membership_fee_required: true,
@@ -348,7 +350,8 @@ function getReadOnlyPersonFields(person: Person) {
     parental_travel_consent: person.parental_travel_consent,
     parental_travel_consent_valid_until: Boolean(person.parental_travel_consent_valid_until),
     email: false,
-    phone: Boolean(person.phone)
+    phone: Boolean(person.phone),
+    shoe_size: Boolean(person.shoe_size)
   };
 }
 
@@ -388,7 +391,8 @@ function applyPersonToValues(
     parental_travel_consent: person.parental_travel_consent,
     parental_travel_consent_valid_until: getValueForInput(person.parental_travel_consent_valid_until),
     email: getValueForInput(person.email),
-    phone: getValueForInput(person.phone)
+    phone: getValueForInput(person.phone),
+    shoe_size: person.shoe_size ? String(person.shoe_size) : ""
   };
 }
 
@@ -568,6 +572,7 @@ function buildPersonUpdateFromValues(values: UFMemberFormValues) {
     parental_travel_consent_valid_until: values.parental_travel_consent ? normalizeOptional(values.parental_travel_consent_valid_until) : null,
     email: values.email.trim() ?normalizeEmail(values.email) : null,
     phone: normalizeOptional(values.phone),
+    shoe_size: values.shoe_size ? Number(values.shoe_size) : null,
     birth_date: normalizeOptional(values.birth_date)
   };
 }

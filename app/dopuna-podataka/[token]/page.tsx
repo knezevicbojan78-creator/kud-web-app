@@ -13,6 +13,7 @@ type Draft = {
   birth_date: string;
   email: string;
   phone: string;
+  shoe_size: string;
   address: string;
   city: string;
   postal_code: string;
@@ -44,6 +45,7 @@ const emptyDraft = (): Draft => ({
   birth_date: "",
   email: "",
   phone: "",
+  shoe_size: "",
   address: "",
   city: "",
   postal_code: "",
@@ -224,6 +226,7 @@ export default function MemberDataCompletionPage() {
         <Field label="Prezime" value={draft.last_name} onChange={(value) => change("last_name", value)} required />
         <Field label="Email" value={draft.email} onChange={(value) => change("email", value)} type="email" required disabled />
         <Field label="Telefon" value={draft.phone} onChange={(value) => change("phone", value)} type="tel" required />
+        <Field label="Broj obuće" value={draft.shoe_size} onChange={(value) => change("shoe_size", value.replace(/\D/g, "").slice(0, 2))} type="number" />
         <label className="form-field">
           <span>Pol *</span>
           <select className="input" required value={draft.gender} onChange={(event) => change("gender", event.target.value)}>
@@ -352,6 +355,7 @@ function mergeDraft(value: Partial<Draft> | null): Draft {
     birth_date: asDraftText(source.birth_date),
     email: asDraftText(source.email),
     phone: asDraftText(source.phone),
+    shoe_size: asDraftText(source.shoe_size),
     address: asDraftText(source.address),
     city: asDraftText(source.city),
     postal_code: asDraftText(source.postal_code),
