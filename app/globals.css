@@ -1687,11 +1687,13 @@ h1 {
 .finance-obligations article span, .finance-obligations article small, .finance-payment-history small { color:var(--color-muted); }
 .finance-obligations article.overdue { border-left:3px solid var(--color-danger); padding-left:.7rem; }
 .finance-payment-list { max-height:190px; overflow-y:auto; padding-right:.25rem; }
-.finance-payment-history article { display:grid; grid-template-columns:minmax(150px, auto) minmax(220px, 1fr) auto minmax(90px, auto); align-items:center; gap:1rem; padding:.65rem 0; border-bottom:1px solid var(--color-border); }
+.finance-payment-history article { display:grid; grid-template-columns:minmax(150px, auto) minmax(220px, 1fr) auto minmax(90px, auto) auto; align-items:center; gap:1rem; padding:.65rem 0; border-bottom:1px solid var(--color-border); }
 .finance-payment-history article > span { display:block; color:var(--color-muted); }
 .finance-payment-history article > small { text-align:right; }
 .finance-payment-history article > strong:last-child { text-align:right; }
 .finance-payment-modal { width:min(760px, calc(100vw - 2rem)); max-height:90vh; overflow:auto; }
+.finance-action-modal { width:min(620px, calc(100vw - 2rem)); max-height:90vh; overflow:auto; }
+.finance-action-modal > p { color:var(--color-muted); }
 .finance-payment-modal > header { display:flex; justify-content:space-between; align-items:flex-start; }
 .finance-payment-fields, .finance-credit-fields { display:grid; grid-template-columns:1fr 1fr; gap:.75rem; }
 .finance-payment-obligations { display:grid; gap:.4rem; margin:1rem 0; }

@@ -61,6 +61,12 @@
       "status": "applied",
       "applied_on": "2026-07-29",
       "note": "Dodaje precizne poruke za putna dokumenta, saglasnost i najmanje tri meseca vazenja pasosa od polaska."
+    },
+    {
+      "file": "finance-v1-entity-refund-history.sql",
+      "status": "applied",
+      "applied_on": "2026-07-29",
+      "note": "Dodaje bezbedan pregled istorije povracaja za finansijski profil osobe ili porodice."
     }
   ]
 }

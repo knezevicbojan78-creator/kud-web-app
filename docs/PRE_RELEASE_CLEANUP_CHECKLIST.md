@@ -175,10 +175,17 @@ zaduženje `CODEX E2E test članarina 07/2026` od 100 RSD:
 * obaveza ID `ff357ff4-a164-4bed-90c0-dbe4f53ce5ba`, status `PAID`;
 * uplata ID `0744097f-5deb-4776-a074-b9aa3d5d083b`;
 * broj potvrde `UPL-2026-000001`;
-* način uplate `BANK_TRANSFER`;
+* način uplate `BANK_TRANSFER`, konačni status `VOIDED`;
+* druga uplata ID `bd5f68db-5a5b-4525-a4e0-07e87f878cd5`;
+* broj druge potvrde `UPL-2026-000002`, iznos 150 RSD, način `CASH`, status
+  `POSTED`;
+* poništen povraćaj ID `de70e97c-3d56-46ec-b08f-790f41711f26`;
+* broj povraćaja `POV-2026-000001`, iznos 50 RSD, način `BANK_TRANSFER`, status
+  `VOIDED`;
+* konačno stanje probnog člana je plaćena obaveza i raspoloživi kredit 50 RSD;
 * postoje i pripadajuća procena članarine, raspodela uplate, audit i eventualni
-  brojački zapis.
+  brojački zapisi, kreditne stavke i reverzije.
 
-Pri čišćenju ukloniti zavisne raspodele, audit i procenu članarine, zatim uplatu
-i obavezu. Pre uklanjanja proveriti da svi zapisi pripadaju isključivo navedenom
-probnom članu i iznosu od 100 RSD.
+Pri čišćenju ukloniti zavisne raspodele, povraćaje, kreditne stavke, audit i
+procenu članarine, zatim obe uplate i obavezu. Pre uklanjanja proveriti da svi
+zapisi pripadaju isključivo navedenom probnom članu i navedenim test iznosima.

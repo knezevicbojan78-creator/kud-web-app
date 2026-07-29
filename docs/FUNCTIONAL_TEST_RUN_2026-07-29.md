@@ -140,8 +140,8 @@ postoji stanje `PENDING` koje bi mogao da odbije.
 
 Završna regresija posle tri ispravke je prošla:
 
-* struktura projekta: 191 fajl;
-* evidencija baze: 10 ispravnih zapisa migracija;
+* struktura projekta: 192 fajla;
+* evidencija baze: 11 ispravnih zapisa migracija;
 * TypeScript: prošao;
 * produkcioni build svih 26 ruta: prošao;
 * sva 3 javna automatska testa: prošla.
@@ -188,3 +188,14 @@ Status: `DELIMIČNO PROŠAO — PREOSTALE VARIJANTE UPLATE I PORODICE PROŠLE`
 * porodični profil probnog roditelja uspešno se učitava, prikazuje povezano dete
   `Test Maloletni Član` i tačno stanje nula otvorenih obaveza, dospelih obaveza
   i kredita.
+* stranica sada omogućava poništavanje evidentirane uplate uz obavezan razlog;
+* poništavanjem `UPL-2026-000001` uplata je ostala u istoriji kao `PONIŠTENA`,
+  a dug od 100 RSD se ponovo otvorio;
+* nova gotovinska uplata `UPL-2026-000002` od 150 RSD zatvorila je dug od
+  100 RSD i napravila kredit od 50 RSD;
+* povraćaj kredita na račun `POV-2026-000001` od 50 RSD uspešno je evidentiran,
+  smanjio kredit na nulu i prikazan je u novoj istoriji povraćaja;
+* poništavanje tog povraćaja uz obavezan razlog promenilo je status u
+  `PONIŠTEN` i vratilo kredit od 50 RSD;
+* read-only provera baze potvrdila je oba statusa `VOIDED`, aktivnu uplatu
+  `POSTED`, sve iznose, načine plaćanja i razloge.

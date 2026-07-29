@@ -583,6 +583,7 @@ export type FinanceProfile = {
     payment_method: "CASH" | "BANK_TRANSFER"; status: "POSTED" | "VOIDED";
     recorded_at: string; recorded_by_member_id: string | null;
   }>;
+  refunds: FinanceRefund[];
 };
 export type FinancePayment = {
   id: string;
@@ -599,6 +600,19 @@ export type FinancePayment = {
   recorded_at: string;
   voided_by_user_id: string | null;
   voided_by_society_member_id: string | null;
+  voided_at: string | null;
+  void_reason: string | null;
+};
+export type FinanceRefund = {
+  id: string;
+  person_id: string;
+  refund_number: string;
+  amount: number;
+  currency: string;
+  refund_method: "CASH" | "BANK_TRANSFER";
+  status: "POSTED" | "VOIDED";
+  reason: string;
+  recorded_at: string;
   voided_at: string | null;
   void_reason: string | null;
 };
@@ -1605,6 +1619,7 @@ type Database = {
         p_actor_member_id: string;
       }; Returns: unknown };
       finance_get_entity_profile: { Args: { p_society_id: string; p_entity_type: "PERSON" | "GUARDIAN"; p_entity_id: string; p_actor_member_id?: string | null }; Returns: FinanceProfile };
+      finance_list_entity_refunds: { Args: { p_society_id: string; p_entity_type: "PERSON" | "GUARDIAN"; p_entity_id: string; p_actor_member_id?: string | null }; Returns: FinanceRefund[] };
       master_admin_get_society_summaries: { Args: Record<never, never>; Returns: MasterSocietySummary[] };
       master_admin_get_dashboard: { Args: Record<never, never>; Returns: MasterDashboardData };
       master_admin_get_license_prices: { Args: Record<never, never>; Returns: MasterLicensePrice[] };
@@ -1656,6 +1671,17 @@ type Database = {
         p_credit_use_amount: number; p_actor_user_id: string | null;
         p_actor_member_id: string;
       }; Returns: FinancePayment };
+      finance_void_payment: { Args: {
+        p_payment_id: string; p_reason: string; p_actor_user_id: string | null;
+        p_actor_member_id: string;
+      }; Returns: FinancePayment };
+      finance_record_refund: { Args: {
+        p_society_id: string; p_person_id: string; p_amount: number; p_currency: string;
+        p_refund_method: "CASH" | "BANK_TRANSFER"; p_reason: string; p_actor_member_id: string;
+      }; Returns: FinanceRefund };
+      finance_void_refund: { Args: {
+        p_refund_id: string; p_reason: string; p_actor_member_id: string;
+      }; Returns: FinanceRefund };
     };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;

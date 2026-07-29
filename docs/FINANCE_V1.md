@@ -184,6 +184,10 @@ Deaktivacija je izuzetak od pravila da finansijske promene važe od narednog mes
 * Povraćaj je u istoj valuti, ne može biti veći od kredita i zahteva razlog.
 * Način povraćaja je `CASH` ili `BANK_TRANSFER`.
 * Pogrešan povraćaj se ne menja niti briše; predsednik ili korisnik sa posebnom dozvolom poništava ga uz razlog, kredit se vraća, a zatim se unosi novi povraćaj.
+* Finansijski profil prikazuje istoriju povraćaja za izabranu osobu, odnosno za
+  svu povezanu decu kada je otvoren porodični pregled.
+* Komande za poništavanje prikazuju se samo korisniku sa odgovarajućom
+  finansijskom dozvolom; poništeni zapisi ostaju vidljivi u istoriji.
 
 ## 17. Numeracija
 
