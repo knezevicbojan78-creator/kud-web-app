@@ -140,7 +140,7 @@ postoji stanje `PENDING` koje bi mogao da odbije.
 
 Završna regresija posle tri ispravke je prošla:
 
-* struktura projekta: 190 fajlova;
+* struktura projekta: 191 fajl;
 * evidencija baze: 10 ispravnih zapisa migracija;
 * TypeScript: prošao;
 * produkcioni build svih 26 ruta: prošao;
@@ -167,12 +167,24 @@ Potvrđeno:
 
 ### 9. Finansije
 
-Status: `DELIMIČNO PROŠAO — BLOKIRAN NEDOVRŠENIM TOKOM`
+Status: `DELIMIČNO PROŠAO — PREOSTALE VARIJANTE UPLATE I PORODICE PROŠLE`
 
 * pretraga i finansijski profil probnog člana rade;
 * početno stanje je tačno: 0 otvorenih obaveza, 0 dospelih i 0 kredita;
 * postojeća stranica omogućava evidentiranje uplate samo kada otvorena obaveza
   već postoji;
-* na stranici trenutno ne postoji komanda za formiranje članarine ili drugog
-  probnog zaduženja, pa ostatak finansijskog scenarija nije izvršen direktnim
-  upisom u bazu koji bi zaobišao aplikaciju.
+* na stranici ne postoji komanda za ručno formiranje članarine, jer se redovni
+  obračun izvršava automatski; za pripremu testa zato je korišćen zaseban,
+  idempotentan DEV fajl ograničen na tačnu probnu email adresu;
+* napravljeno je kontrolisano probno zaduženje od 100 RSD isključivo za
+  `codex.e2e.member.001@example.com`, bez menjanja stvarnih članova;
+* zaduženje je u aplikaciji pravilno prikazano kao otvoreno i dospelo;
+* uplata na račun od 100 RSD uspešno je evidentirana kroz stvarni ekran i dobila
+  broj `UPL-2026-000001`;
+* posle uplate profil prikazuje nula otvorenih i dospelih obaveza, a istorija
+  prikazuje način `Uplata na račun`;
+* direktna read-only provera baze potvrđuje status obaveze `PAID`, iznos 100 RSD
+  i način `BANK_TRANSFER`;
+* porodični profil probnog roditelja uspešno se učitava, prikazuje povezano dete
+  `Test Maloletni Član` i tačno stanje nula otvorenih obaveza, dospelih obaveza
+  i kredita.

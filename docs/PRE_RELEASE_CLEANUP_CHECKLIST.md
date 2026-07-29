@@ -166,3 +166,19 @@ Za probnu osobu `codex.e2e.minor.001@example.com` tokom testa su dopunjeni
 `nationality = Srpsko`, `passport_issuing_country = Srbija`,
 `parental_travel_consent = true` i važenje saglasnosti do 20.08.2026. Ovi
 podaci pripadaju probnoj osobi i uklanjaju se zajedno sa njom.
+
+## Probni finansijski zapisi iz ciklusa 29.07.2026.
+
+Za `codex.e2e.member.001@example.com` napravljeno je jedno kontrolisano
+zaduženje `CODEX E2E test članarina 07/2026` od 100 RSD:
+
+* obaveza ID `ff357ff4-a164-4bed-90c0-dbe4f53ce5ba`, status `PAID`;
+* uplata ID `0744097f-5deb-4776-a074-b9aa3d5d083b`;
+* broj potvrde `UPL-2026-000001`;
+* način uplate `BANK_TRANSFER`;
+* postoje i pripadajuća procena članarine, raspodela uplate, audit i eventualni
+  brojački zapis.
+
+Pri čišćenju ukloniti zavisne raspodele, audit i procenu članarine, zatim uplatu
+i obavezu. Pre uklanjanja proveriti da svi zapisi pripadaju isključivo navedenom
+probnom članu i iznosu od 100 RSD.
