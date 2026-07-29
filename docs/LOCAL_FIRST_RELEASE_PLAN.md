@@ -52,6 +52,10 @@ Pre prelaska na internet potrebno je:
 * proveriti javni obrazac i masovni unos lokalnim test linkovima
 * definisati politiku privatnosti i rokove čuvanja napuštenih nacrta
 
+Tačan spisak trenutno poznatih probnih osoba, povezanih zapisa i završnih
+provera nalazi se u `docs/PRE_RELEASE_CLEANUP_CHECKLIST.md`. Lista se dopunjava
+svaki put kada tokom razvoja napravimo novu vrstu probnih podataka.
+
 ## Budući redosled objavljivanja
 
 1. Privatni GitHub repozitorijum.
