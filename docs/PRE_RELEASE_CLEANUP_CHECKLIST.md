@@ -16,6 +16,22 @@ U aktivnoj Supabase bazi trenutno ostaju:
 * `codex.e2e.minor.001@example.com` — aktivni probni maloletni član
 * `codex.e2e.guardian.001@example.com` — probni roditelj/staratelj povezan sa
   maloletnim članom
+* `codex.e2e.minor.002@example.com` — probni maloletni kandidat za test
+  povezivanja roditelja; kandidat ID
+  `ea9cba01-bab1-49a2-8259-b0d839d63924`
+* `codex.e2e.guardian.002@example.com` — probni uvezeni roditelj; osoba ID
+  `975a63d9-32fe-4477-83ef-81e259517d6a`
+
+Za kandidata `minor.002` nastali su:
+
+* zajednički nacrt `533c1db7-ad27-4d44-aadc-e25c032207c8`;
+* roditeljski poziv `6ad69b4c-3be4-4b7f-96c9-8122090119fd`;
+* članski poziv `5c1ec523-72b1-4e2b-80e8-b5d944070e3f`;
+* izvorna oznaka `CODEX-E2E-POVEZIVANJE-RODITELJA.xlsx`.
+
+Pri čišćenju se prvo uklanjaju oba poziva i nacrt, zatim kandidat, pa probna
+osoba roditelja ako u međuvremenu nije povezana ni sa jednim drugim probnim
+zapisom.
 
 Probni maloletni član je 29.07.2026. dodat u sekciju `Dečiji ansambl`. Istog
 dana je za tu sekciju napravljena i zatvorena kontrolisana proba sa jednim

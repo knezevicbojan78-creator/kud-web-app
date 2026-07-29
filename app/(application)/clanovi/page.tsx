@@ -639,9 +639,11 @@ export default function ClanoviPage() {
   const [approvingImportId, setApprovingImportId] = useState<string | null>(null);
   const [rejectingImportId, setRejectingImportId] = useState<string | null>(null);
   const [sendingInvitationId, setSendingInvitationId] = useState<string | null>(null);
-  const [pendingGuardianEmails, setPendingGuardianEmails] = useState<Record<string, string>>({});
   const [editingPendingId, setEditingPendingId] = useState<string | null>(null);
   const [presidentDrafts, setPresidentDrafts] = useState<Record<string, Record<string, unknown>>>({});
+  const [pendingGuardianLookups, setPendingGuardianLookups] = useState<
+    Record<string, UFMemberGuardianLookupState>
+  >({});
   const [savingPendingId, setSavingPendingId] = useState<string | null>(null);
   const [creatingTestLinkId, setCreatingTestLinkId] = useState<string | null>(null);
   const [localTestLinks, setLocalTestLinks] = useState<Record<string, string>>({});
@@ -1622,8 +1624,14 @@ export default function ClanoviPage() {
   ) {
     if (!society) return;
     const sendingKey = `${candidateId}:${recipientRole}`;
+    const candidate = pendingImports.find((item) => item.id === candidateId);
+    const candidateDraft = (candidate?.draft ?? candidate?.profile ?? {}) as Record<
+      string,
+      unknown
+    >;
+    const guardian = candidateDraft.guardian1 as Record<string, unknown> | undefined;
     const recipientEmail = recipientRole === "GUARDIAN"
-      ? pendingGuardianEmails[candidateId]?.trim()
+      ? String(guardian?.email ?? "").trim()
       : undefined;
     if (recipientRole === "GUARDIAN" && (!recipientEmail || !isValidEmail(recipientEmail))) {
       setErrorMessage("Unesite ispravnu email adresu roditelja/staratelja.");
@@ -1665,8 +1673,14 @@ export default function ClanoviPage() {
   ) {
     if (!society) return;
     const actionKey = `${candidateId}:${recipientRole}`;
+    const candidate = pendingImports.find((item) => item.id === candidateId);
+    const candidateDraft = (candidate?.draft ?? candidate?.profile ?? {}) as Record<
+      string,
+      unknown
+    >;
+    const guardian = candidateDraft.guardian1 as Record<string, unknown> | undefined;
     const recipientEmail = recipientRole === "GUARDIAN"
-      ? pendingGuardianEmails[candidateId]?.trim()
+      ? String(guardian?.email ?? "").trim()
       : undefined;
     if (recipientRole === "GUARDIAN" && (!recipientEmail || !isValidEmail(recipientEmail))) {
       setErrorMessage("Unesite ispravnu email adresu roditelja/staratelja.");
@@ -1729,17 +1743,115 @@ export default function ClanoviPage() {
     }));
   }
 
+  async function handlePendingGuardianEmailBlur(candidateId: string) {
+    const guardian = presidentDrafts[candidateId]?.guardian1 as
+      | Record<string, unknown>
+      | undefined;
+    const email = String(guardian?.email ?? "").trim();
+
+    if (!email || !isValidEmail(email)) {
+      setPendingGuardianLookups((lookups) => ({
+        ...lookups,
+        [candidateId]: {
+          status: "invalid",
+          message: "Unesite ispravnu email adresu roditelja/staratelja."
+        }
+      }));
+      return;
+    }
+
+    setPendingGuardianLookups((lookups) => ({
+      ...lookups,
+      [candidateId]: { status: "checking" }
+    }));
+    setErrorMessage("");
+
+    try {
+      const existingPerson = (await lookupPerson({ email })).person;
+      if (!existingPerson) {
+        setPendingGuardianLookups((lookups) => ({
+          ...lookups,
+          [candidateId]: {
+            status: "not_found",
+            message: "Roditelj/staratelj nije pronađen među unetim osobama."
+          }
+        }));
+        return;
+      }
+
+      setPresidentDrafts((drafts) => ({
+        ...drafts,
+        [candidateId]: {
+          ...(drafts[candidateId] ?? {}),
+          guardian1: applyPersonToGuardian(
+            (drafts[candidateId]?.guardian1 as UFMemberFormValues["guardian1"] | undefined) ?? {
+              first_name: "",
+              last_name: "",
+              email,
+              phone: ""
+            },
+            existingPerson
+          )
+        }
+      }));
+      setPendingGuardianLookups((lookups) => ({
+        ...lookups,
+        [candidateId]: {
+          status: "found",
+          message: "Roditelj/staratelj je pronađen. Sačuvajte vezu pre slanja poziva.",
+          person: existingPerson,
+          readOnlyFields: getReadOnlyGuardianFields(existingPerson)
+        }
+      }));
+    } catch (error) {
+      setPendingGuardianLookups((lookups) => ({
+        ...lookups,
+        [candidateId]: {
+          status: "error",
+          message: getErrorMessage(error)
+        }
+      }));
+    }
+  }
+
   async function handleSavePendingDraft(candidateId: string) {
     if (!society) return;
     setSavingPendingId(candidateId);
     setErrorMessage("");
     try {
+      let draft = presidentDrafts[candidateId] ?? {};
+      if (Boolean(draft.is_minor_member)) {
+        const guardian = draft.guardian1 as UFMemberFormValues["guardian1"] | undefined;
+        const guardianEmail = guardian?.email?.trim() ?? "";
+        if (!guardianEmail || !isValidEmail(guardianEmail)) {
+          throw new Error("Za maloletnog člana prvo unesite email roditelja/staratelja.");
+        }
+        const existingPerson = (await lookupPerson({ email: guardianEmail })).person;
+        if (!existingPerson) {
+          throw new Error(
+            "Roditelj/staratelj nije pronađen. Prvo ga unesite kao osobu u masovnom unosu."
+          );
+        }
+        draft = {
+          ...draft,
+          guardian1: applyPersonToGuardian(
+            guardian ?? {
+              first_name: "",
+              last_name: "",
+              email: guardianEmail,
+              phone: ""
+            },
+            existingPerson
+          )
+        };
+        setPresidentDrafts((drafts) => ({ ...drafts, [candidateId]: draft }));
+      }
       const { error } = await (getSupabaseClient().rpc as any)(
         "auth_update_pending_member_draft",
         {
           p_society_id: society.id,
           p_candidate_id: candidateId,
-          p_draft: presidentDrafts[candidateId] ?? {}
+          p_draft: draft
         }
       );
       if (error) throw error;
@@ -2045,7 +2157,17 @@ export default function ClanoviPage() {
             </p>
           ) : (
             <div className="members-pending-list">
-              {pendingImports.map((candidate) => (
+              {pendingImports.map((candidate) => {
+                const savedDraft = candidate.draft ?? candidate.profile;
+                const isMinorCandidate = Boolean(savedDraft.is_minor_member);
+                const savedGuardian = savedDraft.guardian1 as
+                  | Record<string, unknown>
+                  | undefined;
+                const savedGuardianEmail = String(savedGuardian?.email ?? "").trim();
+                const guardianLinked = isMinorCandidate && isValidEmail(savedGuardianEmail);
+                const memberInvitationBlocked = isMinorCandidate && !guardianLinked;
+
+                return (
                 <article key={candidate.id} className="members-pending-row">
                   <div>
                     <strong>{candidate.profile.first_name} {candidate.profile.last_name}</strong>
@@ -2058,7 +2180,10 @@ export default function ClanoviPage() {
                       </span>
                       <button
                         className="button button-secondary members-send-invitation"
-                        disabled={sendingInvitationId === `${candidate.id}:MEMBER`}
+                        disabled={
+                          memberInvitationBlocked ||
+                          sendingInvitationId === `${candidate.id}:MEMBER`
+                        }
                         type="button"
                         onClick={() => void handleSendDataInvitation(candidate.id, "MEMBER")}
                       >
@@ -2068,7 +2193,10 @@ export default function ClanoviPage() {
                       </button>
                       <button
                         className="button button-secondary members-send-invitation members-test-link-button"
-                        disabled={creatingTestLinkId === `${candidate.id}:MEMBER`}
+                        disabled={
+                          memberInvitationBlocked ||
+                          creatingTestLinkId === `${candidate.id}:MEMBER`
+                        }
                         type="button"
                         onClick={() => void handleCreateLocalTestLink(candidate.id, "MEMBER")}
                       >
@@ -2076,41 +2204,56 @@ export default function ClanoviPage() {
                           ? "Pravljenje..."
                           : "Kopiraj test link člana"}
                       </button>
-                      <label className="members-guardian-email">
-                        Email roditelja/staratelja
-                        <input
-                          className="input"
-                          type="email"
-                          value={pendingGuardianEmails[candidate.id] ?? ""}
-                          onChange={(event) => setPendingGuardianEmails((emails) => ({
-                            ...emails,
-                            [candidate.id]: event.target.value
-                          }))}
-                        />
-                      </label>
-                      <span className={`members-invitation-status ${candidate.guardian_invitation_status?.toLowerCase() ?? "not-sent"}`}>
-                        Roditelj: {getInvitationStatusLabel(candidate.guardian_invitation_status)}
-                      </span>
-                      <button
-                        className="button button-secondary members-send-invitation"
-                        disabled={sendingInvitationId === `${candidate.id}:GUARDIAN`}
-                        type="button"
-                        onClick={() => void handleSendDataInvitation(candidate.id, "GUARDIAN")}
-                      >
-                        {sendingInvitationId === `${candidate.id}:GUARDIAN`
-                          ? "Slanje..."
-                          : candidate.guardian_invitation_status ? "Novi link roditelju" : "Pošalji roditelju"}
-                      </button>
-                      <button
-                        className="button button-secondary members-send-invitation members-test-link-button"
-                        disabled={creatingTestLinkId === `${candidate.id}:GUARDIAN`}
-                        type="button"
-                        onClick={() => void handleCreateLocalTestLink(candidate.id, "GUARDIAN")}
-                      >
-                        {creatingTestLinkId === `${candidate.id}:GUARDIAN`
-                          ? "Pravljenje..."
-                          : "Kopiraj test link roditelja"}
-                      </button>
+                      {isMinorCandidate ? (
+                        <>
+                          <span className={`members-invitation-status ${guardianLinked ? "submitted" : "not-sent"}`}>
+                            {guardianLinked
+                              ? `Povezan roditelj: ${savedGuardianEmail}`
+                              : "Roditelj nije povezan"}
+                          </span>
+                          <button
+                            className="button button-secondary members-send-invitation"
+                            type="button"
+                            onClick={() => handleOpenPendingEditor(candidate)}
+                          >
+                            {guardianLinked ? "Izmeni vezu" : "Poveži roditelja"}
+                          </button>
+                          <span className={`members-invitation-status ${candidate.guardian_invitation_status?.toLowerCase() ?? "not-sent"}`}>
+                            Roditelj: {getInvitationStatusLabel(candidate.guardian_invitation_status)}
+                          </span>
+                          <button
+                            className="button button-secondary members-send-invitation"
+                            disabled={
+                              !guardianLinked ||
+                              sendingInvitationId === `${candidate.id}:GUARDIAN`
+                            }
+                            type="button"
+                            onClick={() => void handleSendDataInvitation(candidate.id, "GUARDIAN")}
+                          >
+                            {sendingInvitationId === `${candidate.id}:GUARDIAN`
+                              ? "Slanje..."
+                              : candidate.guardian_invitation_status ? "Novi link roditelju" : "Pošalji roditelju"}
+                          </button>
+                          <button
+                            className="button button-secondary members-send-invitation members-test-link-button"
+                            disabled={
+                              !guardianLinked ||
+                              creatingTestLinkId === `${candidate.id}:GUARDIAN`
+                            }
+                            type="button"
+                            onClick={() => void handleCreateLocalTestLink(candidate.id, "GUARDIAN")}
+                          >
+                            {creatingTestLinkId === `${candidate.id}:GUARDIAN`
+                              ? "Pravljenje..."
+                              : "Kopiraj test link roditelja"}
+                          </button>
+                        </>
+                      ) : (
+                        <small>
+                          Za roditeljski poziv prvo označite kandidata kao maloletnog i
+                          povežite roditelja kroz „Dopuni podatke“.
+                        </small>
+                      )}
                     </div>
                     {localTestLinks[`${candidate.id}:MEMBER`] && (
                       <label className="members-local-test-link">
@@ -2238,16 +2381,28 @@ export default function ClanoviPage() {
                                 <input
                                   className="input"
                                   type={field === "email" ? "email" : field === "phone" ? "tel" : "text"}
+                                  readOnly={
+                                    field !== "email" &&
+                                    pendingGuardianLookups[candidate.id]?.status === "found"
+                                  }
                                   value={String(
                                     (presidentDrafts[candidate.id]?.guardian1 as Record<string, unknown> | undefined)?.[field] ?? ""
                                   )}
                                   onChange={(event) => handlePendingGuardianChange(
                                     candidate.id, field, event.target.value
                                   )}
+                                  onBlur={
+                                    field === "email"
+                                      ? () => void handlePendingGuardianEmailBlur(candidate.id)
+                                      : undefined
+                                  }
                                 />
                               </label>
                             ))}
                           </div>
+                          {pendingGuardianLookups[candidate.id]?.message && (
+                            <p>{pendingGuardianLookups[candidate.id]?.message}</p>
+                          )}
                         </>
                       )}
                       <div className="members-consent-fields">
@@ -2293,7 +2448,8 @@ export default function ClanoviPage() {
                     </section>
                   )}
                 </article>
-              ))}
+                );
+              })}
             </div>
           )}
         </section>

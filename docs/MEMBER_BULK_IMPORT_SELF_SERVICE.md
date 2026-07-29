@@ -38,6 +38,13 @@ Kandidat ostaje `PENDING` dok ga predsednik ne potvrdi ili odbaci.
 
 * Za maloletnika mogu postojati dva odvojena poziva: `MEMBER` za dete i
   `GUARDIAN` za roditelja/staratelja.
+* Predsednik pre pravljenja bilo kog poziva za maloletnika mora da ga označi
+  kao maloletnog, pronađe već unetog roditelja/staratelja po emailu i sačuva
+  vezu.
+* Roditeljski email se uzima iz sačuvane veze i ne može se proizvoljno promeniti
+  prilikom slanja poziva.
+* Ako roditelj još nije među osobama iz masovnog unosa, predsednik prvo mora da
+  ga unese, pa tek onda da ga poveže sa kandidatom.
 * Oba poziva rade nad istim kandidatom i zajedničkim nacrtom, pa se već sačuvani
   podaci ne unose ponovo.
 * Dete sa navršenih 12 godina sme da dopunjava sve svoje lične podatke,

@@ -264,4 +264,6 @@ Konačni izveštaj sadrži:
 
 ## Status odobrenja
 
-Plan je pripremljen, ali još nije odobren za potpuno izvršavanje.
+Plan je odobren 29.07.2026, nakon implementacije i funkcionalne potvrde
+obaveznog povezivanja maloletnog kandidata sa već unetim roditeljem/starateljem
+pre pravljenja poziva. Odobreni kontinuirani ciklus testiranja može da počne.
