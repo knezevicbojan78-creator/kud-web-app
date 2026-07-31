@@ -20,6 +20,27 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const [societies, setSocieties] = useState<ApplicationMembership[]>([]);
   const [selectedSocietyId, setSelectedSocietyId] = useState("");
   const [isSwitchingSociety, setIsSwitchingSociety] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+  }, [pathname]);
+
+  useEffect(() => {
+    if (!isMobileMenuOpen) return;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setIsMobileMenuOpen(false);
+    };
+    window.addEventListener("keydown", closeOnEscape);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [isMobileMenuOpen]);
 
   useEffect(() => {
     let active = true;
@@ -153,7 +174,18 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="app-shell">
-      <aside className="sidebar" aria-label="Glavni meni">
+      <button
+        aria-label="Zatvori glavni meni"
+        className={isMobileMenuOpen ? "menu-backdrop open" : "menu-backdrop"}
+        onClick={() => setIsMobileMenuOpen(false)}
+        tabIndex={isMobileMenuOpen ? 0 : -1}
+        type="button"
+      />
+      <aside
+        className={isMobileMenuOpen ? "sidebar open" : "sidebar"}
+        aria-label="Glavni meni"
+        id="main-navigation"
+      >
         <div className="sidebar-title">FOLKLORAŠ</div>
 
         <nav className="menu">
@@ -164,6 +196,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               }
               href={item.href}
               key={item.href}
+              onClick={() => setIsMobileMenuOpen(false)}
             >
               {item.label}
             </Link>
@@ -173,7 +206,19 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
       <div className="content-shell">
         <header className="top-header">
-          <div className="header-brand">{organizationName}</div>
+          <div className="header-main">
+            <button
+              aria-controls="main-navigation"
+              aria-expanded={isMobileMenuOpen}
+              aria-label="Otvori glavni meni"
+              className="mobile-menu-button"
+              onClick={() => setIsMobileMenuOpen(true)}
+              type="button"
+            >
+              <span aria-hidden="true">☰</span>
+            </button>
+            <div className="header-brand">{organizationName}</div>
+          </div>
 
           <div className="header-actions">
             {societies.length > 1 ? (
