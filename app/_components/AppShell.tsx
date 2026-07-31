@@ -217,6 +217,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             >
               <span aria-hidden="true">☰</span>
             </button>
+            <span className="mobile-role-name">Uloga: {role}</span>
+            <button
+              className="button button-primary mobile-sign-out"
+              onClick={signOut}
+              type="button"
+            >
+              Odjava
+            </button>
             <div className="header-brand">{organizationName}</div>
           </div>
 
@@ -237,9 +245,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 </select>
               </label>
             ) : null}
-            <span className="organization-name">Uloga: {role}</span>
+            <span className="organization-name desktop-role-name">Uloga: {role}</span>
             <button
-              className="button button-primary"
+              className="button button-primary desktop-sign-out"
               onClick={signOut}
               type="button"
             >
