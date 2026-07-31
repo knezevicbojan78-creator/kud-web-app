@@ -1,21 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
-import {
-  getSupabaseClient,
-  type PresidentRegistration
-} from "../../_lib/supabaseClient";
+import { usePresidentRequests } from "../../_hooks/usePresidentRequests";
 
-type RejectedRegistration = Pick<
-  PresidentRegistration,
-  | "id"
-  | "societyName"
-  | "city"
-  | "PIB"
-  | "registrationNumber"
-  | "createdAt"
->;
+const rejectedSearchFields = [
+  "societyName", "city", "PIB", "registrationNumber"
+] as const;
 
 function formatDate(value: string) {
   return new Intl.DateTimeFormat("sr-RS", {
@@ -25,59 +15,12 @@ function formatDate(value: string) {
 }
 
 export default function OdbijeniZahteviPage() {
-  const [requests, setRequests] = useState<RejectedRegistration[]>([]);
-  const [query, setQuery] = useState("");
-  const [isLoading, setIsLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState("");
-
-  useEffect(() => {
-    async function loadRejectedRequests() {
-      setIsLoading(true);
-      setErrorMessage("");
-
-      try {
-        const supabase = getSupabaseClient();
-        const { data, error } = await supabase.rpc(
-          "master_admin_get_president_requests",
-          { p_status: "REJECTED" }
-        );
-
-        if (error) {
-          setErrorMessage("Odbijeni zahtevi nisu učitani.");
-          setRequests([]);
-          return;
-        }
-
-        setRequests(data ?? []);
-      } catch (error) {
-        setErrorMessage(
-          error instanceof Error
-            ?error.message
-            : "Došlo je do greške pri učitavanju zahteva."
-        );
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    loadRejectedRequests();
-  }, []);
-
-  const visibleRequests = useMemo(() => {
-    const normalizedQuery = query.trim().toLocaleLowerCase("sr-Latn");
-    if (!normalizedQuery) return requests;
-    return requests.filter((request) =>
-      [
-        request.societyName,
-        request.city,
-        request.PIB,
-        request.registrationNumber
-      ]
-        .join(" ")
-        .toLocaleLowerCase("sr-Latn")
-        .includes(normalizedQuery)
-    );
-  }, [query, requests]);
+  const { requests, visibleRequests, query, setQuery, isLoading, errorMessage } =
+    usePresidentRequests({
+      status: "REJECTED",
+      searchFields: [...rejectedSearchFields],
+      loadErrorMessage: "Odbijeni zahtevi nisu učitani."
+    });
 
   return (
     <>

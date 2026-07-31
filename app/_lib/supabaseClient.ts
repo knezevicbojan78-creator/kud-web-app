@@ -338,6 +338,7 @@ export type SocietyMember = {
   funkcija: string | null;
   membership_fee_required: boolean;
   membership_fee_amount: number | null;
+  membership_fee_mode: "STANDARD" | "CUSTOM" | "EXEMPT";
   created_at: string | null;
   updated_at: string | null;
 };

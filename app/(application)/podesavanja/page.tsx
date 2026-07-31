@@ -10,6 +10,7 @@ import {
   type PermissionSettingsData
 } from "../../_lib/supabaseClient";
 import GmailConnectionPanel from "../../_components/GmailConnectionPanel";
+import { MembershipFeeFields } from "../../_components/MembershipFeeFields";
 
 const months = [
   "Januar", "Februar", "Mart", "April", "Maj", "Jun",
@@ -828,25 +829,19 @@ export default function PodesavanjaPage() {
             <button className="button button-secondary" onClick={() => setEditingMember(null)} type="button">ZATVORI</button>
           </header>
           {error && <p className="alert alert-error">{error}</p>}
-          <label className="form-field">
-            <span>Režim članarine</span>
-            <select className="input" value={memberMode}
-              onChange={(event) => setMemberMode(event.target.value as "STANDARD" | "CUSTOM" | "EXEMPT")}>
-              <option value="STANDARD">Standardna članarina</option>
-              <option value="CUSTOM">Posebna članarina</option>
-              <option value="EXEMPT">Oslobođen članarine</option>
-            </select>
-          </label>
-          {memberMode === "CUSTOM" && <label className="form-field">
-            <span>Poseban mesečni iznos ({settings.currency})</span>
-            <input className="input" min="0.01" step="0.01" type="number"
-              value={customAmount} onChange={(event) => setCustomAmount(event.target.value)} />
-          </label>}
-          <label className="form-field">
-            <span>Razlog promene *</span>
-            <textarea className="input" rows={3} value={memberReason}
-              onChange={(event) => setMemberReason(event.target.value)} />
-          </label>
+          <MembershipFeeFields
+            mode={memberMode}
+            customAmount={customAmount}
+            reason={memberReason}
+            standardAmount={settings.standard_amount}
+            currency={settings.currency}
+            onModeChange={(mode) => {
+              setMemberMode(mode);
+              if (mode === "STANDARD") setMemberReason("Vraćanje na standardnu članarinu");
+            }}
+            onCustomAmountChange={setCustomAmount}
+            onReasonChange={setMemberReason}
+          />
           <p className="settings-effective">Nova vrednost važi od {displayDate(settings.effective_from)}</p>
           <div className="header-actions">
             <button className="button button-secondary" onClick={() => setEditingMember(null)} type="button">OTKAŽI</button>

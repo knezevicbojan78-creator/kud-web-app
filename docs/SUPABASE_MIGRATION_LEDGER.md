@@ -19,6 +19,16 @@ Za novu promenu redosled je:
 4. pokrenuti dijagnostiku;
 5. promeniti status u `applied`, upisati datum i rezultat u radni dnevnik.
 
-Komanda `npm run check:migrations` proverava da li su zapisi ispravni i da li
-navedeni SQL fajlovi postoje. Evidencija je uvedena od ovog datuma i dopunjava
-se postepeno; stariji fajlovi ostaju opisani u postojećem projektnom dnevniku.
+Komanda `npm run check:migrations` proverava da li su zapisi ispravni, da li
+navedeni SQL i dijagnostički fajlovi postoje i da li u `supabase` folderu ima
+produkcijskih SQL kandidata bez ledger zapisa.
+
+Neispravan postojeći zapis prekida proveru. Neevidentirani produkcioni SQL
+fajlovi trenutno daju upozorenje, ali ne prekidaju build, jer je evidencija
+uvedena naknadno i stariji fajlovi se klasifikuju postepeno. Dijagnostičke,
+DEV, testne cleanup/reset/restore skripte nisu produkcioni kandidati.
+
+Upozorenje ne treba ignorisati za novu promenu: svaki novi produkcioni SQL mora
+odmah dobiti `prepared`, `applied` ili `retired` zapis. Postojeći istorijski
+dug treba smanjivati tek nakon poređenja sa aktivnom bazom; status starog fajla
+ne sme se nagađati samo na osnovu njegovog prisustva u repozitorijumu.

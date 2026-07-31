@@ -58,9 +58,6 @@ export default function PrisustvoPage() {
   const [activeView, setActiveView] = useState<"CURRENT" | "HISTORY">("CURRENT");
   const [role, setRole] = useState<ApplicationRole | null>(null);
   const [isGuardian, setIsGuardian] = useState(false);
-  const [actorSocietyMemberId, setActorSocietyMemberId] = useState<string | null>(
-    null
-  );
   const [society, setSociety] = useState<Society | null>(null);
   const [sections, setSections] = useState<AttendanceSection[]>([]);
   const [selectedSectionId, setSelectedSectionId] = useState("");
@@ -193,7 +190,6 @@ export default function PrisustvoPage() {
           });
         if (workspaceError || !workspace) throw workspaceError ?? new Error("Društvo nije dostupno.");
         const activeSociety = workspace.society;
-        setActorSocietyMemberId(workspace.actor_society_member_id ?? null);
         setSociety(activeSociety);
         if (!activeSociety) {
           setSections([]);

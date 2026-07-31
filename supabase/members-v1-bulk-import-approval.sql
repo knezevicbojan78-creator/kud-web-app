@@ -224,7 +224,9 @@ begin
           ('gender', nullif(coalesce(data_draft.draft, candidate.profile) ->> 'gender', '') is null),
           ('birth_date', nullif(coalesce(data_draft.draft, candidate.profile) ->> 'birth_date', '') is null),
           ('email', nullif(coalesce(data_draft.draft, candidate.profile) ->> 'email', '') is null),
-          ('phone', nullif(coalesce(data_draft.draft, candidate.profile) ->> 'phone', '') is null),
+          ('phone',
+            not coalesce((coalesce(data_draft.draft, candidate.profile) ->> 'is_minor_member')::boolean, false)
+            and nullif(coalesce(data_draft.draft, candidate.profile) ->> 'phone', '') is null),
           ('address', nullif(coalesce(data_draft.draft, candidate.profile) ->> 'address', '') is null),
           ('city', nullif(coalesce(data_draft.draft, candidate.profile) ->> 'city', '') is null),
           ('postal_code', nullif(coalesce(data_draft.draft, candidate.profile) ->> 'postal_code', '') is null),
@@ -324,7 +326,10 @@ begin
      or nullif(btrim(v_profile ->> 'gender'), '') is null
      or nullif(v_profile ->> 'birth_date', '') is null
      or nullif(lower(btrim(v_profile ->> 'email')), '') is null
-     or nullif(btrim(v_profile ->> 'phone'), '') is null
+     or (
+       not coalesce((v_profile ->> 'is_minor_member')::boolean, false)
+       and nullif(btrim(v_profile ->> 'phone'), '') is null
+     )
      or nullif(btrim(v_profile ->> 'address'), '') is null
      or nullif(btrim(v_profile ->> 'city'), '') is null
      or nullif(btrim(v_profile ->> 'postal_code'), '') is null

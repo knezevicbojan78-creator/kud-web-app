@@ -19,6 +19,12 @@ type GoogleTokenResponse = {
   error_description?: string;
 };
 
+type GmailSendResult = {
+  id?: string;
+  threadId?: string;
+  error?: { message?: string };
+};
+
 type GoogleUserInfo = {
   sub?: string;
   email?: string;
@@ -148,4 +154,76 @@ export async function revokeGoogleToken(token?: string | null) {
   } catch {
     // Povezivanje ili odjava ostaju uspešni i ako Google trenutno ne odgovori.
   }
+}
+
+function encodeHeader(value: string) {
+  return `=?UTF-8?B?${Buffer.from(value, "utf8").toString("base64")}?=`;
+}
+
+function base64Url(value: string) {
+  return Buffer.from(value, "utf8").toString("base64url");
+}
+
+export async function refreshGoogleAccessToken(refreshToken: string) {
+  const response = await fetch("https://oauth2.googleapis.com/token", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({
+      refresh_token: refreshToken,
+      client_id: requireEnvironment("GOOGLE_GMAIL_CLIENT_ID"),
+      client_secret: requireEnvironment("GOOGLE_GMAIL_CLIENT_SECRET"),
+      grant_type: "refresh_token"
+    })
+  });
+  const data = await response.json() as GoogleTokenResponse;
+  if (!response.ok || !data.access_token) {
+    throw new Error(data.error_description || "Google dozvolu za slanje treba obnoviti.");
+  }
+  return data.access_token;
+}
+
+export async function sendGmailMessage(input: {
+  refreshToken: string;
+  fromEmail: string;
+  toEmail: string;
+  subject: string;
+  html: string;
+  text: string;
+}) {
+  const accessToken = await refreshGoogleAccessToken(input.refreshToken);
+  const boundary = `folkloras_${randomBytes(12).toString("hex")}`;
+  const raw = [
+    `From: ${input.fromEmail}`,
+    `To: ${input.toEmail}`,
+    `Subject: ${encodeHeader(input.subject)}`,
+    "MIME-Version: 1.0",
+    `Content-Type: multipart/alternative; boundary="${boundary}"`,
+    "",
+    `--${boundary}`,
+    'Content-Type: text/plain; charset="UTF-8"',
+    "Content-Transfer-Encoding: 8bit",
+    "",
+    input.text,
+    "",
+    `--${boundary}`,
+    'Content-Type: text/html; charset="UTF-8"',
+    "Content-Transfer-Encoding: 8bit",
+    "",
+    input.html,
+    "",
+    `--${boundary}--`
+  ].join("\r\n");
+  const response = await fetch("https://gmail.googleapis.com/gmail/v1/users/me/messages/send", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ raw: base64Url(raw) })
+  });
+  const data = await response.json() as GmailSendResult;
+  if (!response.ok || !data.id) {
+    throw new Error(data.error?.message || "Gmail nije prihvatio poruku.");
+  }
+  return { messageId: data.id, threadId: data.threadId ?? null };
 }

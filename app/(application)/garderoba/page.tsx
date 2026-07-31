@@ -37,9 +37,19 @@ const loanStatusLabels: Record<string, string> = {
 };
 
 function errorMessage(error: unknown) {
+  if (
+    error instanceof TypeError &&
+    error.message.toLowerCase().includes("failed to fetch")
+  ) {
+    return "Garderoba trenutno nije dostupna. Proverite vezu i pokušajte ponovo.";
+  }
   if (error instanceof Error) return error.message;
   if (typeof error === "object" && error && "message" in error) return String(error.message);
   return "Akcija nije uspela.";
+}
+function isFetchError(error: unknown) {
+  return error instanceof TypeError &&
+    error.message.toLowerCase().includes("failed to fetch");
 }
 function date(value: string | null) {
   if (!value) return "Bez roka";
@@ -116,7 +126,7 @@ export default function GarderobaPage() {
     kit_ids: [] as string[]
   });
 
-  async function load() {
+  async function load(attempt = 0) {
     setIsLoading(true);
     setError("");
     try {
@@ -153,6 +163,10 @@ export default function GarderobaPage() {
         category_id: current.category_id || data.categories.find((category) => category.is_active)?.id || ""
       }));
     } catch (loadError) {
+      if (isFetchError(loadError) && attempt === 0) {
+        await load(1);
+        return;
+      }
       setError(errorMessage(loadError));
     } finally {
       setIsLoading(false);
@@ -435,7 +449,14 @@ export default function GarderobaPage() {
   }
 
   if (isLoading) return <section className="card dashboard-card">Učitavanje garderobe...</section>;
-  if (!workspace) return <section className="card dashboard-card"><p className="alert alert-error">{error}</p></section>;
+  if (!workspace) return (
+    <section className="card dashboard-card">
+      <p className="alert alert-error">{error}</p>
+      <button className="button button-secondary" type="button" onClick={() => void load()}>
+        Pokušaj ponovo
+      </button>
+    </section>
+  );
 
   const selectedCategory = workspace.categories.find((category) => category.id === itemForm.category_id);
 

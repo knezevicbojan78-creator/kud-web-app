@@ -10,13 +10,11 @@ import {
 } from "../../_components/UF_MEMBER_FORM";
 import {
   getSupabaseClient,
-  type Person,
   type RepertoireItem,
   type Section,
   type SectionAccompanist,
   type SectionRoleAssignment,
-  type Society,
-  type SocietyMember
+  type Society
 } from "../../_lib/supabaseClient";
 import type { ApplicationRole } from "../../_lib/roles";
 
@@ -106,20 +104,8 @@ type ConfirmationState =
   | { type: "section"; section: SectionSummary }
   | null;
 
-function normalizeSearch(value: string) {
-  return value.trim().toLowerCase();
-}
-
-function getPersonName(person: Pick<Person, "first_name" | "last_name">) {
-  return `${person.first_name ?? ""} ${person.last_name ?? ""}`.trim();
-}
-
 function formatMemberCandidate(candidate: MemberCandidate) {
   return [candidate.name, candidate.email, candidate.phone].filter(Boolean).join(" \u2014 ");
-}
-
-function getCurrentDate() {
-  return new Date().toISOString().slice(0, 10);
 }
 
 function getErrorMessage(error: unknown) {
@@ -132,26 +118,6 @@ function getErrorMessage(error: unknown) {
   }
 
   return "Akcija trenutno nije uspela. Proverite podatke i pokušajte ponovo.";
-}
-
-function canManageSection(role: ApplicationRole) {
-  return role === "Predsednik";
-}
-
-function canManageMembers(role: ApplicationRole, selectedSection: SectionSummary | null) {
-  if (role === "Predsednik") {
-    return true;
-  }
-
-  return (
-    role === "UR" &&
-    Boolean(
-      selectedSection?.roles.some(
-        (sectionRole) =>
-          sectionRole.role === "UR" && sectionRole.status === "ACTIVE"
-      )
-    )
-  );
 }
 
 function createInitialMemberFormValues(): UFMemberFormValues {
@@ -202,9 +168,6 @@ function getValueForInput(value: string | null) {
 export default function MojeSekcijePage() {
   const [role, setRole] = useState<ApplicationRole>("Predsednik");
   const [isGuardian, setIsGuardian] = useState(false);
-  const [actorSocietyMemberId, setActorSocietyMemberId] = useState<string | null>(
-    null
-  );
   const [society, setSociety] = useState<Society | null>(null);
   const [workspaceAccess, setWorkspaceAccess] = useState({
     can_create: false,
@@ -349,7 +312,6 @@ export default function MojeSekcijePage() {
       if (workspaceError || !workspace) throw workspaceError ?? new Error("Društvo nije dostupno.");
 
       const activeSociety = workspace.society;
-      setActorSocietyMemberId(workspace.actor_society_member_id ?? null);
       setWorkspaceAccess(workspace.access);
       setSociety(activeSociety);
 

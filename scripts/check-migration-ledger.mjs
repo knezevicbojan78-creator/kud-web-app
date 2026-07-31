@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 
 const allowedStatuses = new Set(["applied", "prepared", "retired"]);
 const ledger = JSON.parse(
@@ -6,6 +6,17 @@ const ledger = JSON.parse(
 );
 const errors = [];
 const seen = new Set();
+
+function isMigrationCandidate(file) {
+  return file.endsWith(".sql") &&
+    !file.endsWith("-diagnostic.sql") &&
+    !file.startsWith("cleanup-") &&
+    !file.startsWith("dev-") &&
+    !file.startsWith("reset-") &&
+    !file.startsWith("restore-") &&
+    !file.includes("-dev-") &&
+    !file.endsWith("-dev-policy.sql");
+}
 
 for (const entry of ledger.entries ?? []) {
   if (!entry.file || seen.has(entry.file)) {
@@ -39,4 +50,32 @@ if (errors.length) {
   process.exit(1);
 }
 
-console.log(`Evidencija promena baze je ispravna (${seen.size} zapisa).`);
+const migrationCandidates = readdirSync(
+  new URL("../supabase/", import.meta.url),
+  { withFileTypes: true }
+)
+  .filter((entry) => entry.isFile() && isMigrationCandidate(entry.name))
+  .map((entry) => entry.name)
+  .sort();
+const untrackedMigrations = migrationCandidates.filter((file) => !seen.has(file));
+
+console.log(
+  `Evidencija promena baze je ispravna (${seen.size} zapisa; ` +
+  `${migrationCandidates.length} produkcionih SQL kandidata).`
+);
+
+if (untrackedMigrations.length) {
+  const visibleFiles = untrackedMigrations.slice(0, 12);
+  console.warn(
+    `Upozorenje: ${untrackedMigrations.length} produkcionih SQL fajlova nije ` +
+    "evidentirano u migration ledgeru:"
+  );
+  for (const file of visibleFiles) console.warn(`- ${file}`);
+  if (untrackedMigrations.length > visibleFiles.length) {
+    console.warn(`- ... i još ${untrackedMigrations.length - visibleFiles.length} fajlova`);
+  }
+  console.warn(
+    "Istorijski fajlovi mogu se evidentirati postepeno; svaka nova migracija mora " +
+    "odmah dobiti ledger zapis."
+  );
+}

@@ -52,7 +52,15 @@ export async function POST(request: NextRequest) {
       }
     );
     if (error) throw error;
-    if (data?.previous_refresh_token && data.previous_refresh_token !== token.refresh_token) {
+    // Google can invalidate the whole token family when an older refresh token
+    // for the same account is revoked. The database row has already been
+    // replaced, so only revoke a previous token when the connected account
+    // itself changed.
+    if (
+      data?.previous_refresh_token &&
+      data.previous_refresh_token !== token.refresh_token &&
+      data.previous_email?.toLowerCase() !== googleAccount.email.toLowerCase()
+    ) {
       await revokeGoogleToken(data.previous_refresh_token);
     }
     return NextResponse.json({

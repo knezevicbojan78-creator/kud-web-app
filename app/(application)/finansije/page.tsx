@@ -260,6 +260,8 @@ export default function FinansijePage() {
     try {
       const supabase = getSupabaseClient();
       const { data: authData } = await supabase.auth.getUser();
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessTokenForEmail = sessionData.session?.access_token ?? null;
       const { data, error: paymentError } = await supabase.rpc("finance_record_payment", {
         p_society_id: society.id,
         p_amount: cashValue,
@@ -274,7 +276,22 @@ export default function FinansijePage() {
       });
       if (paymentError) throw paymentError;
       const payment = data as FinancePayment;
-      setMessage(`Uplata ${payment.receipt_number} je uspešno evidentirana.`);
+      let emailNote = "";
+      if (accessTokenForEmail) {
+        const emailResponse = await fetch("/api/finance/payment-confirmation", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${accessTokenForEmail}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ paymentId: payment.id })
+        });
+        const emailResult = await emailResponse.json();
+        emailNote = emailResponse.ok
+          ? ` Email potvrde: ${emailResult.sent}/${emailResult.queued} poslato.`
+          : " Uplata je sačuvana, ali potvrda emailom trenutno nije poslata.";
+      }
+      setMessage(`Uplata ${payment.receipt_number} je uspešno evidentirana.${emailNote}`);
       setIsPaymentOpen(false);
       await loadProfile(selected!.entity_type, selected!.entity_id, society, actorMemberId);
     } catch (paymentError) {

@@ -1,23 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
-import {
-  getSupabaseClient,
-  type PresidentRegistration
-} from "../../_lib/supabaseClient";
+import { useState } from "react";
+import { usePresidentRequests } from "../../_hooks/usePresidentRequests";
+import { getSupabaseClient, type PresidentRegistration } from "../../_lib/supabaseClient";
 
-type ApprovedRegistration = Pick<
-  PresidentRegistration,
-  | "id"
-  | "societyName"
-  | "city"
-  | "PIB"
-  | "registrationNumber"
-  | "approvedAt"
-  | "presidentEmail"
-  | "presidentUserId"
->;
+const approvedSearchFields = [
+  "societyName", "city", "PIB", "registrationNumber"
+] as const;
 
 function formatDate(value: string | null) {
   if (!value) {
@@ -31,63 +21,16 @@ function formatDate(value: string | null) {
 }
 
 export default function OdobreniZahteviPage() {
-  const [requests, setRequests] = useState<ApprovedRegistration[]>([]);
-  const [query, setQuery] = useState("");
-  const [isLoading, setIsLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState("");
+  const { requests, visibleRequests, query, setQuery, isLoading, errorMessage } =
+    usePresidentRequests({
+      status: "APPROVED",
+      searchFields: approvedSearchFields,
+      loadErrorMessage: "Odobreni zahtevi nisu učitani."
+    });
   const [actionMessage, setActionMessage] = useState("");
   const [sendingRequestId, setSendingRequestId] = useState("");
 
-  useEffect(() => {
-    async function loadApprovedRequests() {
-      setIsLoading(true);
-      setErrorMessage("");
-
-      try {
-        const supabase = getSupabaseClient();
-        const { data, error } = await supabase.rpc(
-          "master_admin_get_president_requests",
-          { p_status: "APPROVED" }
-        );
-
-        if (error) {
-          setErrorMessage("Odobreni zahtevi nisu učitani.");
-          setRequests([]);
-          return;
-        }
-
-        setRequests(data ?? []);
-      } catch (error) {
-        setErrorMessage(
-          error instanceof Error
-            ?error.message
-            : "Došlo je do greške pri učitavanju zahteva."
-        );
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    loadApprovedRequests();
-  }, []);
-
-  const visibleRequests = useMemo(() => {
-    const normalizedQuery = query.trim().toLocaleLowerCase("sr-Latn");
-    if (!normalizedQuery) return requests;
-    return requests.filter((request) =>
-      [
-        request.societyName,
-        request.city,
-        request.PIB,
-        request.registrationNumber
-      ]
-        .join(" ")
-        .toLocaleLowerCase("sr-Latn")
-        .includes(normalizedQuery)
-    );
-  }, [query, requests]);
-
-  async function resendActivation(request: ApprovedRegistration) {
+  async function resendActivation(request: PresidentRegistration) {
     setSendingRequestId(request.id);
     setActionMessage("");
     const callbackUrl = new URL("/auth/callback", window.location.origin);

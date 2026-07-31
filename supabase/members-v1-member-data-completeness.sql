@@ -23,7 +23,7 @@ begin
   if nullif(btrim(v_draft ->> 'first_name'), '') is null
      or nullif(btrim(v_draft ->> 'last_name'), '') is null
      or nullif(lower(btrim(v_draft ->> 'email')), '') is null
-     or nullif(btrim(v_draft ->> 'phone'), '') is null
+     or (not v_minor and nullif(btrim(v_draft ->> 'phone'), '') is null)
      or nullif(btrim(v_draft ->> 'gender'), '') is null
      or nullif(v_draft ->> 'birth_date', '') is null
      or nullif(btrim(v_draft ->> 'address'), '') is null

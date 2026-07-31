@@ -27,6 +27,10 @@ Thumbs.db
 
 # Generated local artifacts
 outputs/
+*.inspect.ndjson
+
+# Local Supabase CLI state
+supabase/.temp/
 
 # Logs
 *.log

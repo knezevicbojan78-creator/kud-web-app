@@ -1,5 +1,5 @@
 import { execFileSync } from "node:child_process";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 
 const trackedFiles = execFileSync(
   "git",
@@ -21,6 +21,7 @@ const forbiddenPaths = [
 ];
 
 for (const file of trackedFiles) {
+  if (!existsSync(file)) continue;
   if (file === ".env.example") continue;
   if (forbiddenPaths.some((pattern) => pattern.test(file))) {
     errors.push(`${file}: fajl ne treba da bude sačuvan u Git istoriji`);

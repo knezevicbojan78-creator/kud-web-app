@@ -1,24 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
-import {
-  getSupabaseClient,
-  type PresidentRegistration
-} from "../../_lib/supabaseClient";
+import { usePresidentRequests } from "../../_hooks/usePresidentRequests";
 
-type PendingRegistration = Pick<
-  PresidentRegistration,
-  | "id"
-  | "societyName"
-  | "city"
-  | "PIB"
-  | "registrationNumber"
-  | "presidentFirstName"
-  | "presidentLastName"
-  | "presidentEmail"
-  | "createdAt"
->;
+const pendingSearchFields = [
+  "societyName",
+  "city",
+  "PIB",
+  "registrationNumber",
+  "presidentFirstName",
+  "presidentLastName",
+  "presidentEmail"
+] as const;
 
 function formatDate(value: string) {
   return new Intl.DateTimeFormat("sr-RS", {
@@ -28,75 +21,13 @@ function formatDate(value: string) {
 }
 
 export default function ZahteviNaCekanjuPage() {
-  const [requests, setRequests] = useState<PendingRegistration[]>([]);
-  const [query, setQuery] = useState("");
-  const [isLoading, setIsLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState("");
-
-  useEffect(() => {
-    async function loadPendingRequests() {
-      setIsLoading(true);
-      setErrorMessage("");
-
-      try {
-        const supabase = getSupabaseClient();
-        const { data, error } = await supabase.rpc(
-          "master_admin_get_president_requests",
-          { p_status: "PENDING" }
-        );
-
-        if (error) {
-          const isRlsError =
-            error.code === "42501" ||
-            error.message.toLowerCase().includes("row-level security") ||
-            error.message.toLowerCase().includes("permission denied");
-
-          if (isRlsError) {
-            setErrorMessage("SELECT blocked by RLS policy");
-            setRequests([]);
-            return;
-          }
-
-          setErrorMessage(
-            "Zahtevi nisu učitani. Proverite Supabase RLS policy za Master admin čitanje."
-          );
-          setRequests([]);
-          return;
-        }
-
-        setRequests(data ?? []);
-      } catch (error) {
-        setErrorMessage(
-          error instanceof Error
-            ?error.message
-            : "Došlo je do greške pri učitavanju zahteva."
-        );
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    loadPendingRequests();
-  }, []);
-
-  const visibleRequests = useMemo(() => {
-    const normalizedQuery = query.trim().toLocaleLowerCase("sr-Latn");
-    if (!normalizedQuery) return requests;
-    return requests.filter((request) =>
-      [
-        request.societyName,
-        request.city,
-        request.PIB,
-        request.registrationNumber,
-        request.presidentFirstName,
-        request.presidentLastName,
-        request.presidentEmail
-      ]
-        .join(" ")
-        .toLocaleLowerCase("sr-Latn")
-        .includes(normalizedQuery)
-    );
-  }, [query, requests]);
+  const { requests, visibleRequests, query, setQuery, isLoading, errorMessage } =
+    usePresidentRequests({
+      status: "PENDING",
+      searchFields: pendingSearchFields,
+      loadErrorMessage: "Zahtevi nisu učitani. Proverite Supabase RLS policy za Master admin čitanje.",
+      rlsErrorMessage: "SELECT blocked by RLS policy"
+    });
 
   return (
     <>

@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import * as XLSX from "xlsx";
 
 import {
   UF_MEMBER_FORM,
@@ -21,6 +20,18 @@ import {
   type Society,
   type SocietyMemberFunction
 } from "../../_lib/supabaseClient";
+import {
+  isValidEmail,
+  parseBulkImportFile,
+  type BulkImportRow
+} from "../../_lib/memberBulkImport";
+import {
+  getInvitationStatusLabel,
+  getMissingPendingPersonalFields,
+  getPendingCandidateStage,
+  type PendingImportCandidate,
+  type PendingMembershipSetup
+} from "../../_lib/pendingMemberImports";
 
 type MemberListItem = {
   id: string;
@@ -36,44 +47,7 @@ type MemberListItem = {
 
 type FormMode = "create" | "edit";
 type MembersView = "members" | "bulk-import" | "pending";
-
-type BulkImportRow = {
-  rowNumber: number;
-  kind: string;
-  firstName: string;
-  lastName: string;
-  gender: string;
-  birthDate: string;
-  email: string;
-  phone: string;
-  address: string;
-  city: string;
-  postalCode: string;
-  country: string;
-  jmbg: string;
-  passportNumber: string;
-  passportExpiryDate: string;
-  errors: string[];
-  skipReason: string | null;
-};
-
-type PendingImportCandidate = {
-  id: string;
-  profile: {
-    first_name: string;
-    last_name: string;
-    email?: string | null;
-    phone?: string | null;
-  };
-  source_row: number;
-  source_file_name: string;
-  created_at: string;
-  member_invitation_status: string | null;
-  guardian_invitation_status: string | null;
-  invitation_last_saved_at: string | null;
-  draft: Record<string, unknown>;
-  missing_fields: string[];
-};
+type PendingRequestTab = "personal" | "membership" | "links";
 
 type MemberAccessRole = "president" | "ur";
 
@@ -91,29 +65,10 @@ type GuardianLookupMap = Record<
   UFMemberGuardianLookupState
 >;
 
-const protectedFunctionNames = new Set(["Predsednik"]);
 const unknownSaveErrorMessage =
   "Član trenutno nije sačuvan. Proverite podatke i pokušajte ponovo.";
 const invalidEmailMessage = "Unesite ispravnu email adresu.";
 const duplicateMemberMessage = "Ova osoba je već član ovog društva.";
-const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const pendingPersonalFields = [
-  ["first_name", "Ime", "text"],
-  ["last_name", "Prezime", "text"],
-  ["gender", "Pol", "text"],
-  ["birth_date", "Datum rođenja", "date"],
-  ["email", "Email", "email"],
-  ["phone", "Telefon", "tel"],
-  ["shoe_size", "Broj obuće", "number"],
-  ["address", "Adresa", "text"],
-  ["city", "Mesto", "text"],
-  ["postal_code", "Poštanski broj", "text"],
-  ["country", "Država", "text"],
-  ["jmbg", "JMBG", "text"],
-  ["passport_number", "Broj pasoša", "text"],
-  ["passport_expiry_date", "Važenje pasoša", "date"]
-] as const;
-
 function createInitialValues(): UFMemberFormValues {
   return {
     is_minor_member: false,
@@ -137,6 +92,8 @@ function createInitialValues(): UFMemberFormValues {
     start_date: "",
     membership_fee_required: true,
     membership_fee_amount: "0",
+    membership_fee_mode: "STANDARD",
+    membership_fee_reason: "",
     guardian1: {
       first_name: "",
       last_name: "",
@@ -167,6 +124,9 @@ function normalizeEmail(value: string) {
 
 function parseSerbianDate(value: string) {
   const normalized = value.trim();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(normalized)) {
+    return normalized;
+  }
   const match =
     normalized.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})\.?$/) ??
     normalized.match(/^(\d{2})(\d{2})(\d{4})$/);
@@ -185,134 +145,6 @@ function parseSerbianDate(value: string) {
 
 function normalizeSearch(value: string) {
   return value.trim().toLowerCase();
-}
-
-function isValidEmail(value: string) {
-  return emailPattern.test(value.trim());
-}
-
-function excelValueToText(value: unknown) {
-  return value == null ? "" : String(value).trim();
-}
-
-function excelValueToIsoDate(value: unknown) {
-  if (value instanceof Date && !Number.isNaN(value.getTime())) {
-    return [
-      value.getFullYear(),
-      String(value.getMonth() + 1).padStart(2, "0"),
-      String(value.getDate()).padStart(2, "0")
-    ].join("-");
-  }
-
-  if (typeof value === "number") {
-    const parsed = XLSX.SSF.parse_date_code(value);
-    if (parsed) {
-      return `${parsed.y}-${String(parsed.m).padStart(2, "0")}-${String(parsed.d).padStart(2, "0")}`;
-    }
-  }
-
-  const text = excelValueToText(value);
-  if (!text) return "";
-  const localMatch = text.match(/^(\d{1,2})[./-](\d{1,2})[./-](\d{4})$/);
-  if (localMatch) {
-    return `${localMatch[3]}-${localMatch[2].padStart(2, "0")}-${localMatch[1].padStart(2, "0")}`;
-  }
-  return /^\d{4}-\d{2}-\d{2}$/.test(text) ? text : "";
-}
-
-function parseBulkImportFile(workbook: XLSX.WorkBook) {
-  const sheet = workbook.Sheets.OSOBE;
-  if (!sheet) {
-    throw new Error("Excel fajl nema obavezni list „OSOBE“.");
-  }
-
-  const rows = XLSX.utils.sheet_to_json<unknown[]>(sheet, {
-    header: 1,
-    defval: "",
-    raw: true
-  });
-  const headers = (rows[4] ?? []).map((value) =>
-    excelValueToText(value).replace(/\s*\*$/, "")
-  );
-  const expected = [
-    "Vrsta osobe", "Ime", "Prezime", "Pol", "Datum rođenja", "Email",
-    "Telefon", "Adresa", "Mesto", "Poštanski broj", "Država", "JMBG",
-    "Broj pasoša", "Datum važenja pasoša", "PROVERA"
-  ];
-  if (expected.some((header, index) => headers[index] !== header)) {
-    throw new Error(
-      "Kolone u listu „OSOBE“ nisu iste kao u preuzetom šablonu."
-    );
-  }
-
-  const parsedRows: BulkImportRow[] = [];
-  for (let index = 5; index < rows.length; index += 1) {
-    const row = rows[index] ?? [];
-    if (row.slice(0, 14).every((value) => excelValueToText(value) === "")) continue;
-
-    const item: BulkImportRow = {
-      rowNumber: index + 1,
-      kind: excelValueToText(row[0]),
-      firstName: excelValueToText(row[1]),
-      lastName: excelValueToText(row[2]),
-      gender: excelValueToText(row[3]),
-      birthDate: excelValueToIsoDate(row[4]),
-      email: normalizeEmail(excelValueToText(row[5])),
-      phone: excelValueToText(row[6]),
-      address: excelValueToText(row[7]),
-      city: excelValueToText(row[8]),
-      postalCode: excelValueToText(row[9]),
-      country: excelValueToText(row[10]) || "Srbija",
-      jmbg: excelValueToText(row[11]),
-      passportNumber: excelValueToText(row[12]),
-      passportExpiryDate: excelValueToIsoDate(row[13]),
-      errors: [],
-      skipReason: null
-    };
-
-    if (!["Član", "Roditelj/staratelj"].includes(item.kind)) {
-      item.errors.push("Vrsta osobe mora biti „Član“ ili „Roditelj/staratelj“.");
-    }
-    if (!item.firstName) item.errors.push("Nedostaje ime.");
-    if (!item.lastName) item.errors.push("Nedostaje prezime.");
-    if (!item.email) item.errors.push("Nedostaje email.");
-    if (item.gender && !["Muško", "Žensko"].includes(item.gender)) {
-      item.errors.push("Pol mora biti „Muško“ ili „Žensko“.");
-    }
-    if (row[4] && !item.birthDate) item.errors.push("Datum rođenja nije ispravan.");
-    if (item.email && !isValidEmail(item.email)) item.errors.push("Email nije ispravan.");
-    if (item.jmbg && !/^\d{13}$/.test(item.jmbg)) item.errors.push("JMBG mora imati 13 cifara.");
-    if (Boolean(item.passportNumber) !== Boolean(item.passportExpiryDate)) {
-      item.errors.push("Broj pasoša i datum važenja moraju biti uneti zajedno.");
-    }
-    if (row[13] && !item.passportExpiryDate) {
-      item.errors.push("Datum važenja pasoša nije ispravan.");
-    }
-    parsedRows.push(item);
-  }
-
-  const emailCounts = new Map<string, number>();
-  parsedRows.forEach((row) => {
-    if (row.email) emailCounts.set(row.email, (emailCounts.get(row.email) ?? 0) + 1);
-  });
-  parsedRows.forEach((row) => {
-    if (row.email && (emailCounts.get(row.email) ?? 0) > 1) {
-      row.errors.push("Email se ponavlja u fajlu.");
-    }
-  });
-  return parsedRows;
-}
-
-function getInvitationStatusLabel(status: string | null) {
-  switch (status) {
-    case "INVITED": return "Link poslat";
-    case "OPENED": return "Link otvoren";
-    case "IN_PROGRESS": return "Dopuna u toku";
-    case "SUBMITTED": return "Podaci poslati";
-    case "EXPIRED": return "Link istekao";
-    case "CANCELLED": return "Link otkazan";
-    default: return "Link nije poslat";
-  }
 }
 
 function createIdleMemberLookup(): UFMemberLookupState {
@@ -464,6 +296,11 @@ function getErrorMessage(error: unknown) {
       "message" in error && typeof error.message === "string"
         ?error.message.toLowerCase()
         : "";
+    const details =
+      "details" in error && typeof error.details === "string"
+        ? error.details.toLowerCase()
+        : "";
+    const databaseError = `${message} ${details}`;
 
     if (message.includes("row-level security")) {
       return "Nemate dozvolu za ovu izmenu.";
@@ -473,6 +310,18 @@ function getErrorMessage(error: unknown) {
       message.includes("duplicate key") ||
       message.includes("unique constraint")
     ) {
+      if (databaseError.includes("phone")) {
+        return "Broj telefona već koristi druga osoba.";
+      }
+      if (databaseError.includes("email")) {
+        return "Email adresu već koristi druga osoba.";
+      }
+      if (databaseError.includes("jmbg")) {
+        return "JMBG već koristi druga osoba.";
+      }
+      if (databaseError.includes("passport")) {
+        return "Broj pasoša već koristi druga osoba.";
+      }
       return "Već postoji zapis sa istim jedinstvenim podatkom.";
     }
 
@@ -514,6 +363,24 @@ function getDetailedErrorMessage(error: unknown) {
   }
 
   return "Nepoznata greška.";
+}
+
+function isMissingDatabaseFunction(error: unknown) {
+  const message = getDetailedErrorMessage(error).toLowerCase();
+  return (
+    message.includes("could not find the function") ||
+    message.includes("schema cache") ||
+    (message.includes("function") && message.includes("does not exist")) ||
+    message.includes("pgrst202")
+  );
+}
+
+function isAcceptedMemberMissing(error: unknown) {
+  const message = getDetailedErrorMessage(error).toLowerCase();
+  return (
+    message.includes("prihvaćeni član nije pronađen") ||
+    message.includes("prihvaceni clan nije pronadjen")
+  );
 }
 
 function withStepError(message: string, error: unknown) {
@@ -623,6 +490,7 @@ function getMemberEditAccess(role: MemberAccessRole): MemberEditAccess {
 
 export default function ClanoviPage() {
   const [society, setSociety] = useState<Society | null>(null);
+  const [actorMemberId, setActorMemberId] = useState("");
   const [members, setMembers] = useState<MemberListItem[]>([]);
   const [functionOptions, setFunctionOptions] = useState<
     SocietyMemberFunction[]
@@ -633,6 +501,9 @@ export default function ClanoviPage() {
   );
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [activeView, setActiveView] = useState<MembersView>("members");
+  const [selectedPendingCandidateId, setSelectedPendingCandidateId] = useState<string | null>(null);
+  const [activePendingRequestTab, setActivePendingRequestTab] =
+    useState<PendingRequestTab>("personal");
   const [selectedImportFile, setSelectedImportFile] = useState<File | null>(null);
   const [importRows, setImportRows] = useState<BulkImportRow[]>([]);
   const [isReadingImport, setIsReadingImport] = useState(false);
@@ -641,6 +512,9 @@ export default function ClanoviPage() {
   const [pendingImports, setPendingImports] = useState<PendingImportCandidate[]>([]);
   const [pendingStartDates, setPendingStartDates] = useState<Record<string, string>>({});
   const [pendingPhones, setPendingPhones] = useState<Record<string, string>>({});
+  const [pendingMembershipSetups, setPendingMembershipSetups] = useState<
+    Record<string, PendingMembershipSetup>
+  >({});
   const [approvingImportId, setApprovingImportId] = useState<string | null>(null);
   const [rejectingImportId, setRejectingImportId] = useState<string | null>(null);
   const [sendingInvitationId, setSendingInvitationId] = useState<string | null>(null);
@@ -652,14 +526,14 @@ export default function ClanoviPage() {
   const [savingPendingId, setSavingPendingId] = useState<string | null>(null);
   const [creatingTestLinkId, setCreatingTestLinkId] = useState<string | null>(null);
   const [localTestLinks, setLocalTestLinks] = useState<Record<string, string>>({});
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [memberSearch, setMemberSearch] = useState("");
-  const [selectedSearchMemberId, setSelectedSearchMemberId] = useState<
-    string | null
-  >(null);
   const [formMode, setFormMode] = useState<FormMode>("create");
   const [editingMemberId, setEditingMemberId] = useState<string | null>(null);
   const [editingPersonId, setEditingPersonId] = useState<string | null>(null);
+  const [initialMemberFee, setInitialMemberFee] = useState<{
+    mode: "STANDARD" | "CUSTOM" | "EXEMPT";
+    amount: number | null;
+  } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState("");
@@ -677,47 +551,11 @@ export default function ClanoviPage() {
     createGuardianLookups()
   );
 
-  const assignableFunctionIds = useMemo(
-    () =>
-      new Set(
-        functionOptions
-          .filter((memberFunction) => memberFunction.is_active)
-          .filter((memberFunction) => !protectedFunctionNames.has(memberFunction.name))
-          .map((memberFunction) => memberFunction.id)
-      ),
-    [functionOptions]
-  );
   const [currentAccess, setCurrentAccess] = useState<MemberEditAccess>(() =>
     getMemberEditAccess("ur")
   );
-  const memberSearchResults = useMemo(() => {
-    const normalizedQuery = normalizeSearch(memberSearch);
-
-    if (normalizedQuery.length < 2) {
-      return [];
-    }
-
-    return members
-      .filter((member) => {
-        const searchable = [
-          member.firstName,
-          member.lastName,
-          member.phone ?? "",
-          member.email ?? ""
-        ]
-          .join(" ")
-          .toLowerCase();
-
-        return searchable.includes(normalizedQuery);
-      })
-      .slice(0, 20);
-  }, [memberSearch, members]);
   const displayedMembers = useMemo(
     () => {
-      if (selectedSearchMemberId) {
-        return members.filter((member) => member.id === selectedSearchMemberId);
-      }
-
       const normalizedQuery = normalizeSearch(memberSearch);
       if (!normalizedQuery) return members;
 
@@ -728,7 +566,7 @@ export default function ClanoviPage() {
           .includes(normalizedQuery)
       );
     },
-    [memberSearch, members, selectedSearchMemberId]
+    [memberSearch, members]
   );
 
   const loadPageData = useCallback(async () => {
@@ -755,6 +593,12 @@ export default function ClanoviPage() {
 
       setFunctionOptions(pageData?.functions ?? []);
       setSectionOptions(pageData?.sections ?? []);
+      const { data: applicationContext } = await supabase.rpc("auth_get_application_context");
+      setActorMemberId(
+        applicationContext?.memberships?.find(
+          (membership) => membership.society_id === activeSociety.id
+        )?.society_member_id ?? ""
+      );
       const access = pageData?.access ?? {
         can_create: false,
         can_manage_functions: false,
@@ -766,6 +610,17 @@ export default function ClanoviPage() {
       } = await supabase.rpc("auth_can_bulk_import_members", {
         p_society_id: activeSociety.id
       });
+      if (!canBulkImportError && canBulkImport) {
+        const { data: pendingData, error: pendingError } = await (
+          supabase.rpc as any
+        )("auth_get_pending_member_imports", {
+          p_society_id: activeSociety.id
+        });
+        if (pendingError) throw pendingError;
+        setPendingImports((pendingData ?? []) as PendingImportCandidate[]);
+      } else {
+        setPendingImports([]);
+      }
       setPageAccess({
         ...access,
         can_bulk_import: canBulkImportError ? false : Boolean(canBulkImport)
@@ -801,37 +656,20 @@ export default function ClanoviPage() {
       readOnlyFunctions: !pageAccess.can_manage_functions,
       readOnlySections: !pageAccess.can_manage_sections
     });
-    setValues(createInitialValues());
+    setValues({
+      ...createInitialValues(),
+      membership_fee_amount: String(society?.default_membership_fee_amount ?? ""),
+      membership_fee_mode: "STANDARD"
+    });
     setMemberLookup(createIdleMemberLookup());
     setGuardianLookups(createGuardianLookups());
     setFormMode("create");
     setEditingMemberId(null);
     setEditingPersonId(null);
+    setInitialMemberFee(null);
     setIsFormOpen(true);
     setMessage("");
     setErrorMessage("");
-  }
-
-  function handleOpenSearch() {
-    setIsSearchOpen(true);
-    setMemberSearch("");
-    setMessage("");
-    setErrorMessage("");
-  }
-
-  function handleCloseSearch() {
-    setIsSearchOpen(false);
-    setMemberSearch("");
-  }
-
-  function handleSelectSearchMember(memberId: string) {
-    setSelectedSearchMemberId(memberId);
-    setIsSearchOpen(false);
-    setMemberSearch("");
-  }
-
-  function handleClearSearchSelection() {
-    setSelectedSearchMemberId(null);
   }
 
   function handleCancel() {
@@ -1182,8 +1020,10 @@ export default function ClanoviPage() {
         readOnlyMembershipFields: {
           status: !detail.access.can_change_status,
           start_date: !detail.access.can_edit_basic,
-          membership_fee_required: true,
-          membership_fee_amount: true
+          membership_fee_required: !pageAccess.can_bulk_import,
+          membership_fee_amount: !pageAccess.can_bulk_import,
+          membership_fee_mode: !pageAccess.can_bulk_import,
+          membership_fee_reason: !pageAccess.can_bulk_import
         },
         readOnlyFunctions: !detail.access.can_manage_functions,
         readOnlySections: !detail.access.can_manage_sections
@@ -1197,16 +1037,23 @@ export default function ClanoviPage() {
         detail.guardians.find((guardian) => !guardian.link.is_primary)?.person ?? null;
       const nextValues = applyPersonToValues(createInitialValues(), personRow);
 
+      const loadedFeeMode = (memberRow.membership_fee_mode ?? (
+        memberRow.membership_fee_required ? "CUSTOM" : "EXEMPT"
+      )) as "STANDARD" | "CUSTOM" | "EXEMPT";
+      const loadedFeeAmount = memberRow.membership_fee_amount === null
+        ? ""
+        : String(memberRow.membership_fee_amount);
       setValues({
         ...nextValues,
         is_minor_member: Boolean(primaryGuardianPerson) || isUnder18(nextValues.birth_date),
         status: memberRow.status === "INACTIVE" ?"INACTIVE" : "ACTIVE",
         start_date: getValueForInput(memberRow.start_date),
         membership_fee_required: memberRow.membership_fee_required,
-        membership_fee_amount:
-          memberRow.membership_fee_amount === null
-            ?"0"
-            : String(memberRow.membership_fee_amount),
+        membership_fee_amount: loadedFeeMode === "STANDARD"
+          ? String(society?.default_membership_fee_amount ?? loadedFeeAmount)
+          : loadedFeeAmount,
+        membership_fee_mode: loadedFeeMode,
+        membership_fee_reason: "",
         guardian1: primaryGuardianPerson
           ?applyPersonToGuardian(createInitialValues().guardian1, primaryGuardianPerson)
           : createInitialValues().guardian1,
@@ -1240,6 +1087,10 @@ export default function ClanoviPage() {
       });
       setEditingMemberId(memberRow.id);
       setEditingPersonId(memberRow.person_id);
+      setInitialMemberFee({
+        mode: loadedFeeMode,
+        amount: loadedFeeMode === "CUSTOM" ? Number(memberRow.membership_fee_amount) : null
+      });
       setFormMode("edit");
       setIsFormOpen(true);
     } catch (error) {
@@ -1288,7 +1139,9 @@ export default function ClanoviPage() {
         status: values.status,
         start_date: values.start_date,
         membership_fee_required: values.membership_fee_required,
-        membership_fee_amount: getMembershipFeeAmount(values)
+        membership_fee_amount: getMembershipFeeAmount(values),
+        membership_fee_mode: values.membership_fee_mode ?? "STANDARD",
+        membership_fee_reason: values.membership_fee_reason ?? ""
       };
       const guardians = minor
         ? [
@@ -1310,16 +1163,56 @@ export default function ClanoviPage() {
               : [])
           ]
         : [];
-      const { error: updateError } = await supabase.rpc(
-        "auth_update_society_member",
+      let { error: updateError } = await (supabase.rpc as any)(
+        "auth_update_society_member_with_fee",
         {
           p_society_member_id: editingMemberId,
           p_profile: profile,
           p_guardians: guardians,
           p_function_ids: values.selectedFunctionIds,
-          p_section_ids: values.selectedSectionIds
+          p_section_ids: values.selectedSectionIds,
+          p_fee: {
+            mode: values.membership_fee_mode ?? "STANDARD",
+            custom_amount: values.membership_fee_mode === "CUSTOM"
+              ? Number(values.membership_fee_amount)
+              : null,
+            reason: values.membership_fee_reason?.trim() || null
+          }
         }
       );
+
+      if (updateError && isMissingDatabaseFunction(updateError)) {
+        ({ error: updateError } = await supabase.rpc("auth_update_society_member", {
+          p_society_member_id: editingMemberId,
+          p_profile: profile,
+          p_guardians: guardians,
+          p_function_ids: values.selectedFunctionIds,
+          p_section_ids: values.selectedSectionIds
+        }));
+        const nextFeeMode = values.membership_fee_mode ?? "STANDARD";
+        const nextFeeAmount = nextFeeMode === "CUSTOM"
+          ? Number(values.membership_fee_amount)
+          : null;
+        const feeChanged = !initialMemberFee
+          || initialMemberFee.mode !== nextFeeMode
+          || initialMemberFee.amount !== nextFeeAmount;
+        if (!updateError && feeChanged) {
+          if (!actorMemberId) throw new Error("Nije pronađen ovlašćeni član za promenu članarine.");
+          const { data: authData } = await supabase.auth.getUser();
+          const mode = values.membership_fee_mode ?? "STANDARD";
+          const { error: feeError } = await supabase.rpc("finance_set_member_fee", {
+            p_society_member_id: editingMemberId,
+            p_fee_mode: mode,
+            p_custom_amount: mode === "CUSTOM" ? Number(values.membership_fee_amount) : null,
+            p_reason: mode === "STANDARD"
+              ? "Vraćanje na standardnu članarinu"
+              : values.membership_fee_reason?.trim() ?? "",
+            p_actor_user_id: authData.user?.id ?? null,
+            p_actor_member_id: actorMemberId
+          });
+          if (feeError) updateError = feeError;
+        }
+      }
 
       if (updateError) {
         throw withStepError("Izmene člana nisu sačuvane.", updateError);
@@ -1330,6 +1223,7 @@ export default function ClanoviPage() {
       setFormMode("create");
       setEditingMemberId(null);
       setEditingPersonId(null);
+      setInitialMemberFee(null);
       setValues(createInitialValues());
       setMemberLookup(createIdleMemberLookup());
       setGuardianLookups(createGuardianLookups());
@@ -1383,7 +1277,9 @@ export default function ClanoviPage() {
         status: values.status,
         start_date: values.start_date,
         membership_fee_required: values.membership_fee_required,
-        membership_fee_amount: getMembershipFeeAmount(values)
+        membership_fee_amount: getMembershipFeeAmount(values),
+        membership_fee_mode: values.membership_fee_mode ?? "STANDARD",
+        membership_fee_reason: values.membership_fee_reason ?? ""
       };
       const guardians = minor
         ? [
@@ -1405,16 +1301,51 @@ export default function ClanoviPage() {
               : [])
           ]
         : [];
-      const { data: createdMember, error: createError } = await supabase.rpc(
-        "auth_create_society_member",
+      let { data: createdMember, error: createError } = await (supabase.rpc as any)(
+        "auth_create_society_member_with_fee",
         {
           p_society_id: society.id,
           p_profile: profile,
           p_guardians: guardians,
           p_function_ids: values.selectedFunctionIds,
-          p_section_ids: values.selectedSectionIds
+          p_section_ids: values.selectedSectionIds,
+          p_fee: {
+            mode: values.membership_fee_mode ?? "STANDARD",
+            custom_amount: values.membership_fee_mode === "CUSTOM"
+              ? Number(values.membership_fee_amount)
+              : null,
+            reason: values.membership_fee_reason?.trim() || null
+          }
         }
       );
+      if (createError && isMissingDatabaseFunction(createError)) {
+        ({ data: createdMember, error: createError } = await supabase.rpc(
+          "auth_create_society_member",
+          {
+            p_society_id: society.id,
+            p_profile: profile,
+            p_guardians: guardians,
+            p_function_ids: values.selectedFunctionIds,
+            p_section_ids: values.selectedSectionIds
+          }
+        ));
+        if (!createError && createdMember?.society_member_id) {
+          if (!actorMemberId) throw new Error("Nije pronađen ovlašćeni član za podešavanje članarine.");
+          const { data: authData } = await supabase.auth.getUser();
+          const mode = values.membership_fee_mode ?? "STANDARD";
+          const { error: feeError } = await supabase.rpc("finance_set_member_fee", {
+            p_society_member_id: createdMember.society_member_id,
+            p_fee_mode: mode,
+            p_custom_amount: mode === "CUSTOM" ? Number(values.membership_fee_amount) : null,
+            p_reason: mode === "STANDARD"
+              ? "Početna standardna članarina pri prijemu člana"
+              : values.membership_fee_reason?.trim() ?? "",
+            p_actor_user_id: authData.user?.id ?? null,
+            p_actor_member_id: actorMemberId
+          });
+          if (feeError) createError = feeError;
+        }
+      }
       if (createError) {
         throw withStepError("Član nije kreiran.", createError);
       }
@@ -1442,11 +1373,12 @@ export default function ClanoviPage() {
 
     setIsReadingImport(true);
     try {
-      const workbook = XLSX.read(await file.arrayBuffer(), {
+      const xlsx = await import("xlsx");
+      const workbook = xlsx.read(await file.arrayBuffer(), {
         type: "array",
         cellDates: true
       });
-      const parsedRows = parseBulkImportFile(workbook);
+      const parsedRows = parseBulkImportFile(workbook, xlsx);
       if (parsedRows.length === 0) {
         throw new Error("U listu „OSOBE“ nema popunjenih redova.");
       }
@@ -1570,29 +1502,216 @@ export default function ClanoviPage() {
 
   async function handleApprovePendingImport(candidateId: string) {
     const candidate = pendingImports.find((item) => item.id === candidateId);
-    const phone = pendingPhones[candidateId] ?? candidate?.profile.phone ?? "";
-    const startDate = parseSerbianDate(pendingStartDates[candidateId] ?? "");
-    if (!society || !startDate || !phone.trim()) return;
+    const candidateDraft = (candidate?.draft ?? candidate?.profile ?? {}) as Record<
+      string,
+      unknown
+    >;
+    const isMinorCandidate = Boolean(candidateDraft?.is_minor_member);
+    const phone = pendingPhones[candidateId] ??
+      String(candidateDraft?.phone ?? candidate?.profile.phone ?? "");
+    const guardianPhone = String(
+      (candidateDraft?.guardian1 as Record<string, unknown> | undefined)?.phone ?? ""
+    );
+    const startDate = parseSerbianDate(getPendingStartDate(candidateId));
+    const setup = getPendingMembershipSetup(candidateId);
+    const customFeeAmount = Number(setup.customFeeAmount);
+    const currentDraft = {
+      ...candidateDraft,
+      ...(presidentDrafts[candidateId] ?? {}),
+      phone
+    };
+    const missingPersonalFields = getMissingPendingPersonalFields(currentDraft);
+    if (!society) {
+      setErrorMessage("Društvo nije učitano.");
+      return;
+    }
+    if (missingPersonalFields.length > 0) {
+      setActivePendingRequestTab("personal");
+      setErrorMessage(`Nedostaju obavezni podaci: ${missingPersonalFields.join(", ")}.`);
+      return;
+    }
+    if (!startDate) {
+      setErrorMessage("Unesite ispravan datum početka članstva.");
+      return;
+    }
+    if (isMinorCandidate ? !guardianPhone.trim() : !phone.trim()) {
+      setErrorMessage(
+        isMinorCandidate
+          ? "Telefon roditelja/staratelja je obavezan."
+          : "Telefon člana je obavezan."
+      );
+      return;
+    }
+    if (
+      setup.feeMode === "CUSTOM" &&
+      (!setup.customFeeAmount.trim() || !Number.isFinite(customFeeAmount) || customFeeAmount <= 0)
+    ) {
+      setErrorMessage("Unesite ispravan poseban iznos članarine.");
+      return;
+    }
+    if (setup.feeMode !== "STANDARD" && !setup.feeReason.trim()) {
+      setErrorMessage("Unesite razlog posebne članarine ili oslobođenja.");
+      return;
+    }
     setApprovingImportId(candidateId);
     setErrorMessage("");
     try {
-      const { error } = await (getSupabaseClient().rpc as any)(
-        "auth_approve_pending_member_import",
+      const supabase = getSupabaseClient();
+      let { data: approvalResult, error } = await (supabase.rpc as any)(
+        "auth_finalize_pending_member_with_fee",
         {
           p_society_id: society.id,
           p_candidate_id: candidateId,
           p_start_date: startDate,
-          p_profile_updates: { phone: phone.trim() }
+          p_profile_updates: {
+            phone: phone.trim(),
+            membership_fee_required: setup.feeMode !== "EXEMPT",
+            membership_fee_amount: setup.feeMode === "CUSTOM"
+              ? customFeeAmount
+              : setup.feeMode === "STANDARD"
+                ? society.default_membership_fee_amount
+                : null,
+            membership_fee_mode: setup.feeMode,
+            membership_fee_reason: setup.feeReason.trim(),
+            function_ids: setup.functionIds,
+            section_ids: setup.sectionIds
+          },
+          p_fee: {
+            mode: setup.feeMode,
+            custom_amount: setup.feeMode === "CUSTOM" ? customFeeAmount : null,
+            reason: setup.feeReason.trim() || null
+          }
         }
       );
+      if (error && isMissingDatabaseFunction(error)) {
+        const legacyProfileUpdates = {
+          phone: phone.trim(),
+          membership_fee_required: setup.feeMode !== "EXEMPT",
+          membership_fee_amount: setup.feeMode === "CUSTOM"
+            ? customFeeAmount
+            : setup.feeMode === "STANDARD"
+              ? society.default_membership_fee_amount
+              : null,
+          function_ids: setup.functionIds,
+          section_ids: setup.sectionIds
+        };
+        const shouldCompleteAcceptedMember = Boolean(
+          candidate?.society_member_id ||
+          candidate?.member_invitation_status ||
+          candidate?.guardian_invitation_status
+        );
+        ({ data: approvalResult, error } = await (supabase.rpc as any)(
+          shouldCompleteAcceptedMember
+            ? "auth_complete_accepted_member_data"
+            : "auth_approve_pending_member_import",
+          {
+            p_society_id: society.id,
+            p_candidate_id: candidateId,
+            p_start_date: startDate,
+            p_profile_updates: legacyProfileUpdates
+          }
+        ));
+        // Stariji zahtevi mogu imati status poslatog linka, ali bez zaista
+        // kreiranog članskog zapisa. Najpre popravljamo tu vezu, pa nastavljamo
+        // isti tok završne potvrde.
+        if (error && shouldCompleteAcceptedMember && isAcceptedMemberMissing(error)) {
+          const { error: acceptError } = await (supabase.rpc as any)(
+            "auth_accept_candidate_for_data_completion",
+            {
+              p_society_id: society.id,
+              p_candidate_id: candidateId
+            }
+          );
+          if (!acceptError) {
+            ({ data: approvalResult, error } = await (supabase.rpc as any)(
+              "auth_complete_accepted_member_data",
+              {
+                p_society_id: society.id,
+                p_candidate_id: candidateId,
+                p_start_date: startDate,
+                p_profile_updates: legacyProfileUpdates
+              }
+            ));
+          } else if (isMissingDatabaseFunction(acceptError)) {
+            ({ data: approvalResult, error } = await (supabase.rpc as any)(
+              "auth_approve_pending_member_import",
+              {
+                p_society_id: society.id,
+                p_candidate_id: candidateId,
+                p_start_date: startDate,
+                p_profile_updates: legacyProfileUpdates
+              }
+            ));
+          } else {
+            error = acceptError;
+          }
+        }
+        const approvedMemberId = candidate?.society_member_id ?? approvalResult?.society_member_id;
+        if (!error && approvedMemberId) {
+          if (!actorMemberId) throw new Error("Nije pronađen ovlašćeni član za podešavanje članarine.");
+          const { data: authData } = await supabase.auth.getUser();
+          const { error: feeError } = await supabase.rpc("finance_set_member_fee", {
+            p_society_member_id: approvedMemberId,
+            p_fee_mode: setup.feeMode,
+            p_custom_amount: setup.feeMode === "CUSTOM" ? customFeeAmount : null,
+            p_reason: setup.feeMode === "STANDARD"
+              ? "Početna standardna članarina pri prijemu člana"
+              : setup.feeReason.trim(),
+            p_actor_user_id: authData.user?.id ?? null,
+            p_actor_member_id: actorMemberId
+          });
+          if (feeError) error = feeError;
+        }
+      }
       if (error) throw error;
-      await Promise.all([loadPendingImports(), loadPageData()]);
+      handleClosePendingRequest();
       setMessage("Član je potvrđen i dodat u spisak članova.");
+      void Promise.all([loadPendingImports(), loadPageData()]);
     } catch (error) {
-      setErrorMessage(getErrorMessage(error));
+      setErrorMessage(
+        `Član nije potvrđen. ${getDetailedErrorMessage(error) || getErrorMessage(error)}`
+      );
     } finally {
       setApprovingImportId(null);
     }
+  }
+
+  function getPendingMembershipSetup(candidateId: string): PendingMembershipSetup {
+    const candidate = pendingImports.find((item) => item.id === candidateId);
+    const draft = (candidate?.draft ?? candidate?.profile ?? {}) as Record<string, unknown>;
+    const stored = (draft._membership_setup ?? {}) as Record<string, unknown>;
+    const storedMode = ["STANDARD", "CUSTOM", "EXEMPT"].includes(String(stored.feeMode))
+      ? String(stored.feeMode) as PendingMembershipSetup["feeMode"]
+      : "STANDARD";
+    return pendingMembershipSetups[candidateId] ?? {
+      feeMode: storedMode,
+      customFeeAmount: String(stored.customFeeAmount ?? ""),
+      feeReason: String(stored.feeReason ?? ""),
+      functionIds: Array.isArray(stored.functionIds)
+        ? stored.functionIds.map(String)
+        : functionOptions
+          .filter((option) => option.is_active && option.name === "Član")
+          .map((option) => option.id),
+      sectionIds: Array.isArray(stored.sectionIds) ? stored.sectionIds.map(String) : []
+    };
+  }
+
+  function getPendingStartDate(candidateId: string) {
+    if (pendingStartDates[candidateId] !== undefined) return pendingStartDates[candidateId];
+    const candidate = pendingImports.find((item) => item.id === candidateId);
+    const draft = (candidate?.draft ?? candidate?.profile ?? {}) as Record<string, unknown>;
+    const stored = (draft._membership_setup ?? {}) as Record<string, unknown>;
+    return String(stored.startDate ?? "");
+  }
+
+  function updatePendingMembershipSetup(
+    candidateId: string,
+    update: (current: PendingMembershipSetup) => PendingMembershipSetup
+  ) {
+    setPendingMembershipSetups((current) => ({
+      ...current,
+      [candidateId]: update(current[candidateId] ?? getPendingMembershipSetup(candidateId))
+    }));
   }
 
   function handleCancelBulkImport() {
@@ -1603,6 +1722,14 @@ export default function ClanoviPage() {
 
   async function handleRejectPendingImport(candidateId: string) {
     if (!society) return;
+    const candidate = pendingImports.find((item) => item.id === candidateId);
+    const fullName = [candidate?.profile.first_name, candidate?.profile.last_name]
+      .filter(Boolean)
+      .join(" ");
+    const confirmed = window.confirm(
+      `Da li sigurno želite da odbacite zahtev${fullName ? ` za člana ${fullName}` : ""}?\n\nOva radnja uklanja zahtev iz liste za potvrđivanje.`
+    );
+    if (!confirmed) return;
     setRejectingImportId(candidateId);
     setErrorMessage("");
     try {
@@ -1615,6 +1742,7 @@ export default function ClanoviPage() {
       );
       if (error) throw error;
       await loadPendingImports();
+      handleClosePendingRequest();
       setMessage("Pripremljeni unos je odbačen.");
     } catch (error) {
       setErrorMessage(getErrorMessage(error));
@@ -1670,6 +1798,31 @@ export default function ClanoviPage() {
     } finally {
       setSendingInvitationId(null);
     }
+  }
+
+  async function handleAcceptAndSendInvitations(candidate: PendingImportCandidate) {
+    const draft = candidate.draft ?? candidate.profile;
+    const isMinor = Boolean(draft.is_minor_member);
+    if (!isMinor) {
+      await handleSendDataInvitation(candidate.id, "MEMBER");
+      return;
+    }
+    const guardian = draft.guardian1 as Record<string, unknown> | undefined;
+    const guardianEmail = String(guardian?.email ?? "").trim();
+    if (!isValidEmail(guardianEmail)) {
+      setErrorMessage("Pre prihvatanja maloletnog člana povežite primarnog roditelja/staratelja.");
+      return;
+    }
+    const birthDate = String(draft.birth_date ?? "");
+    const twelfthBirthday = birthDate ? new Date(`${birthDate}T00:00:00`) : null;
+    if (twelfthBirthday) twelfthBirthday.setFullYear(twelfthBirthday.getFullYear() + 12);
+    const childCanReceive =
+      isValidEmail(String(draft.email ?? "")) &&
+      Boolean(twelfthBirthday && twelfthBirthday <= new Date());
+    if (childCanReceive) {
+      await handleSendDataInvitation(candidate.id, "MEMBER");
+    }
+    await handleSendDataInvitation(candidate.id, "GUARDIAN");
   }
 
   async function handleCreateLocalTestLink(
@@ -1728,20 +1881,43 @@ export default function ClanoviPage() {
     setEditingPendingId(candidate.id);
   }
 
-  function handlePendingDraftChange(candidateId: string, field: string, value: unknown) {
-    setPresidentDrafts((drafts) => ({
-      ...drafts,
-      [candidateId]: { ...(drafts[candidateId] ?? {}), [field]: value }
-    }));
+  function handleOpenPendingRequest(candidate: PendingImportCandidate) {
+    setSelectedPendingCandidateId(candidate.id);
+    setActivePendingRequestTab("personal");
+    handleOpenPendingEditor(candidate);
   }
 
-  function handlePendingGuardianChange(candidateId: string, field: string, value: string) {
+  function handleClosePendingRequest() {
+    setSelectedPendingCandidateId(null);
+    setEditingPendingId(null);
+    setActivePendingRequestTab("personal");
+  }
+
+  function handlePendingDraftChange(candidateId: string, field: string, value: unknown) {
     setPresidentDrafts((drafts) => ({
       ...drafts,
       [candidateId]: {
         ...(drafts[candidateId] ?? {}),
-        guardian1: {
-          ...((drafts[candidateId]?.guardian1 as Record<string, unknown> | undefined) ?? {}),
+        [field]: value,
+        ...(field === "birth_date"
+          ? { is_minor_member: isUnder18(String(value)) }
+          : {})
+      }
+    }));
+  }
+
+  function handlePendingGuardianChange(
+    candidateId: string,
+    guardianKey: "guardian1" | "guardian2",
+    field: string,
+    value: string
+  ) {
+    setPresidentDrafts((drafts) => ({
+      ...drafts,
+      [candidateId]: {
+        ...(drafts[candidateId] ?? {}),
+        [guardianKey]: {
+          ...((drafts[candidateId]?.[guardianKey] as Record<string, unknown> | undefined) ?? {}),
           [field]: value
         }
       }
@@ -1824,7 +2000,16 @@ export default function ClanoviPage() {
     setSavingPendingId(candidateId);
     setErrorMessage("");
     try {
-      let draft = presidentDrafts[candidateId] ?? {};
+      let draft: Record<string, unknown> = {
+        ...(presidentDrafts[candidateId] ?? {}),
+        ...(pendingPhones[candidateId] !== undefined
+          ? { phone: pendingPhones[candidateId].trim() }
+          : {}),
+        _membership_setup: {
+          ...getPendingMembershipSetup(candidateId),
+          startDate: getPendingStartDate(candidateId)
+        }
+      };
       if (Boolean(draft.is_minor_member)) {
         const guardian = draft.guardian1 as UFMemberFormValues["guardian1"] | undefined;
         const guardianEmail = guardian?.email?.trim() ?? "";
@@ -1861,7 +2046,7 @@ export default function ClanoviPage() {
       );
       if (error) throw error;
       await loadPendingImports();
-      setEditingPendingId(null);
+      handleClosePendingRequest();
       setMessage("Podaci kandidata su sačuvani.");
     } catch (error) {
       setErrorMessage(getErrorMessage(error));
@@ -1920,7 +2105,7 @@ export default function ClanoviPage() {
             }}
           >
             Čekaju odobrenje{" "}
-            <span>{pendingImports.filter((item) => item.missing_fields.length === 0).length}/{pendingImports.length}</span>
+            <span>{pendingImports.filter((item) => getPendingCandidateStage(item).tone === "submitted").length}/{pendingImports.length}</span>
           </button>
         </nav>
       )}
@@ -1953,6 +2138,8 @@ export default function ClanoviPage() {
             existingPersonId={editingPersonId ?? undefined}
             existingMemberId={editingMemberId ?? undefined}
             values={values}
+            standardMembershipFeeAmount={society.default_membership_fee_amount ?? null}
+            membershipFeeCurrency={society.base_currency ?? "RSD"}
             functionOptions={functionOptions}
             allowFallbackFunctionOptions={false}
             sectionOptions={sectionOptions}
@@ -1988,10 +2175,7 @@ export default function ClanoviPage() {
             <input
               className="input"
               value={memberSearch}
-              onChange={(event) => {
-                setSelectedSearchMemberId(null);
-                setMemberSearch(event.target.value);
-              }}
+              onChange={(event) => setMemberSearch(event.target.value)}
               placeholder="Pretraži po imenu, email-u ili telefonu..."
             />
           </label>
@@ -2145,24 +2329,81 @@ export default function ClanoviPage() {
         <section className="card members-table-card">
           <div className="members-pending-heading">
             <div>
-              <h2>Čekaju konačno odobrenje</h2>
-              <p>Predsednik dopunjava obavezne podatke i potvrđuje svakog člana posebno.</p>
+              <h2>Zahtevi na čekanju</h2>
+              {!selectedPendingCandidateId && (
+                <p>Kliknite na osobu da otvorite zahtev.</p>
+              )}
             </div>
             <span>
-              {pendingImports.filter((item) => item.missing_fields.length === 0).length} spremno · {pendingImports.length} ukupno
+              {pendingImports.filter((item) => getPendingCandidateStage(item).tone === "submitted").length} spremno · {pendingImports.length} ukupno
             </span>
-          </div>
-          <div className="members-local-mode-note">
-            <strong>Lokalno testiranje:</strong> napravite probni link i otvorite ga u privatnom
-            prozoru pregledača. Slanje pravog emaila uključićemo tek kada aplikacija bude na internetu.
           </div>
           {pendingImports.length === 0 ? (
             <p className="members-empty-state">
               Trenutno nema uvezenih članova koji čekaju obradu.
             </p>
-          ) : (
-            <div className="members-pending-list">
+          ) : !selectedPendingCandidateId ? (
+            <div className="members-request-list">
               {pendingImports.map((candidate) => {
+                const stage = getPendingCandidateStage(candidate);
+                return (
+                  <button
+                    className="members-request-item"
+                    key={candidate.id}
+                    type="button"
+                    onClick={() => handleOpenPendingRequest(candidate)}
+                  >
+                    <span className="members-request-person">
+                      <strong>{candidate.profile.first_name} {candidate.profile.last_name}</strong>
+                      <small>
+                        {candidate.profile.email || candidate.profile.phone || "Bez kontakta"}
+                        {" · "}red {candidate.source_row}
+                      </small>
+                    </span>
+                    <span className="members-request-state">
+                      <span className={`members-invitation-status ${stage.tone}`}>
+                        {stage.label}
+                      </span>
+                      <small>{stage.detail}</small>
+                    </span>
+                    <span className="members-request-open">Otvori <span aria-hidden="true">›</span></span>
+                  </button>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="members-request-dialog-backdrop">
+            <section
+              aria-modal="true"
+              className="members-request-dialog"
+              role="dialog"
+            >
+            <div className="members-request-detail-heading">
+              <button
+                className="button button-secondary"
+                type="button"
+                onClick={handleClosePendingRequest}
+              >
+                ← Nazad na zahteve
+              </button>
+              <button
+                aria-label="Zatvori zahtev"
+                className="members-request-dialog-close"
+                type="button"
+                onClick={handleClosePendingRequest}
+              >
+                ×
+              </button>
+            </div>
+            <div className="members-pending-list">
+              {errorMessage && (
+                <p className="alert alert-error members-request-error" role="alert">
+                  {errorMessage}
+                </p>
+              )}
+              {pendingImports
+                .filter((candidate) => candidate.id === selectedPendingCandidateId)
+                .map((candidate) => {
                 const savedDraft = candidate.draft ?? candidate.profile;
                 const isMinorCandidate = Boolean(savedDraft.is_minor_member);
                 const savedGuardian = savedDraft.guardian1 as
@@ -2171,6 +2412,97 @@ export default function ClanoviPage() {
                 const savedGuardianEmail = String(savedGuardian?.email ?? "").trim();
                 const guardianLinked = isMinorCandidate && isValidEmail(savedGuardianEmail);
                 const memberInvitationBlocked = isMinorCandidate && !guardianLinked;
+                const membershipSetup = getPendingMembershipSetup(candidate.id);
+                const draftPhone = String(savedDraft.phone ?? candidate.profile.phone ?? "");
+                const editableDraft = presidentDrafts[candidate.id] ?? savedDraft;
+                const editableBirthDate = String(editableDraft.birth_date ?? "");
+                const editableMemberIsMinor = editableBirthDate
+                  ? isUnder18(editableBirthDate)
+                  : Boolean(editableDraft.is_minor_member);
+                const emptyPendingValues = createInitialValues();
+                const pendingFormValues: UFMemberFormValues = {
+                  ...emptyPendingValues,
+                  is_minor_member: editableMemberIsMinor,
+                  first_name: String(editableDraft.first_name ?? ""),
+                  last_name: String(editableDraft.last_name ?? ""),
+                  gender: ["Muško", "Žensko"].includes(String(editableDraft.gender))
+                    ? String(editableDraft.gender) as UFMemberFormValues["gender"]
+                    : "",
+                  birth_date: String(editableDraft.birth_date ?? ""),
+                  address: String(editableDraft.address ?? ""),
+                  city: String(editableDraft.city ?? ""),
+                  postal_code: String(editableDraft.postal_code ?? ""),
+                  country: String(editableDraft.country ?? "Srbija"),
+                  jmbg: String(editableDraft.jmbg ?? ""),
+                  passport_number: String(editableDraft.passport_number ?? ""),
+                  passport_expiry_date: String(editableDraft.passport_expiry_date ?? ""),
+                  parental_travel_consent: Boolean(editableDraft.parental_travel_consent),
+                  parental_travel_consent_valid_until: String(
+                    editableDraft.parental_travel_consent_valid_until ?? ""
+                  ),
+                  email: String(editableDraft.email ?? candidate.profile.email ?? ""),
+                  phone: pendingPhones[candidate.id] ?? String(
+                    editableDraft.phone ?? candidate.profile.phone ?? ""
+                  ),
+                  shoe_size: String(editableDraft.shoe_size ?? ""),
+                  status: "ACTIVE",
+                  start_date: getPendingStartDate(candidate.id),
+                  membership_fee_required: membershipSetup.feeMode !== "EXEMPT",
+                  membership_fee_amount:
+                    membershipSetup.feeMode === "CUSTOM"
+                      ? membershipSetup.customFeeAmount
+                      : membershipSetup.feeMode === "STANDARD"
+                        ? String(society?.default_membership_fee_amount ?? "")
+                        : "",
+                  membership_fee_mode: membershipSetup.feeMode,
+                  membership_fee_reason: membershipSetup.feeReason,
+                  guardian1: {
+                    ...emptyPendingValues.guardian1,
+                    ...((editableDraft.guardian1 as UFMemberFormValues["guardian1"] | undefined) ?? {})
+                  },
+                  guardian2: {
+                    ...emptyPendingValues.guardian2,
+                    ...((editableDraft.guardian2 as UFMemberFormValues["guardian2"] | undefined) ?? {})
+                  },
+                  showGuardian2: Boolean(editableDraft.showGuardian2) ||
+                    hasGuardianValues({
+                      ...emptyPendingValues.guardian2,
+                      ...((editableDraft.guardian2 as UFMemberFormValues["guardian2"] | undefined) ?? {})
+                    }),
+                  selectedFunctionIds: membershipSetup.functionIds,
+                  selectedSectionIds: membershipSetup.sectionIds
+                };
+                const hasValidStartDate = Boolean(
+                  parseSerbianDate(getPendingStartDate(candidate.id))
+                );
+                const hasRequiredPhone = isMinorCandidate
+                  ? Boolean(String(
+                      (editableDraft.guardian1 as Record<string, unknown> | undefined)?.phone ?? ""
+                    ).trim())
+                  : Boolean((pendingPhones[candidate.id] ?? draftPhone).trim());
+                const hasValidCustomFee =
+                  membershipSetup.feeMode !== "CUSTOM" ||
+                  (
+                    membershipSetup.customFeeAmount.trim() &&
+                    Number.isFinite(Number(membershipSetup.customFeeAmount)) &&
+                    Number(membershipSetup.customFeeAmount) >= 0
+                  );
+                const hasRequiredFeeReason =
+                  membershipSetup.feeMode === "STANDARD" ||
+                  Boolean(membershipSetup.feeReason.trim());
+                const confirmationBlockers = [
+                  ...candidate.missing_fields
+                    .filter((field) => field !== "phone" || !isMinorCandidate)
+                    .map(() => "dopunite lične podatke"),
+                  ...(!hasRequiredPhone
+                    ? [isMinorCandidate
+                        ? "unesite telefon roditelja/staratelja"
+                        : "unesite telefon člana"]
+                    : []),
+                  ...(!hasValidStartDate ? ["unesite datum početka članstva"] : []),
+                  ...(!hasValidCustomFee ? ["unesite ispravan iznos članarine"] : []),
+                  ...(!hasRequiredFeeReason ? ["unesite razlog odstupanja članarine"] : [])
+                ].filter((value, index, values) => values.indexOf(value) === index);
 
                 return (
                 <article key={candidate.id} className="members-pending-row">
@@ -2179,161 +2511,296 @@ export default function ClanoviPage() {
                     <small>
                       {candidate.profile.email || candidate.profile.phone || "Bez kontakta"} · red {candidate.source_row}
                     </small>
-                    <div className="members-invitation-controls">
-                      <span className={`members-invitation-status ${candidate.member_invitation_status?.toLowerCase() ?? "not-sent"}`}>
-                        Član: {getInvitationStatusLabel(candidate.member_invitation_status)}
-                      </span>
+                    <nav className="members-request-tabs" aria-label="Delovi zahteva">
                       <button
-                        className="button button-secondary members-send-invitation"
-                        disabled={
-                          memberInvitationBlocked ||
-                          sendingInvitationId === `${candidate.id}:MEMBER`
-                        }
+                        className={activePendingRequestTab === "personal" ? "active" : ""}
                         type="button"
-                        onClick={() => void handleSendDataInvitation(candidate.id, "MEMBER")}
+                        onClick={() => setActivePendingRequestTab("personal")}
                       >
-                        {sendingInvitationId === `${candidate.id}:MEMBER`
-                          ? "Slanje..."
-                          : candidate.member_invitation_status ? "Novi link članu" : "Pošalji članu"}
+                        Lični podaci
                       </button>
                       <button
-                        className="button button-secondary members-send-invitation members-test-link-button"
-                        disabled={
-                          memberInvitationBlocked ||
-                          creatingTestLinkId === `${candidate.id}:MEMBER`
-                        }
+                        className={activePendingRequestTab === "membership" ? "active" : ""}
                         type="button"
-                        onClick={() => void handleCreateLocalTestLink(candidate.id, "MEMBER")}
+                        onClick={() => setActivePendingRequestTab("membership")}
                       >
-                        {creatingTestLinkId === `${candidate.id}:MEMBER`
-                          ? "Pravljenje..."
-                          : "Kopiraj test link člana"}
+                        Članstvo
                       </button>
-                      {isMinorCandidate ? (
-                        <>
-                          <span className={`members-invitation-status ${guardianLinked ? "submitted" : "not-sent"}`}>
-                            {guardianLinked
-                              ? `Povezan roditelj: ${savedGuardianEmail}`
-                              : "Roditelj nije povezan"}
-                          </span>
-                          <button
-                            className="button button-secondary members-send-invitation"
-                            type="button"
-                            onClick={() => handleOpenPendingEditor(candidate)}
-                          >
-                            {guardianLinked ? "Izmeni vezu" : "Poveži roditelja"}
-                          </button>
-                          <span className={`members-invitation-status ${candidate.guardian_invitation_status?.toLowerCase() ?? "not-sent"}`}>
-                            Roditelj: {getInvitationStatusLabel(candidate.guardian_invitation_status)}
-                          </span>
-                          <button
-                            className="button button-secondary members-send-invitation"
-                            disabled={
-                              !guardianLinked ||
-                              sendingInvitationId === `${candidate.id}:GUARDIAN`
-                            }
-                            type="button"
-                            onClick={() => void handleSendDataInvitation(candidate.id, "GUARDIAN")}
-                          >
-                            {sendingInvitationId === `${candidate.id}:GUARDIAN`
-                              ? "Slanje..."
-                              : candidate.guardian_invitation_status ? "Novi link roditelju" : "Pošalji roditelju"}
-                          </button>
-                          <button
-                            className="button button-secondary members-send-invitation members-test-link-button"
-                            disabled={
-                              !guardianLinked ||
-                              creatingTestLinkId === `${candidate.id}:GUARDIAN`
-                            }
-                            type="button"
-                            onClick={() => void handleCreateLocalTestLink(candidate.id, "GUARDIAN")}
-                          >
-                            {creatingTestLinkId === `${candidate.id}:GUARDIAN`
-                              ? "Pravljenje..."
-                              : "Kopiraj test link roditelja"}
-                          </button>
-                        </>
-                      ) : (
-                        <small>
-                          Za roditeljski poziv prvo označite kandidata kao maloletnog i
-                          povežite roditelja kroz „Dopuni podatke“.
-                        </small>
+                      <button
+                        className={activePendingRequestTab === "links" ? "active" : ""}
+                        type="button"
+                        onClick={() => setActivePendingRequestTab("links")}
+                      >
+                        Linkovi
+                      </button>
+                    </nav>
+                    {activePendingRequestTab === "links" && (
+                    <section className="members-request-tab-panel members-request-links-panel">
+                      <h3>Linkovi za dopunu podataka</h3>
+                      {!candidate.member_invitation_status &&
+                       !candidate.guardian_invitation_status && (
+                        <button
+                          className="button button-primary"
+                          disabled={
+                            memberInvitationBlocked ||
+                            sendingInvitationId?.startsWith(`${candidate.id}:`)
+                          }
+                          type="button"
+                          onClick={() => void handleAcceptAndSendInvitations(candidate)}
+                        >
+                          {sendingInvitationId?.startsWith(`${candidate.id}:`)
+                            ? "Slanje..."
+                            : "Prihvati člana i pošalji potrebne linkove"}
+                        </button>
                       )}
-                    </div>
-                    {localTestLinks[`${candidate.id}:MEMBER`] && (
-                      <label className="members-local-test-link">
-                        Poslednji test link člana
-                        <input
-                          className="input"
-                          readOnly
-                          value={localTestLinks[`${candidate.id}:MEMBER`]}
-                          onFocus={(event) => event.currentTarget.select()}
-                        />
-                      </label>
+                      <div className="members-link-groups">
+                        <section className="members-link-group">
+                          <div className="members-link-group-heading">
+                            <div>
+                              <h4>Član</h4>
+                              <span>{candidate.profile.email || "Email nije unet"}</span>
+                            </div>
+                            <span className={`members-invitation-status ${
+                              candidate.member_invitation_status?.toLowerCase() ?? "not-sent"
+                            }`}>
+                              {getInvitationStatusLabel(candidate.member_invitation_status)}
+                            </span>
+                          </div>
+                          <div className="members-link-group-actions">
+                            <button
+                              className="button button-secondary"
+                              disabled={
+                                memberInvitationBlocked ||
+                                sendingInvitationId === `${candidate.id}:MEMBER`
+                              }
+                              type="button"
+                              onClick={() => void handleSendDataInvitation(candidate.id, "MEMBER")}
+                            >
+                              {sendingInvitationId === `${candidate.id}:MEMBER`
+                                ? "Slanje..."
+                                : candidate.member_invitation_status
+                                  ? "Pošalji novi link"
+                                  : "Pošalji link"}
+                            </button>
+                            <button
+                              className="button button-secondary members-test-link-button"
+                              disabled={
+                                memberInvitationBlocked ||
+                                creatingTestLinkId === `${candidate.id}:MEMBER`
+                              }
+                              type="button"
+                              onClick={() => void handleCreateLocalTestLink(candidate.id, "MEMBER")}
+                            >
+                              Test link
+                            </button>
+                          </div>
+                          {localTestLinks[`${candidate.id}:MEMBER`] && (
+                            <input
+                              className="input"
+                              readOnly
+                              value={localTestLinks[`${candidate.id}:MEMBER`]}
+                              onFocus={(event) => event.currentTarget.select()}
+                            />
+                          )}
+                        </section>
+                        {isMinorCandidate && (
+                          <section className="members-link-group">
+                            <div className="members-link-group-heading">
+                              <div>
+                                <h4>Roditelj/staratelj</h4>
+                                <span>{savedGuardianEmail || "Roditelj nije povezan"}</span>
+                              </div>
+                              <span className={`members-invitation-status ${
+                                candidate.guardian_invitation_status?.toLowerCase() ?? "not-sent"
+                              }`}>
+                                {getInvitationStatusLabel(candidate.guardian_invitation_status)}
+                              </span>
+                            </div>
+                            <div className="members-link-group-actions">
+                              <button
+                                className="button button-secondary"
+                                type="button"
+                                onClick={() => setActivePendingRequestTab("personal")}
+                              >
+                                {guardianLinked ? "Izmeni roditelja" : "Dodaj roditelja"}
+                              </button>
+                              <button
+                                className="button button-secondary"
+                                disabled={
+                                  !guardianLinked ||
+                                  sendingInvitationId === `${candidate.id}:GUARDIAN`
+                                }
+                                type="button"
+                                onClick={() => void handleSendDataInvitation(candidate.id, "GUARDIAN")}
+                              >
+                                {sendingInvitationId === `${candidate.id}:GUARDIAN`
+                                  ? "Slanje..."
+                                  : candidate.guardian_invitation_status
+                                    ? "Pošalji novi link"
+                                    : "Pošalji link"}
+                              </button>
+                              <button
+                                className="button button-secondary members-test-link-button"
+                                disabled={
+                                  !guardianLinked ||
+                                  creatingTestLinkId === `${candidate.id}:GUARDIAN`
+                                }
+                                type="button"
+                                onClick={() => void handleCreateLocalTestLink(candidate.id, "GUARDIAN")}
+                              >
+                                Test link
+                              </button>
+                            </div>
+                            {localTestLinks[`${candidate.id}:GUARDIAN`] && (
+                              <input
+                                className="input"
+                                readOnly
+                                value={localTestLinks[`${candidate.id}:GUARDIAN`]}
+                                onFocus={(event) => event.currentTarget.select()}
+                              />
+                            )}
+                          </section>
+                        )}
+                      </div>
+                    </section>
                     )}
-                    {localTestLinks[`${candidate.id}:GUARDIAN`] && (
-                      <label className="members-local-test-link">
-                        Poslednji test link roditelja
-                        <input
-                          className="input"
-                          readOnly
-                          value={localTestLinks[`${candidate.id}:GUARDIAN`]}
-                          onFocus={(event) => event.currentTarget.select()}
-                        />
-                      </label>
-                    )}
-                    {candidate.missing_fields.length > 0
-                      ? <small>Nedostaje: {candidate.missing_fields.join(", ")}</small>
-                      : <span className="members-import-ok">Lični podaci su kompletni</span>}
                   </div>
-                  <label>
-                    Telefon
-                    <input
-                      className="input"
-                      type="tel"
-                      value={pendingPhones[candidate.id] ?? candidate.profile.phone ?? ""}
-                      onChange={(event) => setPendingPhones((phones) => ({
-                        ...phones,
-                        [candidate.id]: event.target.value
-                      }))}
-                    />
-                  </label>
-                  <label>
-                    Datum početka članstva
-                    <input
-                      className="input"
-                      inputMode="numeric"
-                      placeholder="dd.mm.gggg"
-                      type="text"
-                      value={pendingStartDates[candidate.id] ?? ""}
-                      onChange={(event) => setPendingStartDates((dates) => ({
-                        ...dates,
-                        [candidate.id]: event.target.value
-                      }))}
-                    />
-                  </label>
+                  {(activePendingRequestTab === "personal" ||
+                    activePendingRequestTab === "membership") &&
+                    editingPendingId === candidate.id && (
+                    <section className="members-pending-shared-form">
+                      <UF_MEMBER_FORM
+                        mode="pending_approval"
+                        societyId={society!.id}
+                        values={pendingFormValues}
+                        standardMembershipFeeAmount={society?.default_membership_fee_amount ?? null}
+                        membershipFeeCurrency={society?.base_currency ?? "RSD"}
+                        functionOptions={functionOptions}
+                        allowFallbackFunctionOptions={false}
+                        sectionOptions={sectionOptions}
+                        guardianLookups={{
+                          guardian1: pendingGuardianLookups[candidate.id]
+                        }}
+                        readOnlyMembershipFields={{ status: true }}
+                        visibleStep={activePendingRequestTab === "personal" ? 2 : 3}
+                        hideStepper
+                        hideActions
+                        onFieldChange={(field, value) => {
+                          if (field === "start_date") {
+                            setPendingStartDates((dates) => ({
+                              ...dates,
+                              [candidate.id]: String(value)
+                            }));
+                            return;
+                          }
+                          if (field === "phone") {
+                            setPendingPhones((phones) => ({
+                              ...phones,
+                              [candidate.id]: String(value)
+                            }));
+                            handlePendingDraftChange(candidate.id, field, value);
+                            return;
+                          }
+                          if (field === "membership_fee_required") {
+                            updatePendingMembershipSetup(candidate.id, (current) => ({
+                              ...current,
+                              feeMode: value ? (current.feeMode === "EXEMPT" ? "STANDARD" : current.feeMode) : "EXEMPT"
+                            }));
+                            return;
+                          }
+                          if (field === "membership_fee_mode") {
+                            updatePendingMembershipSetup(candidate.id, (current) => ({
+                              ...current,
+                              feeMode: String(value) as PendingMembershipSetup["feeMode"],
+                              ...(value === "STANDARD" ? { feeReason: "" } : {})
+                            }));
+                            return;
+                          }
+                          if (field === "membership_fee_reason") {
+                            updatePendingMembershipSetup(candidate.id, (current) => ({
+                              ...current,
+                              feeReason: String(value)
+                            }));
+                            return;
+                          }
+                          if (field === "membership_fee_amount") {
+                            updatePendingMembershipSetup(candidate.id, (current) => ({
+                              ...current,
+                              feeMode: "CUSTOM",
+                              customFeeAmount: String(value)
+                            }));
+                            return;
+                          }
+                          if (field !== "status" && field !== "showGuardian2") {
+                            handlePendingDraftChange(candidate.id, field, value);
+                          } else if (field === "showGuardian2") {
+                            handlePendingDraftChange(candidate.id, field, value);
+                          }
+                        }}
+                        onGuardianFieldChange={(guardian, field, value) =>
+                          handlePendingGuardianChange(candidate.id, guardian, field, value)
+                        }
+                        onAddSecondGuardian={() =>
+                          handlePendingDraftChange(candidate.id, "showGuardian2", true)
+                        }
+                        onRemoveSecondGuardian={() => {
+                          handlePendingDraftChange(candidate.id, "guardian2", emptyPendingValues.guardian2);
+                          handlePendingDraftChange(candidate.id, "showGuardian2", false);
+                        }}
+                        onFunctionToggle={(functionId) =>
+                          updatePendingMembershipSetup(candidate.id, (current) => ({
+                            ...current,
+                            functionIds: current.functionIds.includes(functionId)
+                              ? current.functionIds.filter((id) => id !== functionId)
+                              : [...current.functionIds, functionId]
+                          }))
+                        }
+                        onSectionToggle={(sectionId) =>
+                          updatePendingMembershipSetup(candidate.id, (current) => ({
+                            ...current,
+                            sectionIds: current.sectionIds.includes(sectionId)
+                              ? current.sectionIds.filter((id) => id !== sectionId)
+                              : [...current.sectionIds, sectionId]
+                          }))
+                        }
+                        onGuardianEmailBlur={(guardian) => {
+                          if (guardian === "guardian1") {
+                            void handlePendingGuardianEmailBlur(candidate.id);
+                          }
+                        }}
+                        onSubmit={() => void handleSavePendingDraft(candidate.id)}
+                        onCancel={handleClosePendingRequest}
+                      />
+                    </section>
+                  )}
                   <div className="members-pending-actions">
-                    <button
-                      className="button button-secondary"
-                      type="button"
-                      onClick={() => handleOpenPendingEditor(candidate)}
-                    >
-                      Dopuni podatke
-                    </button>
+                    {confirmationBlockers.length > 0 && (
+                      <p className="members-confirmation-hint">
+                        Za potvrdu: {confirmationBlockers.join(", ")}.
+                      </p>
+                    )}
+                    {activePendingRequestTab !== "links" && (
+                      <button
+                        className="button button-secondary"
+                        disabled={savingPendingId === candidate.id}
+                        type="button"
+                        onClick={() => void handleSavePendingDraft(candidate.id)}
+                      >
+                        {savingPendingId === candidate.id ? "Čuvanje..." : "Sačuvaj izmene"}
+                      </button>
+                    )}
                     <button
                       className="button button-secondary"
                       disabled={rejectingImportId === candidate.id || approvingImportId === candidate.id}
                       type="button"
                       onClick={() => void handleRejectPendingImport(candidate.id)}
                     >
-                      {rejectingImportId === candidate.id ? "Odbacivanje..." : "Odbaci"}
+                      {rejectingImportId === candidate.id ? "Odbacivanje..." : "Odbaci zahtev"}
                     </button>
                     <button
                       className="button button-primary"
                       disabled={
-                        !parseSerbianDate(pendingStartDates[candidate.id] ?? "") ||
-                        !(pendingPhones[candidate.id] ?? candidate.profile.phone ?? "").trim() ||
-                        candidate.missing_fields.some((field) => field !== "phone") ||
+                        confirmationBlockers.length > 0 ||
                         approvingImportId === candidate.id ||
                         rejectingImportId === candidate.id
                       }
@@ -2343,118 +2810,11 @@ export default function ClanoviPage() {
                       {approvingImportId === candidate.id ? "Potvrđivanje..." : "Potvrdi člana"}
                     </button>
                   </div>
-                  {editingPendingId === candidate.id && (
-                    <section className="members-pending-editor">
-                      <h3>Lični podaci člana</h3>
-                      <div className="member-data-grid">
-                        {pendingPersonalFields.map(([field, label, type]) => (
-                          <label className="form-field" key={field}>
-                            <span>{label}</span>
-                            <input
-                              className="input"
-                              type={type}
-                              value={String(presidentDrafts[candidate.id]?.[field] ?? "")}
-                              onChange={(event) => handlePendingDraftChange(
-                                candidate.id, field, event.target.value
-                              )}
-                            />
-                          </label>
-                        ))}
-                      </div>
-                      <label className="member-data-minor-toggle">
-                        <input
-                          type="checkbox"
-                          checked={Boolean(presidentDrafts[candidate.id]?.is_minor_member)}
-                          onChange={(event) => handlePendingDraftChange(
-                            candidate.id, "is_minor_member", event.target.checked
-                          )}
-                        />
-                        Maloletan član
-                      </label>
-                      {Boolean(presidentDrafts[candidate.id]?.is_minor_member) && (
-                        <>
-                          <h3>Roditelj/staratelj 1</h3>
-                          <div className="member-data-grid">
-                            {[
-                              ["first_name", "Ime roditelja"],
-                              ["last_name", "Prezime roditelja"],
-                              ["email", "Email roditelja"],
-                              ["phone", "Telefon roditelja"]
-                            ].map(([field, label]) => (
-                              <label className="form-field" key={field}>
-                                <span>{label}</span>
-                                <input
-                                  className="input"
-                                  type={field === "email" ? "email" : field === "phone" ? "tel" : "text"}
-                                  readOnly={
-                                    field !== "email" &&
-                                    pendingGuardianLookups[candidate.id]?.status === "found"
-                                  }
-                                  value={String(
-                                    (presidentDrafts[candidate.id]?.guardian1 as Record<string, unknown> | undefined)?.[field] ?? ""
-                                  )}
-                                  onChange={(event) => handlePendingGuardianChange(
-                                    candidate.id, field, event.target.value
-                                  )}
-                                  onBlur={
-                                    field === "email"
-                                      ? () => void handlePendingGuardianEmailBlur(candidate.id)
-                                      : undefined
-                                  }
-                                />
-                              </label>
-                            ))}
-                          </div>
-                          {pendingGuardianLookups[candidate.id]?.message && (
-                            <p>{pendingGuardianLookups[candidate.id]?.message}</p>
-                          )}
-                        </>
-                      )}
-                      <div className="members-consent-fields">
-                        <label className="member-data-minor-toggle">
-                          <input
-                            type="checkbox"
-                            checked={Boolean(presidentDrafts[candidate.id]?.parental_travel_consent)}
-                            onChange={(event) => handlePendingDraftChange(
-                              candidate.id, "parental_travel_consent", event.target.checked
-                            )}
-                          />
-                          Fizička saglasnost za putovanje je dostavljena
-                        </label>
-                        {Boolean(presidentDrafts[candidate.id]?.parental_travel_consent) && (
-                          <label className="form-field">
-                            <span>Saglasnost važi do</span>
-                            <input
-                              className="input"
-                              type="date"
-                              value={String(presidentDrafts[candidate.id]?.parental_travel_consent_valid_until ?? "")}
-                              onChange={(event) => handlePendingDraftChange(
-                                candidate.id,
-                                "parental_travel_consent_valid_until",
-                                event.target.value
-                              )}
-                            />
-                          </label>
-                        )}
-                      </div>
-                      <div className="members-pending-editor-actions">
-                        <button className="button button-secondary" type="button" onClick={() => setEditingPendingId(null)}>
-                          Otkaži
-                        </button>
-                        <button
-                          className="button button-primary"
-                          disabled={savingPendingId === candidate.id}
-                          type="button"
-                          onClick={() => void handleSavePendingDraft(candidate.id)}
-                        >
-                          {savingPendingId === candidate.id ? "Čuvanje..." : "Sačuvaj podatke"}
-                        </button>
-                      </div>
-                    </section>
-                  )}
                 </article>
                 );
               })}
+            </div>
+            </section>
             </div>
           )}
         </section>

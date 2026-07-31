@@ -5,6 +5,7 @@ const steps = [
   ["run", "check:project"],
   ["run", "check:migrations"],
   ["run", "typecheck"],
+  ["run", "test:unit"],
   ["run", "build"],
   ["run", "test:e2e:smoke"]
 ];

@@ -675,24 +675,6 @@ export default function DogadjajiPage() {
     finally { setIsSaving(false); }
   }
 
-  async function togglePerformer(programItem: EventAppearanceRepertoire, participant: EventParticipantView) {
-    if (!selectedEvent) return;
-    const existing = performerLinks.find((link) =>
-      link.event_appearance_repertoire_id === programItem.id && link.event_participant_id === participant.id
-    );
-    try {
-      const { error: performerError } = await getSupabaseClient().rpc("auth_manage_event", {
-        p_action: "TOGGLE_PERFORMER",
-        p_payload: {
-          event_appearance_repertoire_id: programItem.id,
-          event_participant_id: participant.id
-        }
-      });
-      if (performerError) throw performerError;
-      await loadDetail(selectedEvent.id);
-    } catch (performerError) { setError(messageOf(performerError)); }
-  }
-
   async function openPerformerPicker(programItem: EventAppearanceRepertoire) {
     setError("");
     await loadMemberCandidates(programItem.event_section_id);

@@ -3,8 +3,14 @@
 import { useEffect, useState, type FormEvent } from "react";
 
 import type { Person, Section, SocietyMemberFunction } from "../_lib/supabaseClient";
+import { MembershipFeeFields, type MembershipFeeMode } from "./MembershipFeeFields";
 
-export type UFMemberFormMode = "create" | "edit" | "president_onboarding" | "person_create";
+export type UFMemberFormMode =
+  | "create"
+  | "edit"
+  | "pending_approval"
+  | "president_onboarding"
+  | "person_create";
 
 export type UFMemberGender = "Muško" | "Žensko" | "";
 
@@ -32,7 +38,9 @@ export type UFMemberMembershipField =
   | "status"
   | "start_date"
   | "membership_fee_required"
-  | "membership_fee_amount";
+  | "membership_fee_amount"
+  | "membership_fee_mode"
+  | "membership_fee_reason";
 
 export type UFMemberFormField = UFMemberPersonField | UFMemberMembershipField;
 
@@ -66,6 +74,8 @@ export type UFMemberFormValues = {
   start_date: string;
   membership_fee_required: boolean;
   membership_fee_amount: string;
+  membership_fee_mode?: MembershipFeeMode;
+  membership_fee_reason?: string;
   guardian1: UFMemberGuardianValues;
   guardian2: UFMemberGuardianValues;
   showGuardian2: boolean;
@@ -131,6 +141,11 @@ export type UFMemberFormProps = {
   readOnlyFunctions?: boolean;
   readOnlySections?: boolean;
   isSubmitting?: boolean;
+  standardMembershipFeeAmount?: number | null;
+  membershipFeeCurrency?: string;
+  visibleStep?: 2 | 3;
+  hideStepper?: boolean;
+  hideActions?: boolean;
   onFieldChange: (
     field: UFMemberFormField | "showGuardian2" | "is_minor_member",
     value: string | boolean
@@ -249,7 +264,7 @@ function validateValues(
   }
 
   if (!isEdit && !values.gender) {
-    errors.gender = "Izaberite pol.";
+    errors.gender = "Obavezno polje.";
   }
 
   if (!isEdit && !isPersonCreate && !values.start_date) {
@@ -298,11 +313,19 @@ function validateValues(
   }
 
   if (
-    !isPersonCreate && values.membership_fee_required &&
+    !isPersonCreate && (values.membership_fee_mode ?? "STANDARD") === "CUSTOM" &&
     (!values.membership_fee_amount.trim() ||
-      Number.isNaN(Number(values.membership_fee_amount)))
+      Number.isNaN(Number(values.membership_fee_amount)) ||
+      Number(values.membership_fee_amount) <= 0)
   ) {
-    errors.membership_fee_amount = "Iznos članarine mora biti broj.";
+    errors.membership_fee_amount = "Poseban iznos članarine mora biti veći od nule.";
+  }
+  if (
+    !isPersonCreate &&
+    (values.membership_fee_mode === "CUSTOM" || values.membership_fee_mode === "EXEMPT") &&
+    !values.membership_fee_reason?.trim()
+  ) {
+    errors.membership_fee_reason = "Razlog odstupanja od standardne članarine je obavezan.";
   }
 
   if (!isEdit && !isPersonCreate && minor) {
@@ -422,7 +445,7 @@ function TextField({
 function CompactDateField({ label, value, required = false, readOnly = false, hidden = false, error, hint, hintTone = "default", onChange }: { label: string; value: string; required?: boolean; readOnly?: boolean; hidden?: boolean; error?: string; hint?: string; hintTone?: "default" | "warning"; onChange: (value: string) => void }) {
   if (hidden) return null;
   const displayValue = value ? value.split("-").reverse().join("/") : "dd/mm/yyyy";
-  return <label className="form-field"><span>{label}{required ? " *" : ""}</span><div className={`uf-date-picker ${value ? "has-value" : ""}`}><span>{displayValue}</span><span aria-hidden="true">▣</span><input disabled={readOnly} type="date" value={value} onChange={(event) => onChange(event.target.value)} /></div>{error && <span>{error}</span>}</label>;
+  return <label className="form-field"><span>{label}{required ? " *" : ""}</span><div className={`uf-date-picker ${value ? "has-value" : ""}`}><span>{displayValue}</span><span aria-hidden="true">▣</span><input disabled={readOnly} type="date" value={value} onClick={(event) => event.currentTarget.showPicker()} onChange={(event) => onChange(event.target.value)} /></div>{error && <span>{error}</span>}{!error && hint && <span className={hintTone === "warning" ? "field-warning" : undefined}>{hint}</span>}</label>;
 }
 
 type GuardianSectionProps = {
@@ -546,6 +569,11 @@ export function UF_MEMBER_FORM({
   readOnlyFunctions = false,
   readOnlySections = false,
   isSubmitting = false,
+  standardMembershipFeeAmount = null,
+  membershipFeeCurrency = "RSD",
+  visibleStep,
+  hideStepper = false,
+  hideActions = false,
   onFieldChange,
   onGuardianFieldChange,
   onAddSecondGuardian,
@@ -583,6 +611,13 @@ export function UF_MEMBER_FORM({
   const showGuardian2 = !isPersonCreate && (values.showGuardian2 || hasGuardianValues(values.guardian2));
   const sectionId = `${mode}-member-section`;
   const currentStatus = isPresidentOnboarding ?"ACTIVE" : values.status;
+  const membershipFeeMode: MembershipFeeMode = values.membership_fee_mode ?? (
+    !values.membership_fee_required
+      ? "EXEMPT"
+      : standardMembershipFeeAmount != null && Number(values.membership_fee_amount) === standardMembershipFeeAmount
+        ? "STANDARD"
+        : "CUSTOM"
+  );
   const today = new Date();
   const todayValue = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
   const passportIsExpired = Boolean(
@@ -591,6 +626,7 @@ export function UF_MEMBER_FORM({
   const memberLookupStatus = memberLookup?.status ?? "idle";
   const primaryGuardianLookupStatus = guardianLookups?.guardian1?.status ?? "idle";
   const isCreateWizard = mode === "create";
+  const isPendingApproval = mode === "pending_approval";
   const isMinorCreateWizard = isCreateWizard && values.is_minor_member;
   const memberEmailChecked =
     !isCreateWizard ||
@@ -625,6 +661,7 @@ export function UF_MEMBER_FORM({
     delete localErrors.passport_expiry_date;
   }
   const visibleErrors = mergeErrors(localErrors, errors);
+  const displayedStep = visibleStep ?? activeStep;
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -643,7 +680,9 @@ export function UF_MEMBER_FORM({
           "status",
           "start_date",
           "membership_fee_required",
-          "membership_fee_amount"
+          "membership_fee_amount",
+          "membership_fee_mode",
+          "membership_fee_reason"
         ]);
         if (errorFields.some((field) => !membershipErrorFields.has(field))) {
           setActiveStep(2);
@@ -661,13 +700,13 @@ export function UF_MEMBER_FORM({
 
   return (
     <form className={`uf-member-form ${isPersonCreate ? "uf-person-create-form" : ""}`} noValidate onSubmit={handleSubmit}>
-      {!isPersonCreate && <nav className="uf-stepper" aria-label="Koraci forme">
-        <button className={activeStep === 1 ? "active" : ""} disabled={!isCreateWizard} type="button" onClick={() => setActiveStep(1)}><span>1</span> Identifikacija</button>
-        <button className={activeStep === 2 ? "active" : ""} disabled={!memberEmailChecked || !primaryGuardianEmailChecked} type="button" onClick={() => setActiveStep(2)}><span>2</span> Lični podaci</button>
-        <button className={activeStep === 3 ? "active" : ""} disabled={!memberEmailChecked || !primaryGuardianEmailChecked} type="button" onClick={() => setActiveStep(3)}><span>3</span> Članstvo</button>
+      {!isPersonCreate && !hideStepper && <nav className="uf-stepper" aria-label="Koraci forme">
+        <button className={displayedStep === 1 ? "active" : ""} disabled={!isCreateWizard} type="button" onClick={() => setActiveStep(1)}><span>1</span> Identifikacija</button>
+        <button className={displayedStep === 2 ? "active" : ""} disabled={!memberEmailChecked || !primaryGuardianEmailChecked} type="button" onClick={() => setActiveStep(2)}><span>2</span> Lični podaci</button>
+        <button className={displayedStep === 3 ? "active" : ""} disabled={!memberEmailChecked || !primaryGuardianEmailChecked} type="button" onClick={() => setActiveStep(3)}><span>3</span> Članstvo</button>
       </nav>}
 
-      {activeStep === 1 && <section className="uf-form-panel uf-identification-panel" aria-labelledby={sectionId}>
+      {displayedStep === 1 && <section className="uf-form-panel uf-identification-panel" aria-labelledby={sectionId}>
         <div className="page-heading" style={{ marginBottom: 0 }}>
           <p className="eyebrow" id={sectionId}>
             Podaci o članu
@@ -733,7 +772,7 @@ export function UF_MEMBER_FORM({
           : memberLookupStatus === "checking") && <p>Provera email adrese...</p>}
       </section>}
 
-      {activeStep === 2 && memberEmailChecked && primaryGuardianEmailChecked && (
+      {displayedStep === 2 && memberEmailChecked && primaryGuardianEmailChecked && (
       <>
       {showGuardian1 && (
         <GuardianSection
@@ -742,6 +781,7 @@ export function UF_MEMBER_FORM({
           values={values.guardian1}
           errors={visibleErrors}
           lookup={guardianLookups?.guardian1}
+          readOnlyFields={readOnlyGuardianFields?.guardian1}
           hideEmail={isMinorCreateWizard}
           onGuardianFieldChange={onGuardianFieldChange}
           onEmailBlur={() => onGuardianEmailBlur?.("guardian1")}
@@ -765,6 +805,15 @@ export function UF_MEMBER_FORM({
           readOnly={isPersonFieldReadOnly("first_name")}
           onChange={(value) => onFieldChange("first_name", value)}
         />
+        {isPendingApproval && <TextField
+          required={!minor}
+          label={memberMinor ?"Email člana" : "Email"}
+          type="email"
+          value={values.email}
+          error={visibleErrors.email}
+          readOnly={isPersonFieldReadOnly("email")}
+          onChange={(value) => onFieldChange("email", value)}
+        />}
         {isPersonCreate && <TextField required label="Email" type="email" value={values.email} error={visibleErrors.email} readOnly={isPersonFieldReadOnly("email")} onChange={(value) => onFieldChange("email", value)} />}
         <TextField
           required
@@ -815,6 +864,7 @@ export function UF_MEMBER_FORM({
             values={values.guardian2}
             errors={visibleErrors}
             lookup={guardianLookups?.guardian2}
+            readOnlyFields={readOnlyGuardianFields?.guardian2}
             onGuardianFieldChange={onGuardianFieldChange}
             onEmailBlur={() => onGuardianEmailBlur?.("guardian2")}
             onRemove={onRemoveSecondGuardian}
@@ -896,7 +946,7 @@ export function UF_MEMBER_FORM({
       </>
       )}
 
-      {!isPersonCreate && activeStep === 3 && memberEmailChecked && primaryGuardianEmailChecked && (
+      {!isPersonCreate && displayedStep === 3 && memberEmailChecked && primaryGuardianEmailChecked && (
       <div className="uf-membership-layout">
       <section className="uf-form-panel" aria-labelledby={`${mode}-membership-section`}>
         <div className="page-heading" style={{ marginBottom: 0 }}>
@@ -928,31 +978,24 @@ export function UF_MEMBER_FORM({
           onChange={(value) => onFieldChange("start_date", value)}
         />
 
-        <label className="form-field">
-          <span>Članarina se naplaćuje</span>
-          <select
-            className="input"
-            disabled={isMembershipFieldReadOnly("membership_fee_required")}
-            value={values.membership_fee_required ?"true" : "false"}
-            onChange={(event) =>
-              onFieldChange(
-                "membership_fee_required",
-                event.target.value === "true"
-              )
-            }
-          >
-            <option value="true">Da</option>
-            <option value="false">Ne</option>
-          </select>
-        </label>
-
-        <TextField
-          label="Iznos članarine"
-          type="number"
-          value={values.membership_fee_amount}
-          error={visibleErrors.membership_fee_amount}
-          readOnly={isMembershipFieldReadOnly("membership_fee_amount")}
-          onChange={(value) => onFieldChange("membership_fee_amount", value)}
+        <MembershipFeeFields
+          mode={membershipFeeMode}
+          customAmount={values.membership_fee_amount}
+          reason={values.membership_fee_reason ?? ""}
+          standardAmount={standardMembershipFeeAmount}
+          currency={membershipFeeCurrency}
+          disabled={
+            isMembershipFieldReadOnly("membership_fee_required") ||
+            isMembershipFieldReadOnly("membership_fee_amount")
+          }
+          onModeChange={(feeMode) => {
+            onFieldChange("membership_fee_required", feeMode !== "EXEMPT");
+            onFieldChange("membership_fee_amount", feeMode === "STANDARD" ? String(standardMembershipFeeAmount ?? "") : feeMode === "EXEMPT" ? "" : values.membership_fee_amount);
+            onFieldChange("membership_fee_mode", feeMode);
+            if (feeMode === "STANDARD") onFieldChange("membership_fee_reason", "");
+          }}
+          onCustomAmountChange={(value) => onFieldChange("membership_fee_amount", value)}
+          onReasonChange={(value) => onFieldChange("membership_fee_reason", value)}
         />
       </section>
 
@@ -1009,7 +1052,7 @@ export function UF_MEMBER_FORM({
 
       {isPersonCreate && showCompactSubmitError && <p className="uf-compact-submit-error">Proverite obavezna polja označena zvezdicom i format emaila.</p>}
       {!isPersonCreate && showWizardSubmitError && <p className="uf-compact-submit-error">Pregled nije moguće otvoriti. Proverite označena polja na prikazanom koraku.</p>}
-      <div className="uf-form-actions">
+      {!hideActions && <div className="uf-form-actions">
         <button
           className="button button-secondary"
           disabled={isSubmitting}
@@ -1026,7 +1069,7 @@ export function UF_MEMBER_FORM({
             <button className="button button-primary" disabled={isSubmitting || memberSaveBlocked || !memberEmailChecked || !primaryGuardianEmailChecked} type="submit">{isPresidentOnboarding ? "Pregled i potvrda" : "Sačuvaj"}</button>
           )}
         </div>
-      </div>
+      </div>}
     </form>
   );
 }

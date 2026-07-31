@@ -87,7 +87,9 @@ export default function MemberDataCompletionPage() {
         );
         if (loadError || !data) throw loadError ?? new Error("Link nije važeći.");
         const loadedDraft = mergeDraft(data.draft);
-        if (data.recipient_role === "GUARDIAN") loadedDraft.is_minor_member = true;
+        // Punoletstvo se određuje isključivo iz datuma rođenja. Roditeljski
+        // poziv je već dokaz da se radi o maloletnom članu dok se datum ne unese.
+        loadedDraft.is_minor_member = data.recipient_role === "GUARDIAN" || isUnder18(loadedDraft.birth_date);
         setDraft(loadedDraft);
         setVersion(data.draft_version);
         setRecipientRole(data.recipient_role);
@@ -143,7 +145,11 @@ export default function MemberDataCompletionPage() {
   }
 
   function change(field: keyof Draft, value: string | boolean) {
-    scheduleSave({ ...latestDraft.current, [field]: value });
+    const nextDraft = { ...latestDraft.current, [field]: value };
+    if (field === "birth_date") {
+      nextDraft.is_minor_member = isUnder18(String(value));
+    }
+    scheduleSave(nextDraft);
   }
 
   function changeGuardian(which: "guardian1" | "guardian2", field: keyof GuardianDraft, value: string) {
@@ -243,11 +249,6 @@ export default function MemberDataCompletionPage() {
         <DateField label="Datum važenja pasoša" value={draft.passport_expiry_date} onChange={(value) => change("passport_expiry_date", value)} />
       </div>
 
-      {recipientRole === "MEMBER" && <label className="member-data-minor-toggle">
-        <input type="checkbox" checked={draft.is_minor_member} onChange={(event) => change("is_minor_member", event.target.checked)} />
-        Podaci se odnose na maloletnog člana
-      </label>}
-
       {recipientRole === "GUARDIAN" && (
         <section className="member-data-guardians">
           <h2>Roditelj/staratelj 1</h2>
@@ -339,6 +340,18 @@ function SaveIndicator({ state, lastSavedAt }: { state: string; lastSavedAt: str
 
 function asDraftText(value: unknown, fallback = "") {
   return typeof value === "string" ? value : value == null ? fallback : String(value);
+}
+
+function isUnder18(birthDate: string) {
+  const match = birthDate.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) return false;
+  const date = new Date(Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3])));
+  if (Number.isNaN(date.getTime())) return false;
+  const today = new Date();
+  let age = today.getFullYear() - date.getUTCFullYear();
+  const birthdayThisYear = new Date(today.getFullYear(), date.getUTCMonth(), date.getUTCDate());
+  if (today < birthdayThisYear) age -= 1;
+  return age < 18;
 }
 
 function mergeDraft(value: Partial<Draft> | null): Draft {

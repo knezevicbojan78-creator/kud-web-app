@@ -137,6 +137,55 @@
       "applied_on": "2026-07-29",
       "verified_by": "gmail-v1-society-connection-diagnostic.sql",
       "note": "Jedno Gmail OAuth povezivanje po drustvu, dostupno samo predsedniku, sa sifrovanim tokenima, zamenom i odjavom naloga."
+    },
+    {
+      "file": "gmail-v1-society-outbox.sql",
+      "status": "applied",
+      "applied_on": "2026-07-30",
+      "verified_by": "gmail-v1-society-outbox-diagnostic.sql",
+      "note": "Opsti outbox svih poslovnih emailova, Gmail slanje poziva za dopunu i potvrda uplata, istorija pokusaja i kontrolisani tab u Izvestajima."
+    },
+    {
+      "file": "members-v1-accepted-awaiting-data.sql",
+      "status": "applied",
+      "applied_on": "2026-07-30",
+      "verified_by": "members-v1-accepted-awaiting-data-diagnostic.sql",
+      "note": "Slanje linka postaje prijem u aktivno clanstvo, uz odvojeno stanje dopune podataka do zavrsnog pregleda."
+    },
+    {
+      "file": "members-v1-final-approval-membership-settings.sql",
+      "status": "applied",
+      "applied_on": "2026-07-30",
+      "verified_by": "members-v1-final-approval-membership-settings-diagnostic.sql",
+      "note": "Zavrsna potvrda posle dopune podataka cuva clanarinu, funkcije i sekcije u istom koraku."
+    },
+    {
+      "file": "members-v1-unified-fee-workflows.sql",
+      "status": "applied",
+      "applied_on": "2026-07-31",
+      "verified_by": "members-v1-unified-fee-workflows-diagnostic.sql",
+      "note": "Jedinstven i atomski unos standardne, posebne ili oslobodjene clanarine pri dodavanju, izmeni i zavrsnoj potvrdi clana."
+    },
+    {
+      "file": "reports-v1-overview.sql",
+      "status": "applied",
+      "applied_on": "2026-07-31",
+      "verified_by": "reports-v1-overview-diagnostic.sql",
+      "note": "Objedinjeni izvestaji o clanstvu, finansijama, prisustvu, dogadjajima, garderobi, dopuni podataka i aktivnostima korisnika."
+    },
+    {
+      "file": "performance-v1-remove-redundant-indexes.sql",
+      "status": "applied",
+      "applied_on": "2026-07-31",
+      "verified_by": "performance-v1-remove-redundant-indexes-diagnostic.sql",
+      "note": "Atomsko uklanjanje pet redundantnih indeksa nakon read-only pregleda aktivne baze; jedinstveni indeksi koji cuvaju ista pravila ostaju aktivni."
+    },
+    {
+      "file": "migrations/20260731170000_production_v1_clean_test_data.sql",
+      "status": "applied",
+      "applied_on": "2026-07-31",
+      "verified_by": "production-v1-clean-test-data-diagnostic.sql",
+      "note": "Selektivno produkciono ciscenje testnih naloga i poslovnih podataka uz ocuvanje KUD Mitance, predsednika kud.mitance@gmail.com, aktivne licence, konfiguracije i svih Master Admin naloga."
     }
   ]
 }
