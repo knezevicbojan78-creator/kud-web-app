@@ -26,6 +26,14 @@ export function isValidEmail(value: string) {
   return emailPattern.test(value.trim());
 }
 
+export function isMinorOnDate(birthDate: string, referenceDate = new Date()) {
+  if (!isValidIsoDate(birthDate)) return false;
+  const [year, month, day] = birthDate.split("-").map(Number);
+  const eighteenthBirthday = new Date(year + 18, month - 1, day);
+  const today = new Date(referenceDate.getFullYear(), referenceDate.getMonth(), referenceDate.getDate());
+  return eighteenthBirthday > today;
+}
+
 function valueToText(value: unknown) {
   return value == null ? "" : String(value).trim();
 }
@@ -124,7 +132,13 @@ export function parseBulkImportFile(
     }
     if (!item.firstName) item.errors.push("Nedostaje ime.");
     if (!item.lastName) item.errors.push("Nedostaje prezime.");
-    if (!item.email) item.errors.push("Nedostaje email.");
+    const emailIsRequired = item.kind === "Roditelj/staratelj" ||
+      (item.kind === "Član" && !isMinorOnDate(item.birthDate));
+    if (!item.email && emailIsRequired) {
+      item.errors.push(item.kind === "Član"
+        ? "Email je obavezan za punoletnog člana."
+        : "Nedostaje email.");
+    }
     if (item.gender && !["Muško", "Žensko"].includes(item.gender)) {
       item.errors.push("Pol mora biti „Muško“ ili „Žensko“.");
     }

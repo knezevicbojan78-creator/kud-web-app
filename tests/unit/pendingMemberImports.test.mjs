@@ -59,7 +59,7 @@ test("maloletnom kandidatu se proveravaju podaci prvog staratelja", () => {
     last_name: "Milić",
     gender: "Žensko",
     birth_date: "2015-04-15",
-    email: "mila@example.com",
+    email: "",
     address: "Glavna 1",
     city: "Novi Sad",
     postal_code: "21000",

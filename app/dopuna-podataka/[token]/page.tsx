@@ -230,8 +230,8 @@ export default function MemberDataCompletionPage() {
       <div className="member-data-grid">
         <Field label="Ime" value={draft.first_name} onChange={(value) => change("first_name", value)} required />
         <Field label="Prezime" value={draft.last_name} onChange={(value) => change("last_name", value)} required />
-        <Field label="Email" value={draft.email} onChange={(value) => change("email", value)} type="email" required disabled />
-        <Field label="Telefon" value={draft.phone} onChange={(value) => change("phone", value)} type="tel" required />
+        <Field label="Email" value={draft.email} onChange={(value) => change("email", value)} type="email" required={!draft.is_minor_member} disabled />
+        <Field label="Telefon" value={draft.phone} onChange={(value) => change("phone", value)} type="tel" required={!draft.is_minor_member} />
         <Field label="Broj obuće" value={draft.shoe_size} onChange={(value) => change("shoe_size", value.replace(/\D/g, "").slice(0, 2))} type="number" />
         <label className="form-field">
           <span>Pol *</span>
@@ -398,7 +398,9 @@ function getMessage(error: unknown) {
 
 function getProgress(draft: Draft) {
   const values = [
-    draft.first_name, draft.last_name, draft.email, draft.phone, draft.gender,
+    draft.first_name, draft.last_name,
+    ...(!draft.is_minor_member ? [draft.email, draft.phone] : []),
+    draft.gender,
     draft.birth_date, draft.address, draft.city, draft.postal_code, draft.country,
     ...(draft.is_minor_member
       ? [
@@ -414,8 +416,6 @@ function getMissingRequiredFields(draft: Draft) {
   const fields: Array<[string, string]> = [
     ["Ime", draft.first_name],
     ["Prezime", draft.last_name],
-    ["Email", draft.email],
-    ["Telefon", draft.phone],
     ["Pol", draft.gender],
     ["Datum rođenja", draft.birth_date],
     ["Adresa", draft.address],
@@ -423,6 +423,9 @@ function getMissingRequiredFields(draft: Draft) {
     ["Poštanski broj", draft.postal_code],
     ["Država", draft.country]
   ];
+  if (!draft.is_minor_member) {
+    fields.push(["Email", draft.email], ["Telefon", draft.phone]);
+  }
   if (draft.is_minor_member) {
     fields.push(
       ["Ime roditelja/staratelja", draft.guardian1.first_name],

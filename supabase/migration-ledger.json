@@ -186,6 +186,12 @@
       "applied_on": "2026-07-31",
       "verified_by": "production-v1-clean-test-data-diagnostic.sql",
       "note": "Selektivno produkciono ciscenje testnih naloga i poslovnih podataka uz ocuvanje KUD Mitance, predsednika kud.mitance@gmail.com, aktivne licence, konfiguracije i svih Master Admin naloga."
+    },
+    {
+      "file": "migrations/20260731193000_allow_minor_members_without_email.sql",
+      "status": "applied",
+      "applied_on": "2026-07-31",
+      "note": "Maloletnom clanu email nije obavezan; kontakt i poziv vode se preko roditelja ili staratelja."
     }
   ]
 }

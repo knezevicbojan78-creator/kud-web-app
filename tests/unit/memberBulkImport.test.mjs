@@ -76,6 +76,32 @@ test("duplirani email u fajlu označava oba reda", () => {
   assert.ok(rows.every((row) => row.errors.includes("Email se ponavlja u fajlu.")));
 });
 
+test("maloletni član može biti unet bez sopstvenog emaila", () => {
+  const minorRow = [...validRow];
+  minorRow[4] = "15.04.2015";
+  minorRow[5] = "";
+  const [row] = parseBulkImportFile(addRows(loadTemplate(), [minorRow]), XLSX);
+
+  assert.deepEqual(row.errors, []);
+});
+
+test("punoletnom članu email ostaje obavezan", () => {
+  const adultRow = [...validRow];
+  adultRow[5] = "";
+  const [row] = parseBulkImportFile(addRows(loadTemplate(), [adultRow]), XLSX);
+
+  assert.ok(row.errors.includes("Email je obavezan za punoletnog člana."));
+});
+
+test("roditelju ili staratelju email ostaje obavezan", () => {
+  const guardianRow = [...validRow];
+  guardianRow[0] = "Roditelj/staratelj";
+  guardianRow[5] = "";
+  const [row] = parseBulkImportFile(addRows(loadTemplate(), [guardianRow]), XLSX);
+
+  assert.ok(row.errors.includes("Nedostaje email."));
+});
+
 test("neispravan datum se prijavljuje", () => {
   const invalidDateRow = [...validRow];
   invalidDateRow[4] = "31.02.2026";

@@ -41,7 +41,7 @@ export function getPendingCandidateStage(candidate: PendingImportCandidate) {
   const draft = candidate.draft ?? candidate.profile;
   const isMinor = Boolean(draft.is_minor_member);
   const missingFields = candidate.missing_fields.filter(
-    (field) => field !== "phone" || !isMinor
+    (field) => !isMinor || (field !== "phone" && field !== "email")
   );
   const invitationStatuses = [
     candidate.member_invitation_status,
@@ -86,7 +86,6 @@ export function getMissingPendingPersonalFields(draft: Record<string, unknown>) 
     ["last_name", "prezime člana"],
     ["gender", "pol člana"],
     ["birth_date", "datum rođenja člana"],
-    ["email", "email člana"],
     ["address", "adresa člana"],
     ["city", "mesto člana"],
     ["postal_code", "poštanski broj"],
@@ -98,6 +97,9 @@ export function getMissingPendingPersonalFields(draft: Record<string, unknown>) 
   });
 
   const isMinor = Boolean(draft.is_minor_member);
+  if (!isMinor && !String(draft.email ?? "").trim()) {
+    missing.push("email člana");
+  }
   if (!isMinor && !String(draft.phone ?? "").trim()) {
     missing.push("telefon člana");
   }
