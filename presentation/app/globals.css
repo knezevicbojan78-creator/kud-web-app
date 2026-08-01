@@ -300,6 +300,8 @@ html { scroll-behavior: smooth; }
 .marketing-footer { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 25px 50px; padding: 45px max(48px, calc((100vw - 1180px)/2)); background: #172d3d; color: #dbe3e6; }
 .marketing-footer p { color: #93a5ae; font-size: .85rem; }
 .marketing-footer nav a { color: #c1cdd2; }
+.marketing-footer nav button { border: 0; background: transparent; color: #c1cdd2; cursor: pointer; font: inherit; font-size: .93rem; font-weight: 700; padding: 0; }
+.marketing-footer nav a:hover, .marketing-footer nav button:hover { color: #fff; text-decoration: underline; }
 .marketing-footer small { grid-column: 1 / -1; padding-top: 20px; border-top: 1px solid rgba(255,255,255,.1); color: #78909b; }
 
 @media (max-width: 900px) {

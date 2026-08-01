@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Script from "next/script";
+import { CookieConsent } from "./_components/CookieConsent";
 import "./globals.css";
 import "../presentation/app/globals.css";
 
@@ -19,22 +19,7 @@ export default function RootLayout({
   return (
     <html lang="sr">
       <body>{children}</body>
-      {googleAnalyticsId ? (
-        <>
-          <Script
-            src={`https://www.googletagmanager.com/gtag/js?id=${googleAnalyticsId}`}
-            strategy="afterInteractive"
-          />
-          <Script id="google-analytics" strategy="afterInteractive">
-            {`
-              window.dataLayer = window.dataLayer || [];
-              function gtag(){dataLayer.push(arguments);}
-              gtag('js', new Date());
-              gtag('config', '${googleAnalyticsId}');
-            `}
-          </Script>
-        </>
-      ) : null}
+      <CookieConsent googleAnalyticsId={googleAnalyticsId} />
     </html>
   );
 }

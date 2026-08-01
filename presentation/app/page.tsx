@@ -104,7 +104,7 @@ export default function MarketingHome() {
         <a className="button marketing-primary light-button" href={registrationUrl}>Započnite besplatno testiranje <ArrowIcon /></a>
       </section>
 
-      <footer className="marketing-footer"><div className="marketing-brand"><Image alt="" height={40} src="/brand/folkloras-logo.png" unoptimized width={40}/><span>FOLKLORAŠ</span></div><p>Jedno mesto za svakodnevni rad KUD-a.</p><nav><a href="#mogucnosti">Mogućnosti</a><a href="#paketi">Paketi</a><a href={loginUrl}>Prijava</a></nav><small>© 2026 Folkloraš. Sva prava zadržana.</small></footer>
+      <footer className="marketing-footer"><div className="marketing-brand"><Image alt="" height={40} src="/brand/folkloras-logo.png" unoptimized width={40}/><span>FOLKLORAŠ</span></div><p>Jedno mesto za svakodnevni rad KUD-a.</p><nav><a href="#mogucnosti">Mogućnosti</a><a href="#paketi">Paketi</a><a href={loginUrl}>Prijava</a><Link href="/politika-privatnosti">Politika privatnosti</Link><button data-cookie-settings type="button">Podešavanja kolačića</button></nav><small>© 2026 Folkloraš. Sva prava zadržana.</small></footer>
     </main>
   );
 }
