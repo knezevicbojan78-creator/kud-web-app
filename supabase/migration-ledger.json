@@ -199,6 +199,13 @@
       "applied_on": "2026-08-01",
       "verified_by": "members-v1-guardian-email-suggestions-diagnostic.sql",
       "note": "Predlozi roditelja ili staratelja po delu emaila iz globalnog people registra, dostupni samo ovlascenom korisniku radi povezivanja sa detetom bez obzira na clanstvo roditelja u drustvu."
+    },
+    {
+      "file": "migrations/20260801170000_pending_membership_waiting_state.sql",
+      "status": "applied",
+      "applied_on": "2026-08-01",
+      "verified_by": "pending-membership-waiting-state-diagnostic.sql",
+      "note": "Slanje linka zadrzava kandidata u redu cekanja sa neaktivnim tehnickim clanstvom; aktiviranje i izabrani datum pocetka clanstva upisuju se tek zavrsnom predsednickom potvrdom."
     }
   ]
 }

@@ -25,6 +25,18 @@ export type PendingMembershipSetup = {
   sectionIds: string[];
 };
 
+export function excludePendingMemberships<T extends { id: string }>(
+  members: T[],
+  candidates: PendingImportCandidate[]
+) {
+  const pendingMemberIds = new Set(
+    candidates
+      .map((candidate) => candidate.society_member_id)
+      .filter((id): id is string => Boolean(id))
+  );
+  return members.filter((member) => !pendingMemberIds.has(member.id));
+}
+
 export function isPendingMemberMinor(draft: Record<string, unknown>) {
   const birthDate = String(draft.birth_date ?? "").trim();
   if (birthDate) {

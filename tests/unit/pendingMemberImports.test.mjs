@@ -2,12 +2,21 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  excludePendingMemberships,
   getInvitationStatusLabel,
   getMissingPendingInvitationFields,
   getMissingPendingPersonalFields,
   getPendingCandidateStage,
   isPendingMemberMinor
 } from "../../app/_lib/pendingMemberImports.ts";
+
+test("članstvo kandidata u čekanju se ne prikazuje među članovima", () => {
+  const members = [{ id: "active-1" }, { id: "pending-1" }];
+  const candidates = [candidate({ society_member_id: "pending-1" })];
+  assert.deepEqual(excludePendingMemberships(members, candidates), [
+    { id: "active-1" }
+  ]);
+});
 
 function candidate(overrides = {}) {
   return {

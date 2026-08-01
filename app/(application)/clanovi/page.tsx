@@ -26,6 +26,7 @@ import {
   type BulkImportRow
 } from "../../_lib/memberBulkImport";
 import {
+  excludePendingMemberships,
   getInvitationStatusLabel,
   getMissingPendingInvitationFields,
   getMissingPendingPersonalFields,
@@ -615,6 +616,7 @@ export default function ClanoviPage() {
       } = await supabase.rpc("auth_can_bulk_import_members", {
         p_society_id: activeSociety.id
       });
+      let currentPendingImports: PendingImportCandidate[] = [];
       if (!canBulkImportError && canBulkImport) {
         const { data: pendingData, error: pendingError } = await (
           supabase.rpc as any
@@ -622,7 +624,8 @@ export default function ClanoviPage() {
           p_society_id: activeSociety.id
         });
         if (pendingError) throw pendingError;
-        setPendingImports((pendingData ?? []) as PendingImportCandidate[]);
+        currentPendingImports = (pendingData ?? []) as PendingImportCandidate[];
+        setPendingImports(currentPendingImports);
       } else {
         setPendingImports([]);
       }
@@ -631,7 +634,7 @@ export default function ClanoviPage() {
         can_bulk_import: canBulkImportError ? false : Boolean(canBulkImport)
       });
       setMembers(
-        (pageData?.members ?? []).map((member) => ({
+        excludePendingMemberships(pageData?.members ?? [], currentPendingImports).map((member) => ({
           id: member.id,
           personId: member.person_id,
           firstName: member.first_name,
@@ -2681,7 +2684,7 @@ export default function ClanoviPage() {
                         >
                           {sendingInvitationId?.startsWith(`${candidate.id}:`)
                             ? "Slanje..."
-                            : "Prihvati člana i pošalji potrebne linkove"}
+                            : "Prihvati u proces dopune i pošalji linkove"}
                         </button>
                       )}
                       <div className="members-link-groups">
