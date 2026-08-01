@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -186,7 +187,18 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         aria-label="Glavni meni"
         id="main-navigation"
       >
-        <div className="sidebar-title">FOLKLORAŠ</div>
+        <div className="sidebar-title">
+          <Image
+            alt=""
+            aria-hidden="true"
+            className="sidebar-brand-logo"
+            height={30}
+            priority
+            src="/brand/folkloras-logo.png"
+            width={30}
+          />
+          <span>FOLKLORAŠ</span>
+        </div>
 
         <nav className="menu">
           {menuItems.map((item) => (

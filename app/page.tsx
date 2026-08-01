@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -228,6 +229,15 @@ export default function LoginPage() {
       <section className="card login-card">
         <div className="login-brand">
           <p className="eyebrow">Dobrodošli</p>
+          <Image
+            alt=""
+            aria-hidden="true"
+            className="login-brand-logo"
+            height={68}
+            priority
+            src="/brand/folkloras-logo.png"
+            width={68}
+          />
           <h1>FOLKLORAŠ</h1>
           <span>{title}</span>
         </div>
