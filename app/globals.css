@@ -124,6 +124,12 @@ a {
   padding: var(--space-2) var(--space-3);
 }
 
+select.input {
+  padding-top: 0;
+  padding-bottom: 0;
+  line-height: normal;
+}
+
 .input:focus {
   border-color: var(--color-primary);
   outline: 3px solid var(--color-focus-ring);
