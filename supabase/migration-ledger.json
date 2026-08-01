@@ -218,6 +218,12 @@
       "status": "applied",
       "applied_on": "2026-08-01",
       "note": "Pojedinacni unos prvo proverava globalni people registar, cuva ili ponovo koristi osobu i kreira kandidata u redu za odobrenje bez aktiviranja clanstva."
+    },
+    {
+      "file": "migrations/20260801220000_membership_fee_types.sql",
+      "status": "applied",
+      "applied_on": "2026-08-01",
+      "note": "Katalog imenovanih vrsta clanarine sa iznosima kojim upravlja predsednik drustva."
     }
   ]
 }

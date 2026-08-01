@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import {
   getSupabaseClient,
   type FinanceMemberFeeSetting,
+  type FinanceMembershipFeeType,
   type FinanceMembershipSettings,
   type PermissionFunctionMember,
   type PermissionMemberConfiguration,
@@ -63,6 +64,11 @@ export default function PodesavanjaPage() {
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [exceptions, setExceptions] = useState<FinanceMemberFeeSetting[]>([]);
+  const [feeTypes, setFeeTypes] = useState<FinanceMembershipFeeType[]>([]);
+  const [editingFeeTypeId, setEditingFeeTypeId] = useState<string | null>(null);
+  const [feeTypeName, setFeeTypeName] = useState("");
+  const [feeTypeAmount, setFeeTypeAmount] = useState("");
+  const [isSavingFeeType, setIsSavingFeeType] = useState(false);
   const [memberQuery, setMemberQuery] = useState("");
   const [memberResults, setMemberResults] = useState<FinanceMemberFeeSetting[]>([]);
   const [editingMember, setEditingMember] = useState<FinanceMemberFeeSetting | null>(null);
@@ -122,6 +128,16 @@ export default function PodesavanjaPage() {
       );
       if (exceptionsError) throw exceptionsError;
       setExceptions(exceptionRows ?? []);
+      const { data: feeTypeRows, error: feeTypesError } = await supabase.rpc(
+        "finance_list_membership_fee_types",
+        {
+          p_society_id: membership.society_id,
+          p_actor_member_id: membership.society_member_id,
+          p_include_inactive: false
+        }
+      );
+      if (feeTypesError) throw feeTypesError;
+      setFeeTypes(feeTypeRows ?? []);
     } catch (loadError) {
       setError(errorMessage(loadError));
     } finally {
@@ -423,6 +439,80 @@ export default function PodesavanjaPage() {
     }
   }
 
+  function resetFeeTypeForm() {
+    setEditingFeeTypeId(null);
+    setFeeTypeName("");
+    setFeeTypeAmount("");
+  }
+
+  function editFeeType(feeType: FinanceMembershipFeeType) {
+    setEditingFeeTypeId(feeType.id);
+    setFeeTypeName(feeType.name);
+    setFeeTypeAmount(String(feeType.amount));
+    setError("");
+    setMessage("");
+  }
+
+  async function saveFeeType() {
+    if (!settings || !actorMemberId) return;
+    const name = feeTypeName.trim();
+    const numericAmount = Number(feeTypeAmount);
+    if (name.length < 2 || name.length > 80) {
+      setError("Naziv vrste članarine mora imati između 2 i 80 karaktera.");
+      return;
+    }
+    if (!Number.isFinite(numericAmount) || numericAmount <= 0) {
+      setError("Iznos vrste članarine mora biti veći od nule.");
+      return;
+    }
+    setIsSavingFeeType(true);
+    setError("");
+    setMessage("");
+    try {
+      const { error: saveError } = await getSupabaseClient().rpc(
+        "finance_save_membership_fee_type",
+        {
+          p_society_id: settings.society_id,
+          p_fee_type_id: editingFeeTypeId,
+          p_name: name,
+          p_amount: numericAmount,
+          p_actor_member_id: actorMemberId
+        }
+      );
+      if (saveError) throw saveError;
+      const action = editingFeeTypeId ? "izmijenjena" : "dodana";
+      resetFeeTypeForm();
+      await loadSettings();
+      setMessage(`Vrsta članarine je ${action}.`);
+    } catch (saveError) {
+      setError(errorMessage(saveError));
+    } finally {
+      setIsSavingFeeType(false);
+    }
+  }
+
+  async function archiveFeeType(feeType: FinanceMembershipFeeType) {
+    if (!actorMemberId) return;
+    if (!window.confirm(`Deaktivirati vrstu članarine „${feeType.name}“?`)) return;
+    setIsSavingFeeType(true);
+    setError("");
+    setMessage("");
+    try {
+      const { error: archiveError } = await getSupabaseClient().rpc(
+        "finance_archive_membership_fee_type",
+        { p_fee_type_id: feeType.id, p_actor_member_id: actorMemberId }
+      );
+      if (archiveError) throw archiveError;
+      if (editingFeeTypeId === feeType.id) resetFeeTypeForm();
+      await loadSettings();
+      setMessage(`Vrsta članarine „${feeType.name}“ je deaktivirana.`);
+    } catch (archiveError) {
+      setError(errorMessage(archiveError));
+    } finally {
+      setIsSavingFeeType(false);
+    }
+  }
+
   function editMember(member: FinanceMemberFeeSetting) {
     setEditingMember(member);
     setMemberMode(member.fee_mode);
@@ -533,6 +623,47 @@ export default function PodesavanjaPage() {
                       </label>
                     );
                   })}
+                </div>
+              </section>
+
+              <section className="settings-fee-types">
+                <header>
+                  <div>
+                    <h3>Vrste članarine</h3>
+                    <p>Dodajte više imenovanih članarina koje društvo koristi.</p>
+                  </div>
+                </header>
+                <div className="settings-fee-type-form">
+                  <label className="form-field">
+                    <span>Naziv članarine *</span>
+                    <input className="input" maxLength={80} placeholder="Na primer: Dečija grupa"
+                      value={feeTypeName} onChange={(event) => setFeeTypeName(event.target.value)} />
+                  </label>
+                  <label className="form-field">
+                    <span>Iznos ({settings.currency}) *</span>
+                    <input className="input" min="0.01" step="0.01" type="number"
+                      value={feeTypeAmount} onChange={(event) => setFeeTypeAmount(event.target.value)} />
+                  </label>
+                  <div className="header-actions">
+                    {editingFeeTypeId && <button className="button button-secondary" disabled={isSavingFeeType}
+                      onClick={resetFeeTypeForm} type="button">OTKAŽI</button>}
+                    <button className="button button-primary" disabled={isSavingFeeType}
+                      onClick={() => void saveFeeType()} type="button">
+                      {isSavingFeeType ? "ČUVANJE..." : editingFeeTypeId ? "SAČUVAJ VRSTU" : "DODAJ VRSTU"}
+                    </button>
+                  </div>
+                </div>
+                <div className="settings-fee-type-list">
+                  {feeTypes.length === 0 && <p className="program-empty-row">Još nema dodatih vrsta članarine.</p>}
+                  {feeTypes.map((feeType) => <article key={feeType.id}>
+                    <div><strong>{feeType.name}</strong><span>{feeType.amount} {feeType.currency} mesečno</span></div>
+                    <div className="header-actions">
+                      <button className="button button-secondary" disabled={isSavingFeeType}
+                        onClick={() => editFeeType(feeType)} type="button">IZMENI</button>
+                      <button className="button button-secondary" disabled={isSavingFeeType}
+                        onClick={() => void archiveFeeType(feeType)} type="button">DEAKTIVIRAJ</button>
+                    </div>
+                  </article>)}
                 </div>
               </section>
 

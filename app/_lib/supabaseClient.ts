@@ -749,6 +749,17 @@ export type FinanceMembershipSettings = {
   chargeable_months: number[];
 };
 
+export type FinanceMembershipFeeType = {
+  id: string;
+  society_id: string;
+  name: string;
+  amount: number;
+  currency: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
 export type FinanceMemberFeeSetting = {
   society_member_id: string;
   person_id: string;
@@ -1916,6 +1927,9 @@ type Database = {
       finance_search_entities: { Args: { p_society_id: string; p_query: string; p_actor_member_id: string; p_limit?: number }; Returns: FinanceSearchEntity[] };
       finance_get_actor_context: { Args: Record<never, never>; Returns: { society_id: string; society_member_id: string; role: "Predsednik" | "Blagajnik" } | null };
       finance_get_membership_settings: { Args: { p_society_id: string; p_actor_member_id: string }; Returns: FinanceMembershipSettings };
+      finance_list_membership_fee_types: { Args: { p_society_id: string; p_actor_member_id: string; p_include_inactive?: boolean }; Returns: FinanceMembershipFeeType[] };
+      finance_save_membership_fee_type: { Args: { p_society_id: string; p_fee_type_id: string | null; p_name: string; p_amount: number; p_actor_member_id: string }; Returns: FinanceMembershipFeeType };
+      finance_archive_membership_fee_type: { Args: { p_fee_type_id: string; p_actor_member_id: string }; Returns: FinanceMembershipFeeType };
       finance_update_membership_settings: { Args: {
         p_society_id: string; p_standard_amount: number; p_chargeable_months: number[];
         p_reason: string; p_actor_member_id: string;
