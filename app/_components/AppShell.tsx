@@ -192,10 +192,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             alt=""
             aria-hidden="true"
             className="sidebar-brand-logo"
-            height={30}
+            height={36}
             priority
             src="/brand/folkloras-logo.png"
-            width={30}
+            unoptimized
+            width={36}
           />
           <span>FOLKLORAŠ</span>
         </div>

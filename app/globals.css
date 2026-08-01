@@ -374,10 +374,16 @@ a {
   font-weight: 700;
 }
 
+.sidebar-title span {
+  display: flex;
+  align-items: center;
+  line-height: 1;
+}
+
 .sidebar-brand-logo {
   flex: 0 0 auto;
-  width: 28px;
-  height: 28px;
+  width: 34px;
+  height: 34px;
   object-fit: contain;
   filter: brightness(0) invert(1);
 }

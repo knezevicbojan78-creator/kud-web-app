@@ -236,6 +236,7 @@ export default function LoginPage() {
             height={68}
             priority
             src="/brand/folkloras-logo.png"
+            unoptimized
             width={68}
           />
           <h1>FOLKLORAŠ</h1>
