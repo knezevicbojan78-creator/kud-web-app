@@ -58,7 +58,26 @@ V1 ne obuhvata:
 
 ## 5. Podešavanja članarine
 
-* Društvo ima jedan standardni mesečni iznos članarine.
+### Katalog vrsta članarine — dopuna 01.08.2026.
+
+* Društvo može imati više imenovanih vrsta članarine sa nazivom i pozitivnim
+  iznosom, na primer `Redovna`, `Dečija` ili `Porodična`.
+* Valuta svake vrste automatski je osnovna valuta društva.
+* Aktivni naziv mora biti jedinstven unutar društva.
+* Predsednik može da kreira, izmeni i arhivira vrstu. Arhiviranje čuva
+  istorijski zapis i ne briše podatak.
+* Upravljanje je trenutno ograničeno na prijavljenog aktivnog predsednika;
+  serverska funkcija proverava Auth identitet i funkciju, a tabela nema
+  direktna klijentska prava.
+* Katalog je dodat tabelom `society_membership_fee_types` i kontrolisanim RPC
+  funkcijama iz migracije
+  `supabase/migrations/20260801220000_membership_fee_types.sql`.
+
+Postojeći V1 obračunski model u nastavku ostaje važeći: standardni iznos
+društva i individualni režimi `STANDARD`, `CUSTOM` i `EXEMPT` određuju stvarnu
+obavezu člana dok se katalog vrsta eksplicitno ne poveže sa obračunom.
+
+* Društvo ima jedan obračunski standardni mesečni iznos članarine.
 * Novi član podrazumevano dobija standardni iznos.
 * Svaki član ima režim članarine:
   * `STANDARD` — prati standardni iznos društva

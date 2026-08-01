@@ -1,5 +1,20 @@
 # Kontrolna lista čišćenja pre puštanja aplikacije u rad
 
+## Status — 2026-08-02
+
+Prva produkcijska objava je završena. Selektivna migracija
+`20260731170000_production_v1_clean_test_data.sql` primenjena je 31.07.2026. i
+evidentirana kao `applied`; sačuvala je KUD Mitanče, njegovog predsednika,
+aktivnu licencu, konfiguraciju i Master administrator naloge. Inventar probnih
+podataka u nastavku ostaje istorijski spisak koji je korišćen za kontrolu tog
+čišćenja i ne treba ga tumačiti kao potvrdu da zapisi i dalje postoje.
+
+Produkcijski domen, Vercel promenljive, javna početna strana, Google Analytics,
+politika privatnosti i saglasnost za kolačiće su podešeni. Pre uključivanja
+većeg broja stvarnih korisnika i dalje treba ponoviti read-only proveru da nema
+zaostalih probnih podataka, potvrditi rezervnu kopiju, email isporučivost,
+Google OAuth produkcijske adrese i pravni pregled politike.
+
 Ovaj dokument je obavezna kontrolna lista pre prve produkcione probe i pre
 uključivanja stvarnih korisnika. Čišćenje se ne pokreće unapred jer se probni
 podaci još koriste za lokalno funkcionalno testiranje.

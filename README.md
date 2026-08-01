@@ -1,38 +1,61 @@
 # FOLKLORAŠ
 
-Next.js aplikacija za upravljanje kulturno-umetničkim društvima, povezana sa Supabase bazom.
+Next.js aplikacija za upravljanje kulturno-umetničkim društvima, povezana sa
+Supabase bazom i objavljena preko Vercela.
 
-## Trenutno stanje
+## Produkcija
 
-U razvojnom V1 toku trenutno postoje:
+* Javni sajt: `https://www.folkloras.rs`
+* Prijava: `https://www.folkloras.rs/prijava`
+* Politika privatnosti: `https://www.folkloras.rs/politika-privatnosti`
+* Produkcijska grana: `main`
+* Hosting projekat: Vercel `kud-web-app`
 
-- registracija društva
-- pregled, odobravanje i odbijanje registracionih zahteva
-- kreiranje aktivnog društva pri odobravanju
-- pregled i Master admin izmena podataka društva kroz zajedničku `SocietyDataForm`
-- unos i izmena članova kroz zajedničku `UF_MEMBER_FORM`
-- podrška za maloletne članove i roditelje/staratelje
-- funkcije članova, pripadnost sekcijama i istorija statusa
-- DEV/V1 modul `MOJE SEKCIJE` za sekcije, UR-ove, korepetitore i pregled članova
-- DEV/V1 modul `PRISUSTVO` za otvaranje i zatvaranje probe, brzo evidentiranje članova i audit promena
+Početna ruta je prezentaciona strana. Google Analytics (`G-JT7R47R6KS`) se
+učitava samo nakon saglasnosti posetioca. Izbor se može promeniti kroz link
+`Podešavanja kolačića` u podnožju sajta.
 
-## Važna ograničenja trenutne faze
+## Trenutne celine
 
-- Supabase Auth V1 Master admin osnova primenjena je i funkcionalno potvrđena u aktivnoj bazi; registracija, potvrda emaila, TOTP i otvaranje Dashboarda prošli su uspešno.
-- Za osam Master admin RPC funkcija pripremljena je Auth/MFA zaštitna migracija koja još mora biti primenjena i proverena u aktivnoj bazi.
-- Registracija i onboarding predsednika, člana i roditelja još nisu implementirani.
-- Postojeći moduli i RPC tokovi još se postepeno prebacuju sa DEV pristupa na finalnu autorizaciju.
-- Ekrani za članove i sekcije privremeno koriste prvo aktivno društvo.
-- `CLANOVI` privremeno radi sa pravima predsednika; stvarno UR ograničenje biće uvedeno sa korisničkim kontekstom i finalnim dozvolama.
-- RLS politike i repo SQL migracije još nisu finalno usklađeni sa aktivnom bazom.
-- Approval workflow još nije transakcijski.
+* Supabase Auth V1, MFA za Master administratora i stvarni korisnički kontekst
+* registracija, odobravanje i onboarding predsednika i društva
+* članovi, roditelji/staratelji, maloletnici i red za dopunu podataka
+* pojedinačni i masovni prijem članova
+* funkcije, sekcije, prisustvo i dozvole
+* događaji, finansije, izveštaji i garderoba
+* predsednička podešavanja i više imenovanih vrsta članarine
+* licence, društva, zahtevi i audit za Master administratora
+* javni paketi i kontrolisani upiti za paket po meri
+* Gmail OAuth osnova i serverski email tokovi
+* prezentacioni sajt, politika privatnosti i saglasnost za analitičke kolačiće
 
-Detaljan status, pravila i odloženi tehnički dug nalaze se u folderu `docs`.
+## Migracije
 
-## Razvoj
+Svaka produkcijska SQL promena mora biti evidentirana u
+`supabase/migration-ledger.json`. Statusi i obavezni postupak opisani su u
+`docs/SUPABASE_MIGRATION_LEDGER.md`.
+
+Provera evidencije:
+
+```bash
+npm run check:migrations
+```
+
+## Razvoj i provere
 
 ```bash
 npm run dev
 npm run typecheck
 npm run build
+npm run verify
 ```
+
+## Dokumentacija
+
+* `docs/PROJECT_STATUS.md` — aktuelni zbirni status
+* `docs/WORK_LOG_2026-08-01_02.md` — poslednji produkcijski radni ciklus
+* `docs/DECISIONS.md` — potvrđene poslovne i tehničke odluke
+* `docs/DATABASE_SCHEMA.md` — model baze
+* `docs/PRE_RELEASE_CLEANUP_CHECKLIST.md` — produkcijske i bezbednosne provere
+
+Detaljna dokumentacija funkcionalnih modula nalazi se u folderu `docs`.

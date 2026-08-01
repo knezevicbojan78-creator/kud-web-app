@@ -32,3 +32,15 @@ Upozorenje ne treba ignorisati za novu promenu: svaki novi produkcioni SQL mora
 odmah dobiti `prepared`, `applied` ili `retired` zapis. Postojeći istorijski
 dug treba smanjivati tek nakon poređenja sa aktivnom bazom; status starog fajla
 ne sme se nagađati samo na osnovu njegovog prisustva u repozitorijumu.
+
+## Poslednje primenjene migracije — 01.08.2026.
+
+* `migrations/20260801120000_members_v1_guardian_email_suggestions.sql`
+* `migrations/20260801170000_pending_membership_waiting_state.sql`
+* `migrations/20260801190000_custom_plan_inquiries.sql`
+* `migrations/20260801200000_single_member_pending_intake.sql`
+* `migrations/20260801220000_membership_fee_types.sql`
+
+Svih pet zapisa ima status `applied` i datum `2026-08-01` u mašinski čitljivoj
+evidenciji. Za migracije koje imaju posebnu dijagnostiku, naziv dijagnostičkog
+fajla upisan je u polje `verified_by`.

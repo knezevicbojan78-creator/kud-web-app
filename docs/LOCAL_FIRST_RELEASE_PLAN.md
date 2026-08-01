@@ -1,5 +1,21 @@
 # Local-first razvoj i plan objavljivanja
 
+## Status plana — 2026-08-02
+
+Local-first faza je završila prvi prelaz u produkciju. Projekat je povezan sa
+privatnim GitHub repozitorijumom, Vercelom i javnim domenom
+`www.folkloras.rs`. Produkcijska i Preview konfiguracija postoje, a objave se
+pokreću iz grane `main`.
+
+Završene su i ranije otvorene stavke: javna prezentaciona strana, produkcijski
+login, politika privatnosti, saglasnost za analitičke kolačiće i Google
+Analytics web stream. Stvarni Gmail OAuth tok je uveden, ali šira isporučivost
+emailova, verifikacija Google aplikacije i završni brendirani email kanal i
+dalje zahtevaju operativnu proveru pre većeg broja korisnika.
+
+Ostatak dokumenta čuva prvobitni plan i kriterijume kao istoriju. Svaki navod
+da Vercel i javni domen još nisu uvedeni više nije aktuelan.
+
 ## Odluka
 
 Aplikacija ostaje u lokalnom razvojnom režimu dok glavni poslovni moduli,
@@ -50,7 +66,8 @@ Pre prelaska na internet potrebno je:
 * potvrditi sve produkcione SQL migracije i dijagnostike
 * pripremiti rezervnu kopiju produkcione baze
 * proveriti javni obrazac i masovni unos lokalnim test linkovima
-* definisati politiku privatnosti i rokove čuvanja napuštenih nacrta
+* politika privatnosti je objavljena; pre šire komercijalne upotrebe obaviti
+  pravni pregled i posebno potvrditi rokove čuvanja napuštenih nacrta
 
 Tačan spisak trenutno poznatih probnih osoba, povezanih zapisa i završnih
 provera nalazi se u `docs/PRE_RELEASE_CLEANUP_CHECKLIST.md`. Lista se dopunjava
@@ -58,14 +75,15 @@ svaki put kada tokom razvoja napravimo novu vrstu probnih podataka.
 
 ## Budući redosled objavljivanja
 
-1. Privatni GitHub repozitorijum.
-2. Vercel Preview okruženje.
-3. Odvojena razvojna i produkciona konfiguracija.
-4. Provera prijavljivanja i glavnih tokova na Preview adresi.
-5. Povezivanje poddomena `app.folkloraš.rs`.
-6. Podešavanje Resend domena i ograničenog API ključa.
-7. Proba sa malim brojem stvarnih korisnika.
-8. Produkciono puštanje nakon prihvatanja probe.
+1. Privatni GitHub repozitorijum — završeno.
+2. Vercel Preview i Production okruženje — završeno.
+3. Odvojena razvojna i produkciona konfiguracija — završeno.
+4. Provera prijavljivanja i glavnih tokova na javnoj adresi — u toku po
+   funkcionalnim celinama.
+5. Povezivanje `folkloras.rs` i `www.folkloras.rs` — završeno.
+6. Produkciona email isporuka i završna verifikacija Google aplikacije — ostaje.
+7. Proba sa malim brojem stvarnih korisnika — sledeća operativna faza.
+8. Šire produkciono puštanje nakon prihvatanja probe — ostaje.
 
 Izmene se ni tada ne objavljuju direktno korisnicima: prvo se rade lokalno,
 zatim na Preview verziji, pa tek nakon potvrde u produkciji.

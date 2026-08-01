@@ -11,6 +11,42 @@
 > funkcionalnim testiranjem i proaktivnim predlaganjem dostupnih ubrzanja
 > zapisan je u `docs/COLLABORATION_WORKFLOW.md`.
 
+> Produkcijska objava, javni sajt, prijem članova, vrste članarine, Google
+> Analytics i privatnost iz radnog ciklusa 1–2. avgusta 2026. detaljno su
+> evidentirani u `docs/WORK_LOG_2026-08-01_02.md`.
+
+## Produkcijski status — 2026-08-02
+
+* Aplikacija je objavljena iz grane `main` na Vercel projektu `kud-web-app`.
+* Glavni javni domen je `https://www.folkloras.rs`; `folkloras.rs` preusmerava
+  na `www`, a Vercel domen ostaje rezervna produkcijska adresa.
+* Ruta `/` je prezentaciona strana, dok je prijava na `/prijava`.
+* Auth V1 tokovi, predsednički onboarding i postojeći poslovni moduli koriste
+  stvarnu Supabase Auth sesiju i kontrolisane RPC funkcije.
+* Maloletni član ne mora imati email. Roditelj/staratelj je obavezni kontakt,
+  a nepotpuni kandidat ostaje neaktivan u redu čekanja do završne potvrde.
+* Javni obrazac za paket po meri upisuje kontrolisani zahtev, koji vidi samo
+  Master administrator.
+* Predsednik u podešavanjima upravlja katalogom imenovanih vrsta članarine sa
+  nazivom, iznosom i valutom društva.
+* Pet migracija od 1. avgusta 2026. evidentirano je kao primenjeno u
+  `supabase/migration-ledger.json`.
+* Google Analytics property `Folkloraš Web` koristi web stream za
+  `https://www.folkloras.rs` i Measurement ID `G-JT7R47R6KS`.
+* Google Analytics se učitava isključivo nakon saglasnosti. Posetilac može da
+  odbije analitiku i kasnije promeni odluku kroz `Podešavanja kolačića`.
+* Politika privatnosti i kolačića dostupna je na `/politika-privatnosti` i iz
+  podnožja javnog sajta.
+* Produkcijski build prolazi sa 33 rute. Poslednje funkcionalne Vercel objave
+  za Analytics i privatnost završene su statusom `Ready`.
+
+### Važna napomena o starijim odeljcima
+
+Stariji navodi u ovom dokumentu da Auth, Vercel, javni domen ili produkcijska
+objava još nisu uvedeni predstavljaju istorijsko stanje u trenutku kada su
+zapisani. Za aktuelno stanje merodavan je ovaj odeljak i radni dnevnik od
+1–2. avgusta 2026.
+
 ## Supabase Auth V1 — potvrđena logika, 2026-07-26
 
 ### Završna bezbednosna dopuna, 2026-07-27

@@ -1175,3 +1175,42 @@ Planirane funkcije omogućavaju predsedniku:
 Svaka stvarna promena zahteva razlog i upisuje neizmenjiv audit. Zaključana prava, predsednička dozvola i suspendovano društvo zaštićeni su u kontrolisanim funkcijama. Funkcije još nisu dodeljene `anon` ili `authenticated` ulozi.
 
 Prva read-only dijagnostika vratila je `president_actor_count = 0`. Funkcija `Predsednik` postoji u društvu, ali trenutno nema aktivnog člana sa tom dodelom, pa President-only read i write tokovi još nisu funkcionalno provereni.
+## Dopuna šeme — 1. avgust 2026.
+
+### `custom_plan_inquiries`
+
+Javni upiti za paket po meri. Čuva ime, prezime, telefon, email, poruku,
+`status` (`NEW`, `CONTACTED`, `CLOSED`) i vreme nastanka. Tabela ima uključen
+RLS i nema direktna prava za `anon` ili `authenticated`.
+
+* javni upis: `auth_submit_custom_plan_inquiry(...)`;
+* Master admin pregled: `master_admin_get_custom_plan_inquiries()`;
+* honeypot parametar `p_website` vraća neutralan odgovor bez upisa;
+* migracija: `migrations/20260801190000_custom_plan_inquiries.sql`.
+
+### Pojedinačni pending prijem
+
+`auth_prepare_single_member_candidate(...)` ne uvodi novu tabelu, već koristi
+postojeće `people`, `member_import_candidates` i `member_data_drafts`. Proverava
+dozvolu `members.create`, ponovo koristi osobu kada je bezbedno, sprečava
+duplikat u istom društvu i pravi kandidata statusa `PENDING`.
+
+Nepotpuno tehničko članstvo ostaje `INACTIVE` i `AWAITING_DATA` do završne
+predsedničke potvrde. Ovo pravilo važi i za masovni unos.
+
+### `society_membership_fee_types`
+
+Katalog imenovanih vrsta članarine po društvu:
+
+* `society_id`, `name`, `amount`, `currency`;
+* `is_active` za arhiviranje bez brisanja;
+* audit identiteti `created_by_user_id` i `created_by_society_member_id`;
+* `created_at` i `updated_at`;
+* jedinstven aktivni normalizovani naziv po društvu;
+* pozitivan iznos i naziv dužine 2–80 znakova.
+
+Tabela nema direktna klijentska prava. Kontrolisani RPC tokovi su
+`finance_list_membership_fee_types`, `finance_save_membership_fee_type` i
+`finance_archive_membership_fee_type`; svaki proverava Auth identitet i aktivnu
+funkciju predsednika. Migracija je
+`migrations/20260801220000_membership_fee_types.sql`.

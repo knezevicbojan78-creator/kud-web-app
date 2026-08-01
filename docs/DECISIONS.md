@@ -1191,3 +1191,84 @@ ne daje toj osobi pravo da vidi ili menja tuđe prisustvo.
 Korepetitor može biti angažovan spolja, više korepetitora može raditi sa istom
 sekcijom, a njihovo prisustvo ne mora svako društvo da prati. Odvojena veza i
 prekidač rešavaju sva tri slučaja bez lažnog članstva i bez duplih zapisa.
+
+---
+
+# 2026-08-01 — Javni sajt je početna ruta produkcije
+
+## Odluka
+
+`/` je javna prezentaciona strana Folkloraša, a prijava je posebna ruta
+`/prijava`. Prezentacioni i aplikacioni deo ostaju u istom Next.js projektu i
+dele produkcijski domen, layout, brend i konfiguraciju.
+
+Glavni javni domen je `www.folkloras.rs`; apex domen `folkloras.rs` preusmerava
+na `www`. Vercel produkcija prati granu `main`.
+
+## Razlog
+
+Novi posetilac mora prvo dobiti objašnjenje proizvoda, paketa i probnog perioda,
+a ne ekran za postojeće korisnike. Jedan projekat smanjuje rizik da javna i
+aplikaciona verzija koriste različite funkcije ili objave.
+
+---
+
+# 2026-08-01 — Kandidat nije aktivan član pre završne potvrde
+
+## Odluka
+
+Pojedinačni i masovni unos koriste zajednički red čekanja. Slanje linka i
+dopuna podataka mogu napraviti tehnički zapis članstva, ali on ostaje
+`INACTIVE` i `AWAITING_DATA`. Aktivacija i datum početka nastaju tek završnom
+predsedničkom potvrdom.
+
+Maloletnom kandidatu email nije obavezan. Kontakt i poziv vode se preko
+roditelja/staratelja, uz mogućnost kontrolisane pretrage postojećeg roditelja
+po delu email adrese.
+
+## Razlog
+
+Nepotpuna osoba ne sme uticati na broj aktivnih članova, licence, sekcije,
+članarinu ili operativne liste. Jedinstveni pending tok uklanja razliku između
+ručnog i Excel unosa i sprečava prerano aktiviranje.
+
+---
+
+# 2026-08-01 — Imenovane vrste članarine su katalog društva
+
+## Odluka
+
+Predsednik može da održava katalog imenovanih vrsta članarine sa nazivom,
+pozitivnim iznosom, valutom društva i aktivnim/arhiviranim statusom. Aktivni
+naziv je jedinstven unutar društva. Brisanje se ne koristi; vrsta se arhivira.
+
+Prva faza uvodi katalog i upravljanje. Postojeći obračunski model
+`STANDARD/CUSTOM/EXEMPT` ostaje izvor stvarne mesečne obaveze dok posebna
+odluka i migracija ne povežu tip sa konkretnim članom i obračunom.
+
+## Razlog
+
+Društvima su potrebni razumljivi poslovni nazivi i unapred definisani iznosi,
+ali se istorijski finansijski obračun ne sme implicitno promeniti uvođenjem
+novog kataloga.
+
+---
+
+# 2026-08-02 — Analitika samo nakon saglasnosti
+
+## Odluka
+
+Google Analytics koristi osnovni režim saglasnosti: Google oznaka se uopšte ne
+učitava pre izbora `Prihvatam`. Izbor `Odbijam` ne pokreće analitiku, uklanja
+dostupne `_ga` kolačiće i ostaje zapamćen. Korisnik može u svakom trenutku
+ponovo otvoriti podešavanja iz podnožja sajta ili politike privatnosti.
+
+Politika privatnosti i kolačića je javna ruta
+`/politika-privatnosti`. U podnožju ostaju diskretni linkovi ka politici i
+podešavanjima, dok se puni poslovni podaci rukovaoca prikazuju u politici.
+
+## Razlog
+
+Saglasnost mora biti stvaran i promenljiv izbor, a analitika nije neophodna za
+rad sajta. Odlaganje učitavanja oznake najjasnije sprečava slanje analitičkih
+podataka pre pristanka.
