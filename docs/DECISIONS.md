@@ -1242,9 +1242,10 @@ Predsednik može da održava katalog imenovanih vrsta članarine sa nazivom,
 pozitivnim iznosom, valutom društva i aktivnim/arhiviranim statusom. Aktivni
 naziv je jedinstven unutar društva. Brisanje se ne koristi; vrsta se arhivira.
 
-Prva faza uvodi katalog i upravljanje. Postojeći obračunski model
-`STANDARD/CUSTOM/EXEMPT` ostaje izvor stvarne mesečne obaveze dok posebna
-odluka i migracija ne povežu tip sa konkretnim članom i obračunom.
+Aktivne vrste se nude u padajućem meniju članarine pri unosu, izmeni i završnoj
+potvrdi člana. Izbor imenovane vrste mapira se na postojeći režim `CUSTOM`,
+prenosi njen iznos i čuva naziv vrste u razlogu finansijske promene. Režimi
+`STANDARD/CUSTOM/EXEMPT` ostaju izvor stvarne mesečne obaveze.
 
 ## Razlog
 

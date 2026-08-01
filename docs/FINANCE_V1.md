@@ -69,13 +69,16 @@ V1 ne obuhvata:
 * Upravljanje je trenutno ograničeno na prijavljenog aktivnog predsednika;
   serverska funkcija proverava Auth identitet i funkciju, a tabela nema
   direktna klijentska prava.
+* Aktivne vrste se prikazuju u padajućem meniju članarine pri unosu, izmeni i
+  završnoj potvrdi člana. Izbor vrste koristi režim `CUSTOM`, automatski prenosi
+  njen iznos i u razlog finansijske promene upisuje naziv izabrane vrste.
 * Katalog je dodat tabelom `society_membership_fee_types` i kontrolisanim RPC
   funkcijama iz migracije
   `supabase/migrations/20260801220000_membership_fee_types.sql`.
 
-Postojeći V1 obračunski model u nastavku ostaje važeći: standardni iznos
-društva i individualni režimi `STANDARD`, `CUSTOM` i `EXEMPT` određuju stvarnu
-obavezu člana dok se katalog vrsta eksplicitno ne poveže sa obračunom.
+Postojeći V1 obračunski model u nastavku ostaje važeći: izabrana imenovana
+vrsta se u obračunu čuva kao `CUSTOM` iznos, dok `STANDARD` i `EXEMPT` zadržavaju
+postojeće značenje.
 
 * Društvo ima jedan obračunski standardni mesečni iznos članarine.
 * Novi član podrazumevano dobija standardni iznos.

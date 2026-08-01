@@ -3,7 +3,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 
 import type { Person, Section, SocietyMemberFunction } from "../_lib/supabaseClient";
-import { MembershipFeeFields, type MembershipFeeMode } from "./MembershipFeeFields";
+import { MembershipFeeFields, type MembershipFeeMode, type MembershipFeeTypeOption } from "./MembershipFeeFields";
 
 export type UFMemberFormMode =
   | "create"
@@ -147,6 +147,9 @@ export type UFMemberFormProps = {
   standardMembershipFeeAmount?: number | null;
   membershipFeeCurrency?: string;
   membershipFeeReasonRequired?: boolean;
+  membershipFeeTypes?: MembershipFeeTypeOption[];
+  selectedMembershipFeeTypeId?: string | null;
+  onMembershipFeeTypeSelect?: (feeType: MembershipFeeTypeOption) => void;
   visibleStep?: 2 | 3;
   hideStepper?: boolean;
   hideActions?: boolean;
@@ -606,6 +609,9 @@ export function UF_MEMBER_FORM({
   standardMembershipFeeAmount = null,
   membershipFeeCurrency = "RSD",
   membershipFeeReasonRequired = true,
+  membershipFeeTypes = [],
+  selectedMembershipFeeTypeId = null,
+  onMembershipFeeTypeSelect,
   visibleStep,
   hideStepper = false,
   hideActions = false,
@@ -1031,6 +1037,8 @@ export function UF_MEMBER_FORM({
           reason={values.membership_fee_reason ?? ""}
           standardAmount={standardMembershipFeeAmount}
           currency={membershipFeeCurrency}
+          feeTypes={membershipFeeTypes}
+          selectedFeeTypeId={selectedMembershipFeeTypeId}
           disabled={
             isMembershipFieldReadOnly("membership_fee_required") ||
             isMembershipFieldReadOnly("membership_fee_amount")
@@ -1043,6 +1051,7 @@ export function UF_MEMBER_FORM({
           }}
           onCustomAmountChange={(value) => onFieldChange("membership_fee_amount", value)}
           onReasonChange={(value) => onFieldChange("membership_fee_reason", value)}
+          onFeeTypeSelect={onMembershipFeeTypeSelect}
         />
       </section>
 

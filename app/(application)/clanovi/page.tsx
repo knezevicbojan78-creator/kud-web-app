@@ -15,6 +15,7 @@ import {
 } from "../../_components/UF_MEMBER_FORM";
 import {
   getSupabaseClient,
+  type FinanceMembershipFeeType,
   type Person,
   type Section,
   type Society,
@@ -499,6 +500,8 @@ export default function ClanoviPage() {
     SocietyMemberFunction[]
   >([]);
   const [sectionOptions, setSectionOptions] = useState<Section[]>([]);
+  const [membershipFeeTypes, setMembershipFeeTypes] = useState<FinanceMembershipFeeType[]>([]);
+  const [selectedMembershipFeeTypeId, setSelectedMembershipFeeTypeId] = useState<string | null>(null);
   const [values, setValues] = useState<UFMemberFormValues>(() =>
     createInitialValues()
   );
@@ -615,11 +618,23 @@ export default function ClanoviPage() {
       setFunctionOptions(pageData?.functions ?? []);
       setSectionOptions(pageData?.sections ?? []);
       const { data: applicationContext } = await supabase.rpc("auth_get_application_context");
-      setActorMemberId(
-        applicationContext?.memberships?.find(
+      const currentActorMemberId = applicationContext?.memberships?.find(
           (membership) => membership.society_id === activeSociety.id
-        )?.society_member_id ?? ""
-      );
+        )?.society_member_id ?? "";
+      setActorMemberId(currentActorMemberId);
+      if (currentActorMemberId) {
+        const { data: feeTypeRows, error: feeTypeError } = await supabase.rpc(
+          "finance_list_membership_fee_types",
+          {
+            p_society_id: activeSociety.id,
+            p_actor_member_id: currentActorMemberId,
+            p_include_inactive: false
+          }
+        );
+        setMembershipFeeTypes(feeTypeError ? [] : (feeTypeRows ?? []));
+      } else {
+        setMembershipFeeTypes([]);
+      }
       const access = pageData?.access ?? {
         can_create: false,
         can_manage_functions: false,
@@ -744,6 +759,7 @@ export default function ClanoviPage() {
     setEditingMemberId(null);
     setEditingPersonId(null);
     setInitialMemberFee(null);
+    setSelectedMembershipFeeTypeId(null);
     setIsFormOpen(true);
     setMessage("");
     setErrorMessage("");
@@ -756,6 +772,7 @@ export default function ClanoviPage() {
     setFormMode("create");
     setEditingMemberId(null);
     setEditingPersonId(null);
+    setSelectedMembershipFeeTypeId(null);
     setIsFormOpen(false);
     setMessage("");
     setErrorMessage("");
@@ -765,6 +782,9 @@ export default function ClanoviPage() {
     field: UFMemberFormField | "showGuardian2" | "is_minor_member",
     value: string | boolean
   ) {
+    if (field === "membership_fee_mode" || field === "membership_fee_amount") {
+      setSelectedMembershipFeeTypeId(null);
+    }
     if (field === "is_minor_member" && formMode === "create") {
       setValues({
         ...createInitialValues(),
@@ -1168,6 +1188,11 @@ export default function ClanoviPage() {
         mode: loadedFeeMode,
         amount: loadedFeeMode === "CUSTOM" ? Number(memberRow.membership_fee_amount) : null
       });
+      setSelectedMembershipFeeTypeId(
+        loadedFeeMode === "CUSTOM"
+          ? membershipFeeTypes.find((feeType) => Number(feeType.amount) === Number(loadedFeeAmount))?.id ?? null
+          : null
+      );
       setFormMode("edit");
       setIsFormOpen(true);
     } catch (error) {
@@ -1730,6 +1755,7 @@ export default function ClanoviPage() {
       : "STANDARD";
     return pendingMembershipSetups[candidateId] ?? {
       feeMode: storedMode,
+      feeTypeId: stored.feeTypeId ? String(stored.feeTypeId) : null,
       customFeeAmount: String(stored.customFeeAmount ?? ""),
       feeReason: String(stored.feeReason ?? ""),
       functionIds: Array.isArray(stored.functionIds)
@@ -2266,6 +2292,18 @@ export default function ClanoviPage() {
             values={values}
             standardMembershipFeeAmount={society.default_membership_fee_amount ?? null}
             membershipFeeCurrency={society.base_currency ?? "RSD"}
+            membershipFeeTypes={membershipFeeTypes}
+            selectedMembershipFeeTypeId={selectedMembershipFeeTypeId}
+            onMembershipFeeTypeSelect={(feeType) => {
+              setSelectedMembershipFeeTypeId(feeType.id);
+              setValues((current) => ({
+                ...current,
+                membership_fee_required: true,
+                membership_fee_mode: "CUSTOM",
+                membership_fee_amount: String(feeType.amount),
+                membership_fee_reason: `Izabrana vrsta članarine: ${feeType.name}`
+              }));
+            }}
             membershipFeeReasonRequired={
               formMode !== "edit" ||
               !initialMemberFee ||
@@ -2826,6 +2864,17 @@ export default function ClanoviPage() {
                         values={pendingFormValues}
                         standardMembershipFeeAmount={society?.default_membership_fee_amount ?? null}
                         membershipFeeCurrency={society?.base_currency ?? "RSD"}
+                        membershipFeeTypes={membershipFeeTypes}
+                        selectedMembershipFeeTypeId={membershipSetup.feeTypeId}
+                        onMembershipFeeTypeSelect={(feeType) =>
+                          updatePendingMembershipSetup(candidate.id, (current) => ({
+                            ...current,
+                            feeMode: "CUSTOM",
+                            feeTypeId: feeType.id,
+                            customFeeAmount: String(feeType.amount),
+                            feeReason: `Izabrana vrsta članarine: ${feeType.name}`
+                          }))
+                        }
                         functionOptions={functionOptions}
                         allowFallbackFunctionOptions={false}
                         sectionOptions={sectionOptions}
@@ -2858,6 +2907,7 @@ export default function ClanoviPage() {
                           if (field === "membership_fee_required") {
                             updatePendingMembershipSetup(candidate.id, (current) => ({
                               ...current,
+                              feeTypeId: value ? current.feeTypeId : null,
                               feeMode: value ? (current.feeMode === "EXEMPT" ? "STANDARD" : current.feeMode) : "EXEMPT"
                             }));
                             return;
@@ -2865,6 +2915,7 @@ export default function ClanoviPage() {
                           if (field === "membership_fee_mode") {
                             updatePendingMembershipSetup(candidate.id, (current) => ({
                               ...current,
+                              feeTypeId: null,
                               feeMode: String(value) as PendingMembershipSetup["feeMode"],
                               ...(value === "STANDARD" ? { feeReason: "" } : {})
                             }));
@@ -2880,6 +2931,7 @@ export default function ClanoviPage() {
                           if (field === "membership_fee_amount") {
                             updatePendingMembershipSetup(candidate.id, (current) => ({
                               ...current,
+                              feeTypeId: null,
                               feeMode: "CUSTOM",
                               customFeeAmount: String(value)
                             }));

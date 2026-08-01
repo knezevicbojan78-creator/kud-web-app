@@ -19,6 +19,7 @@ export type PendingImportCandidate = {
 
 export type PendingMembershipSetup = {
   feeMode: "STANDARD" | "CUSTOM" | "EXEMPT";
+  feeTypeId: string | null;
   customFeeAmount: string;
   feeReason: string;
   functionIds: string[];

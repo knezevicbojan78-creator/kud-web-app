@@ -1,6 +1,12 @@
 "use client";
 
 export type MembershipFeeMode = "STANDARD" | "CUSTOM" | "EXEMPT";
+export type MembershipFeeTypeOption = {
+  id: string;
+  name: string;
+  amount: number;
+  currency: string;
+};
 
 type MembershipFeeFieldsProps = {
   mode: MembershipFeeMode;
@@ -9,7 +15,10 @@ type MembershipFeeFieldsProps = {
   standardAmount: number | null;
   currency?: string;
   disabled?: boolean;
+  feeTypes?: MembershipFeeTypeOption[];
+  selectedFeeTypeId?: string | null;
   onModeChange: (mode: MembershipFeeMode) => void;
+  onFeeTypeSelect?: (feeType: MembershipFeeTypeOption) => void;
   onCustomAmountChange: (amount: string) => void;
   onReasonChange: (reason: string) => void;
 };
@@ -26,7 +35,10 @@ export function MembershipFeeFields({
   standardAmount,
   currency = "RSD",
   disabled = false,
+  feeTypes = [],
+  selectedFeeTypeId = null,
   onModeChange,
+  onFeeTypeSelect,
   onCustomAmountChange,
   onReasonChange
 }: MembershipFeeFieldsProps) {
@@ -39,10 +51,23 @@ export function MembershipFeeFields({
         <select
           className="input"
           disabled={disabled}
-          value={mode}
-          onChange={(event) => onModeChange(event.target.value as MembershipFeeMode)}
+          value={selectedFeeTypeId ? `FEE_TYPE:${selectedFeeTypeId}` : mode}
+          onChange={(event) => {
+            const nextValue = event.target.value;
+            if (nextValue.startsWith("FEE_TYPE:")) {
+              const feeType = feeTypes.find((item) => item.id === nextValue.slice(9));
+              if (feeType) onFeeTypeSelect?.(feeType);
+              return;
+            }
+            onModeChange(nextValue as MembershipFeeMode);
+          }}
         >
           <option value="STANDARD">Standardna članarina — {moneyLabel(standardAmount, currency)}</option>
+          {feeTypes.map((feeType) => (
+            <option key={feeType.id} value={`FEE_TYPE:${feeType.id}`}>
+              {feeType.name} — {moneyLabel(feeType.amount, feeType.currency || currency)}
+            </option>
+          ))}
           <option value="CUSTOM">Posebna članarina</option>
           <option value="EXEMPT">Oslobođen članarine</option>
         </select>
