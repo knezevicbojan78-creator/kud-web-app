@@ -249,8 +249,8 @@ export default function RegistracijaDrustvaPage() {
               ))}
             </div>
             <p className="auth-secondary-note">
-              Ovo je zahtevani paket. Master admin ga potvrđuje pri odobravanju
-              naloga i obaveznoj dodeli licence.
+              Izaberite paket koji odgovara vašem društvu, a mi ćemo Vam dodeliti
+              besplatni probni period.
             </p>
           </fieldset>
 
