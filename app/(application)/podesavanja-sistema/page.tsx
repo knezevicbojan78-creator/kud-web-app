@@ -5,6 +5,7 @@ import {
   getSupabaseClient,
   type MasterLicensePrice
 } from "../../_lib/supabaseClient";
+import { licensePlanDisplayName } from "../../_lib/licensePlanNames";
 
 type PriceDraft = {
   monthly: string;
@@ -84,7 +85,7 @@ export default function PodesavanjaSistemaPage() {
     if (error) {
       setErrorMessage(error.message || "Cena licence nije promenjena.");
     } else {
-      setMessage(`Cene paketa „${plan.name}“ su sačuvane.`);
+      setMessage(`Cene paketa „${licensePlanDisplayName(plan.name)}“ su sačuvane.`);
       cancelEdit();
       await loadPrices();
     }
@@ -121,7 +122,7 @@ export default function PodesavanjaSistemaPage() {
             return (
               <article key={plan.id}>
                 <div className="master-price-plan">
-                  <strong>{plan.name}</strong>
+                  <strong>{licensePlanDisplayName(plan.name)}</strong>
                   <span>do {plan.active_member_limit} članova · do {plan.active_section_limit} sekcija</span>
                 </div>
 

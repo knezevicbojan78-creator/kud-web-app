@@ -204,7 +204,7 @@ export default function PresidentOnboardingPage() {
 
   async function signOut() {
     await getSupabaseClient().auth.signOut();
-    router.replace("/");
+    router.replace("/prijava");
   }
 
   if (isWorking && !societyId) {

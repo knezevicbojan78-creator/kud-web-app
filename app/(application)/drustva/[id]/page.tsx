@@ -15,6 +15,7 @@ import {
   type MasterSocietyDetail,
   type Society
 } from "../../../_lib/supabaseClient";
+import { licensePlanDisplayName } from "../../../_lib/licensePlanNames";
 
 type SocietyErrors = Partial<Record<SocietyDataField, string>>;
 type DetailTab = "overview" | "data" | "license" | "president" | "requests" | "history";
@@ -358,7 +359,7 @@ export default function DrustvoDetaljiPage() {
           <div className="master-detail-counts">
             <article className="card"><span>Aktivni članovi</span><strong>{counts.active_members}</strong><small>{counts.inactive_members} neaktivnih</small></article>
             <article className="card"><span>Aktivne sekcije</span><strong>{counts.active_sections}</strong><small>{counts.inactive_sections} neaktivnih</small></article>
-            <article className="card"><span>Licenca</span><strong>{license?.plan_name ?? society.license_type ?? "Nije dodeljena"}</strong><small>{license ? `važi do ${formatDate(license.valid_until)}` : "nema aktivnog perioda"}</small></article>
+            <article className="card"><span>Licenca</span><strong>{licensePlanDisplayName(license?.plan_name ?? society.license_type)}</strong><small>{license ? `važi do ${formatDate(license.valid_until)}` : "nema aktivnog perioda"}</small></article>
             <article className="card"><span>Predsednik</span><strong>{registration?.president_name ?? "Nije povezan"}</strong><small>{registration?.president_email ?? "nema podataka"}</small></article>
           </div>
 
@@ -367,7 +368,7 @@ export default function DrustvoDetaljiPage() {
               <header><div><p className="eyebrow">Administracija</p><h2>Status društva</h2></div></header>
               <dl className="master-detail-facts">
                 <div><dt>Trenutni status</dt><dd>{societyStatusLabel(society.status)}</dd></div>
-                <div><dt>Licenca</dt><dd>{license?.plan_name ?? society.license_type ?? "Nije dodeljena"}</dd></div>
+                <div><dt>Licenca</dt><dd>{licensePlanDisplayName(license?.plan_name ?? society.license_type)}</dd></div>
                 <div><dt>Matični broj</dt><dd>{society.registration_number}</dd></div>
                 {suspension && <div><dt>Razlog suspenzije</dt><dd>{suspension.reason}</dd></div>}
                 {suspension && <div><dt>Početak suspenzije</dt><dd>{formatDateTime(suspension.suspended_at)}</dd></div>}
@@ -439,7 +440,7 @@ export default function DrustvoDetaljiPage() {
             </header>
             {license ? (
               <dl className="master-detail-facts">
-                <div><dt>Paket</dt><dd>{license.plan_name}</dd></div>
+                <div><dt>Paket</dt><dd>{licensePlanDisplayName(license.plan_name)}</dd></div>
                 <div><dt>Izvor</dt><dd>{license.source === "PROMOTIONAL" ? "Promotivna" : "Plaćena"}</dd></div>
                 <div><dt>Period</dt><dd>{formatDate(license.valid_from)} – {formatDate(license.valid_until)}</dd></div>
                 <div><dt>Trajanje</dt><dd>{license.duration_months} meseci</dd></div>
@@ -456,7 +457,7 @@ export default function DrustvoDetaljiPage() {
                 <label className="form-field">
                   <span>Paket *</span>
                   <select className="input" onChange={(event) => setLicensePlanId(event.target.value)} value={licensePlanId}>
-                    {licenseManagement.plans.map((plan) => <option key={plan.id} value={plan.id}>{plan.name} · do {plan.active_member_limit} članova / {plan.active_section_limit} sekcija</option>)}
+                    {licenseManagement.plans.map((plan) => <option key={plan.id} value={plan.id}>{licensePlanDisplayName(plan.name)} · do {plan.active_member_limit} članova / {plan.active_section_limit} sekcija</option>)}
                   </select>
                 </label>
                 <label className="form-field">
@@ -520,7 +521,7 @@ export default function DrustvoDetaljiPage() {
             {!licenseManagement?.periods.length && <div className="master-empty">Još nema licencnih perioda.</div>}
             {licenseManagement?.periods.map((period) => (
               <div className="master-license-history-row" key={period.id}>
-                <div><strong>{period.plan_name}</strong><span>{period.source === "PROMOTIONAL" ? "Promotivna" : period.billing_cycle === "MONTHLY" ? "Mesečna" : "Godišnja"}</span></div>
+                <div><strong>{licensePlanDisplayName(period.plan_name)}</strong><span>{period.source === "PROMOTIONAL" ? "Promotivna" : period.billing_cycle === "MONTHLY" ? "Mesečna" : "Godišnja"}</span></div>
                 <div><strong>{formatDate(period.valid_from)} – {formatDate(period.valid_until)}</strong><span>{period.price_snapshot} {period.currency_snapshot} · bez poreza</span></div>
                 <div><strong>{period.source === "PROMOTIONAL" ? period.promotion_reason : formatDate(period.paid_on)}</strong><span>{period.internal_note ?? "Bez interne napomene"}</span></div>
               </div>

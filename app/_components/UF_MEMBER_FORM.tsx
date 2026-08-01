@@ -261,6 +261,7 @@ function validateValues(
   const isPresidentOnboarding = mode === "president_onboarding";
   const isPersonCreate = mode === "person_create";
   const isEdit = mode === "edit";
+  const isCreateWizard = mode === "create";
   const isAdult = !minor;
   const effectiveStatus = isPresidentOnboarding ?"ACTIVE" : values.status;
 
@@ -272,11 +273,11 @@ function validateValues(
     errors.last_name = requiredMessage;
   }
 
-  if (!isEdit && !values.gender) {
+  if (!isEdit && !isPersonCreate && !isCreateWizard && !values.gender) {
     errors.gender = "Obavezno polje.";
   }
 
-  if (!isEdit && !isPersonCreate && !values.start_date) {
+  if (!isEdit && !isPersonCreate && !isCreateWizard && !values.start_date) {
     errors.start_date = "Datum početka članstva je obavezan.";
   }
 
@@ -284,11 +285,11 @@ function validateValues(
     errors.birth_date = presidentAdultMessage;
   }
 
-  if (!isEdit && !isPersonCreate && minor && !values.birth_date) {
+  if (!isEdit && !isPersonCreate && !isCreateWizard && minor && !values.birth_date) {
     errors.birth_date = "Datum rođenja je obavezan za maloletnog člana.";
   }
 
-  if (!isEdit && !isPersonCreate && minor && values.birth_date && !birthDateIsMinor) {
+  if (!isEdit && !isPersonCreate && !isCreateWizard && minor && values.birth_date && !birthDateIsMinor) {
     errors.birth_date = minorBirthDateMessage;
   }
 
@@ -322,7 +323,7 @@ function validateValues(
   }
 
   if (
-    !isPersonCreate && (values.membership_fee_mode ?? "STANDARD") === "CUSTOM" &&
+    !isPersonCreate && !isCreateWizard && (values.membership_fee_mode ?? "STANDARD") === "CUSTOM" &&
     (!values.membership_fee_amount.trim() ||
       Number.isNaN(Number(values.membership_fee_amount)) ||
       Number(values.membership_fee_amount) <= 0)
@@ -330,7 +331,7 @@ function validateValues(
     errors.membership_fee_amount = "Poseban iznos članarine mora biti veći od nule.";
   }
   if (
-    !isPersonCreate &&
+    !isPersonCreate && !isCreateWizard &&
     membershipFeeReasonRequired &&
     (values.membership_fee_mode === "CUSTOM" || values.membership_fee_mode === "EXEMPT") &&
     !values.membership_fee_reason?.trim()
@@ -1112,7 +1113,7 @@ export function UF_MEMBER_FORM({
           {isPersonCreate ? <button className="button button-primary" disabled={isSubmitting} type="submit">Sačuvaj osobu i dodaj putnika</button> : activeStep < 3 ? (
             <button className="button button-primary" disabled={isSubmitting || memberSaveBlocked || !memberEmailChecked || !primaryGuardianEmailChecked} type="button" onClick={() => setActiveStep((activeStep + 1) as 2 | 3)}>Nastavi</button>
           ) : (
-            <button className="button button-primary" disabled={isSubmitting || memberSaveBlocked || !memberEmailChecked || !primaryGuardianEmailChecked} type="submit">{isPresidentOnboarding ? "Pregled i potvrda" : "Sačuvaj"}</button>
+            <button className="button button-primary" disabled={isSubmitting || memberSaveBlocked || !memberEmailChecked || !primaryGuardianEmailChecked} type="submit">{isPresidentOnboarding ? "Pregled i potvrda" : isCreateWizard ? "Sačuvaj u čekanju" : "Sačuvaj"}</button>
           )}
         </div>
       </div>}

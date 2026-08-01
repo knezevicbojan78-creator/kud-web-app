@@ -52,7 +52,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         const { data } = await supabase.auth.getSession();
 
         if (!data.session) {
-          router.replace("/");
+          router.replace("/prijava");
           return;
         }
 
@@ -128,7 +128,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   async function signOut() {
     await getSupabaseClient().auth.signOut();
-    router.replace("/");
+    router.replace("/prijava");
   }
 
   async function changeSociety(societyId: string) {

@@ -8,6 +8,7 @@ import {
   type MasterLicensePrice,
   type PresidentRegistration
 } from "../../../_lib/supabaseClient";
+import { licensePlanDisplayName } from "../../../_lib/licensePlanNames";
 
 type RegistrationDetail = PresidentRegistration;
 
@@ -23,14 +24,6 @@ function formatDate(value: string | null) {
     dateStyle: "medium",
     timeStyle: "short"
   }).format(new Date(value));
-}
-
-function formatValue(value: string | number | null) {
-  if (value === null || value === "") {
-    return "Nije uneto";
-  }
-
-  return String(value);
 }
 
 function isPermissionError(message: string, code?: string) {
@@ -306,7 +299,7 @@ export default function ZahtevDetaljiPage() {
 
             <section className="request-detail-group">
               <p className="eyebrow">Zahtev</p>
-              <h2>{formatValue(request.licenseType)}</h2>
+              <h2>{licensePlanDisplayName(request.licenseType)}</h2>
               <dl className="request-facts">
                 <div>
                   <dt>Status</dt>
@@ -353,7 +346,7 @@ export default function ZahtevDetaljiPage() {
                     <option value="">Izaberite paket</option>
                     {licensePlans.map((plan) => (
                       <option key={plan.id} value={plan.id}>
-                        {plan.name}
+                        {licensePlanDisplayName(plan.name)}
                       </option>
                     ))}
                   </select>

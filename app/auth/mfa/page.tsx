@@ -32,7 +32,7 @@ export default function MasterMfaPage() {
           await supabase.auth.getUser();
 
         if (userError || !userData.user) {
-          router.replace("/");
+          router.replace("/prijava");
           return;
         }
 
@@ -228,7 +228,7 @@ export default function MasterMfaPage() {
           className="auth-text-button"
           onClick={async () => {
             await getSupabaseClient().auth.signOut();
-            router.replace("/");
+            router.replace("/prijava");
           }}
           type="button"
         >

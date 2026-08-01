@@ -17,20 +17,33 @@ begin
     $new$p_society_id, v_person_id, 'INACTIVE', current_date, true, 0, 'AWAITING_DATA'$new$
   );
   if v_updated = v_definition then
-    raise exception 'Nije pronađen očekivani ACTIVE unos kandidata.';
+    if position(
+      $new$p_society_id, v_person_id, 'INACTIVE', current_date, true, 0, 'AWAITING_DATA'$new$
+      in v_definition
+    ) = 0 then
+      raise exception 'Nije pronađen očekivani ACTIVE ili INACTIVE unos kandidata.';
+    end if;
+  else
+    v_definition := v_updated;
   end if;
 
-  v_definition := v_updated;
   v_updated := replace(
     v_definition,
     $old$values (v_member_id, 'ACTIVE', current_date);$old$,
     $new$values (v_member_id, 'INACTIVE', current_date);$new$
   );
   if v_updated = v_definition then
-    raise exception 'Nije pronađena očekivana ACTIVE istorija kandidata.';
+    if position(
+      $new$values (v_member_id, 'INACTIVE', current_date);$new$
+      in v_definition
+    ) = 0 then
+      raise exception 'Nije pronađena očekivana ACTIVE ili INACTIVE istorija kandidata.';
+    end if;
+  else
+    v_definition := v_updated;
   end if;
 
-  execute v_updated;
+  execute v_definition;
 end;
 $migration$;
 

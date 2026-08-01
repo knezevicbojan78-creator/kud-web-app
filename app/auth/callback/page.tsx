@@ -123,7 +123,7 @@ export default function AuthCallbackPage() {
         {error ? (
           <>
             <div className="auth-message error">{error}</div>
-            <a className="button button-secondary" href="/">
+            <a className="button button-secondary" href="/prijava">
               Nazad na prijavljivanje
             </a>
           </>

@@ -7,6 +7,7 @@ import {
   type MasterDashboardData,
   type PresidentDashboardData
 } from "../../_lib/supabaseClient";
+import { licensePlanDisplayName } from "../../_lib/licensePlanNames";
 
 function formatDateTime(value: string) {
   return new Intl.DateTimeFormat("sr-Latn-RS", {
@@ -86,7 +87,7 @@ export default function DashboardPage() {
       },
       {
         title: "Licencni paket",
-        value: presidentData.license_type,
+        value: licensePlanDisplayName(presidentData.license_type),
         note: presidentData.current_license_valid_until
           ? `Važi do ${presidentData.current_license_valid_until.split("-").reverse().join("/")}`
           : "Aktivna licenca"
@@ -159,7 +160,7 @@ export default function DashboardPage() {
           <div className="master-license-list">
             {data?.license_distribution.map((item) => (
               <div key={item.license_type}>
-                <span>{item.license_type}</span>
+                <span>{licensePlanDisplayName(item.license_type)}</span>
                 <strong>{item.society_count}</strong>
               </div>
             ))}

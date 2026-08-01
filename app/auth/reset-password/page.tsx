@@ -36,7 +36,7 @@ export default function ResetPasswordPage() {
       }
 
       await supabase.auth.signOut();
-      router.replace("/");
+      router.replace("/prijava");
     } catch (updatePasswordError) {
       setError(
         updatePasswordError instanceof Error

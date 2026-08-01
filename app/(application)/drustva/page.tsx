@@ -6,6 +6,7 @@ import {
   getSupabaseClient,
   type MasterSocietySummary
 } from "../../_lib/supabaseClient";
+import { licensePlanDisplayName } from "../../_lib/licensePlanNames";
 
 function formatDate(value: string | null) {
   if (!value) return "Nije dostupno";
@@ -148,7 +149,7 @@ export default function DrustvaPage() {
                   <td><strong>{society.pib}</strong><span>{society.registration_number}</span></td>
                   <td><strong>{society.active_member_count}</strong><span>aktivnih</span></td>
                   <td><strong>{society.active_section_count}</strong><span>aktivnih</span></td>
-                  <td>{society.license_type ?? "Nije dodeljena"}</td>
+                  <td>{licensePlanDisplayName(society.license_type)}</td>
                   <td>
                     <span className={`master-status ${society.status.toLowerCase()}`}>
                       {societyStatusLabel(society.status)}

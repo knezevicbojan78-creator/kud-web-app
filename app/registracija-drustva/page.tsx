@@ -6,6 +6,12 @@ import {
   getSupabaseClient,
   type PublicLicensePlan
 } from "../_lib/supabaseClient";
+import { licensePlanDisplayName } from "../_lib/licensePlanNames";
+
+function grossPrice(value: number | null) {
+  if (value === null) return "Po dogovoru";
+  return new Intl.NumberFormat("sr-RS", { maximumFractionDigits: 2 }).format(value * 1.2);
+}
 
 type FormValues = {
   societyName: string;
@@ -56,6 +62,12 @@ const fields: Array<{
   { key: "presidentPhone", label: "Telefon predsednika", section: "president", type: "tel" }
 ];
 
+const licensePlanAliases: Record<string, string[]> = {
+  SMALL: ["SMALL", "MALO DRUŠTVO"],
+  STANDARD: ["STANDARD"],
+  LARGE: ["LARGE", "VELIKO DRUŠTVO"]
+};
+
 function validate(values: FormValues) {
   const errors: FormErrors = {};
   fields.forEach(({ key }) => {
@@ -90,7 +102,19 @@ export default function RegistracijaDrustvaPage() {
       if (error) {
         setSubmitError("Licencni paketi trenutno nisu dostupni.");
       } else {
-        setLicensePlans(data ?? []);
+        const availablePlans = data ?? [];
+        setLicensePlans(availablePlans);
+        const requestedPlanCode = new URLSearchParams(window.location.search)
+          .get("paket")
+          ?.trim()
+          .toUpperCase();
+        const requestedPlanAliases = requestedPlanCode
+          ? licensePlanAliases[requestedPlanCode] ?? [requestedPlanCode]
+          : [];
+        const requestedPlan = availablePlans.find((plan) =>
+          requestedPlanAliases.includes(plan.name.trim().toUpperCase())
+        );
+        if (requestedPlan) setRequestedLicensePlanId(requestedPlan.id);
       }
     }
     void loadPlans();
@@ -169,6 +193,12 @@ export default function RegistracijaDrustvaPage() {
           <span>Pošaljite osnovne podatke društva na odobrenje</span>
         </div>
 
+        <div className="auth-message info" role="note">
+          Aplikacija je u završnoj fazi testiranja i zvanično počinje sa radom
+          01.09.2026. godine. Možete popuniti zahtev za prijavu, a kada Vam
+          pristup bude odobren, dobićete obaveštenje putem elektronske pošte.
+        </div>
+
         {message ? (
           <section className="auth-request-complete" role="status">
             <div className="auth-message success">{message}</div>
@@ -176,7 +206,7 @@ export default function RegistracijaDrustvaPage() {
               Nije potrebno ponovo slati podatke. Zahtev sada čeka odluku
               Master admina.
             </p>
-            <Link className="button button-primary" href="/">
+            <Link className="button button-primary" href="/prijava">
               Nazad na prijavljivanje
             </Link>
           </section>
@@ -237,12 +267,12 @@ export default function RegistracijaDrustvaPage() {
                     type="radio"
                   />
                   <span>
-                    <strong>{plan.name}</strong>
+                    <strong>{licensePlanDisplayName(plan.name)}</strong>
                     <small>{plan.description}</small>
                     <small>
                       {requestedLicenseKind === "ANNUAL"
-                        ? `${plan.annual_price} ${plan.currency} godišnje`
-                        : `${plan.monthly_price} ${plan.currency} mesečno`}
+                        ? `${grossPrice(plan.annual_price)} ${plan.currency} godišnje, sa porezom`
+                        : `${grossPrice(plan.monthly_price)} ${plan.currency} mesečno, sa porezom`}
                     </small>
                   </span>
                 </label>
@@ -270,7 +300,7 @@ export default function RegistracijaDrustvaPage() {
           <button className="button button-primary" disabled={isSubmitting} type="submit">
             {isSubmitting ? "Slanje..." : "Pošalji zahtev"}
           </button>
-              <Link className="auth-text-button auth-centered-link" href="/">
+              <Link className="auth-text-button auth-centered-link" href="/prijava">
                 Nazad na prijavljivanje
               </Link>
             </form>

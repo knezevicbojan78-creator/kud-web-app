@@ -52,6 +52,17 @@ export type PublicLicensePlan = {
   active_section_limit: number | null;
 };
 
+export type CustomPlanInquiry = {
+  id: string;
+  first_name: string;
+  last_name: string;
+  phone: string;
+  email: string;
+  message: string;
+  status: "NEW" | "CONTACTED" | "CLOSED";
+  created_at: string;
+};
+
 export type PermissionSettingsFunction = {
   id: string;
   name: string;
@@ -1173,6 +1184,35 @@ type Database = {
           p_requested_license_kind: "MONTHLY" | "ANNUAL";
         };
         Returns: { request_id: string; status: "PENDING" };
+      };
+      auth_submit_custom_plan_inquiry: {
+        Args: {
+          p_first_name: string;
+          p_last_name: string;
+          p_phone: string;
+          p_email: string;
+          p_message: string;
+          p_website?: string | null;
+        };
+        Returns: { inquiry_id?: string; status: "NEW" | "RECEIVED" };
+      };
+      auth_prepare_single_member_candidate: {
+        Args: {
+          p_society_id: string;
+          p_profile: Record<string, unknown>;
+          p_guardians?: Array<Record<string, unknown>>;
+          p_membership_setup?: Record<string, unknown>;
+        };
+        Returns: {
+          candidate_id: string;
+          person_id: string;
+          reused_person: boolean;
+          status: "PENDING";
+        };
+      };
+      master_admin_get_custom_plan_inquiries: {
+        Args: Record<never, never>;
+        Returns: CustomPlanInquiry[];
       };
       auth_get_public_license_plans: {
         Args: Record<never, never>;

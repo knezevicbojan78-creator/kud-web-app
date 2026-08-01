@@ -206,6 +206,18 @@
       "applied_on": "2026-08-01",
       "verified_by": "pending-membership-waiting-state-diagnostic.sql",
       "note": "Slanje linka zadrzava kandidata u redu cekanja sa neaktivnim tehnickim clanstvom; aktiviranje i izabrani datum pocetka clanstva upisuju se tek zavrsnom predsednickom potvrdom."
+    },
+    {
+      "file": "migrations/20260801190000_custom_plan_inquiries.sql",
+      "status": "applied",
+      "applied_on": "2026-08-01",
+      "note": "Javni upit za paket po meri sa kontrolisanim RPC upisom i pregledom dostupnim samo Master administratoru."
+    },
+    {
+      "file": "migrations/20260801200000_single_member_pending_intake.sql",
+      "status": "applied",
+      "applied_on": "2026-08-01",
+      "note": "Pojedinacni unos prvo proverava globalni people registar, cuva ili ponovo koristi osobu i kreira kandidata u redu za odobrenje bez aktiviranja clanstva."
     }
   ]
 }

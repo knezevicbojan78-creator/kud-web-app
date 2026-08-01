@@ -544,6 +544,7 @@ export default function ClanoviPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
+  const [pendingStatusFilter, setPendingStatusFilter] = useState("all");
   const [pageAccess, setPageAccess] = useState({
     can_create: false,
     can_manage_functions: false,
@@ -574,6 +575,20 @@ export default function ClanoviPage() {
     },
     [memberSearch, members]
   );
+
+  const filteredPendingImports = useMemo(
+    () => pendingImports.filter((candidate) =>
+      pendingStatusFilter === "all" ||
+      getPendingCandidateStage(candidate).tone === pendingStatusFilter
+    ),
+    [pendingImports, pendingStatusFilter]
+  );
+
+  useEffect(() => {
+    if (!message) return;
+    const timeoutId = window.setTimeout(() => setMessage(""), 3000);
+    return () => window.clearTimeout(timeoutId);
+  }, [message]);
 
   const loadPageData = useCallback(async () => {
     setIsLoading(true);
@@ -1234,7 +1249,7 @@ export default function ClanoviPage() {
           p_function_ids: values.selectedFunctionIds,
           p_section_ids: values.selectedSectionIds,
           p_fee: {
-            mode: values.membership_fee_mode ?? "STANDARD",
+            feeMode: values.membership_fee_mode ?? "STANDARD",
             custom_amount: values.membership_fee_mode === "CUSTOM"
               ? Number(values.membership_fee_amount)
               : null,
@@ -1312,8 +1327,6 @@ export default function ClanoviPage() {
       const minor = values.is_minor_member;
 
       if (minor) {
-        const minorBirthDateError = getMinorBirthDateError(values.birth_date);
-        if (minorBirthDateError) throw new Error(minorBirthDateError);
         validateGuardianInputForSave(
           values.guardian1,
           "Roditelj/staratelj 1"
@@ -1363,63 +1376,33 @@ export default function ClanoviPage() {
               : [])
           ]
         : [];
-      let { data: createdMember, error: createError } = await (supabase.rpc as any)(
-        "auth_create_society_member_with_fee",
+      const { data: preparedCandidate, error: createError } = await (supabase.rpc as any)(
+        "auth_prepare_single_member_candidate",
         {
           p_society_id: society.id,
           p_profile: profile,
           p_guardians: guardians,
-          p_function_ids: values.selectedFunctionIds,
-          p_section_ids: values.selectedSectionIds,
-          p_fee: {
+          p_membership_setup: {
+            startDate: values.start_date || "",
             mode: values.membership_fee_mode ?? "STANDARD",
-            custom_amount: values.membership_fee_mode === "CUSTOM"
-              ? Number(values.membership_fee_amount)
-              : null,
-            reason: values.membership_fee_reason?.trim() || null
+            customFeeAmount: values.membership_fee_amount || "",
+            feeReason: values.membership_fee_reason?.trim() || "",
+            functionIds: values.selectedFunctionIds,
+            sectionIds: values.selectedSectionIds
           }
         }
       );
-      if (createError && isMissingDatabaseFunction(createError)) {
-        ({ data: createdMember, error: createError } = await supabase.rpc(
-          "auth_create_society_member",
-          {
-            p_society_id: society.id,
-            p_profile: profile,
-            p_guardians: guardians,
-            p_function_ids: values.selectedFunctionIds,
-            p_section_ids: values.selectedSectionIds
-          }
-        ));
-        if (!createError && createdMember?.society_member_id) {
-          if (!actorMemberId) throw new Error("Nije pronađen ovlašćeni član za podešavanje članarine.");
-          const { data: authData } = await supabase.auth.getUser();
-          const mode = values.membership_fee_mode ?? "STANDARD";
-          const { error: feeError } = await supabase.rpc("finance_set_member_fee", {
-            p_society_member_id: createdMember.society_member_id,
-            p_fee_mode: mode,
-            p_custom_amount: mode === "CUSTOM" ? Number(values.membership_fee_amount) : null,
-            p_reason: mode === "STANDARD"
-              ? "Početna standardna članarina pri prijemu člana"
-              : values.membership_fee_reason?.trim() ?? "",
-            p_actor_user_id: authData.user?.id ?? null,
-            p_actor_member_id: actorMemberId
-          });
-          if (feeError) createError = feeError;
-        }
-      }
       if (createError) {
-        throw withStepError("Član nije kreiran.", createError);
+        throw withStepError("Kandidat nije sačuvan.", createError);
       }
 
       await loadPageData();
       setValues(createInitialValues());
       setIsFormOpen(false);
-      setMessage(
-        createdMember?.reused_person
-          ? "Postojeća osoba je uspešno dodata u ovo društvo."
-          : "Član je uspešno dodat."
-      );
+      setActiveView("pending");
+      setMessage(preparedCandidate?.reused_person
+        ? "Postojeća osoba je pronađena u people registru i dodata u red za odobrenje."
+        : "Osoba je sačuvana u people registru i dodata u red za odobrenje.");
     } catch (error) {
       setErrorMessage(getErrorMessage(error));
     } finally {
@@ -1908,7 +1891,7 @@ export default function ClanoviPage() {
     const missingInvitationFields = getMissingPendingInvitationFields(candidateDraft);
     if (missingInvitationFields.length > 0) {
       setErrorMessage(
-        `Pre pravljenja test linka unesite: ${missingInvitationFields.join(", ")}.`
+        `Pre kopiranja linka unesite: ${missingInvitationFields.join(", ")}.`
       );
       return;
     }
@@ -1932,14 +1915,14 @@ export default function ClanoviPage() {
           p_recipient_email: recipientEmail ?? null
         }
       );
-      if (error || !data?.token) throw error ?? new Error("Test link nije napravljen.");
+      if (error || !data?.token) throw error ?? new Error("Link nije napravljen.");
       const testLink = `${window.location.origin}/dopuna-podataka/${data.token}`;
       setLocalTestLinks((links) => ({ ...links, [actionKey]: testLink }));
       try {
         await navigator.clipboard.writeText(testLink);
-        setMessage("Lokalni test link je kopiran. Otvorite privatni prozor pregledača i nalepite link.");
+        setMessage("Link je kopiran. Otvorite privatni prozor pregledača i nalepite ga.");
       } catch {
-        setMessage("Lokalni test link je napravljen. Kopirajte ga iz prikaza kandidata.");
+        setMessage("Link je napravljen. Kopirajte ga iz prikaza kandidata.");
       }
       await loadPendingImports();
     } catch (error) {
@@ -2126,7 +2109,7 @@ export default function ClanoviPage() {
   }
 
   async function handleSavePendingDraft(candidateId: string) {
-    if (!society) return;
+    if (!society) return false;
     setSavingPendingId(candidateId);
     setErrorMessage("");
     try {
@@ -2176,13 +2159,26 @@ export default function ClanoviPage() {
       );
       if (error) throw error;
       await loadPendingImports();
-      handleClosePendingRequest();
       setMessage("Podaci kandidata su sačuvani.");
+      return true;
     } catch (error) {
       setErrorMessage(getErrorMessage(error));
+      return false;
     } finally {
       setSavingPendingId(null);
     }
+  }
+
+  async function handlePendingTabChange(
+    candidateId: string,
+    nextTab: PendingRequestTab
+  ) {
+    if (nextTab === activePendingRequestTab || savingPendingId === candidateId) return;
+    if (activePendingRequestTab === "personal" || activePendingRequestTab === "membership") {
+      const saved = await handleSavePendingDraft(candidateId);
+      if (!saved) return;
+    }
+    setActivePendingRequestTab(nextTab);
   }
 
 
@@ -2474,9 +2470,19 @@ export default function ClanoviPage() {
                 <p>Kliknite na osobu da otvorite zahtev.</p>
               )}
             </div>
-            <span>
-              {pendingImports.filter((item) => getPendingCandidateStage(item).tone === "submitted").length} spremno · {pendingImports.length} ukupno
-            </span>
+            <div className="members-pending-summary">
+              <label>
+                <span>Status</span>
+                <select className="input" onChange={(event) => setPendingStatusFilter(event.target.value)} value={pendingStatusFilter}>
+                  <option value="all">Svi statusi</option>
+                  <option value="not-sent">Čeka slanje linka</option>
+                  <option value="in_progress">Čeka dopunu</option>
+                  <option value="opened">Čeka slanje podataka</option>
+                  <option value="submitted">Spreman za potvrdu</option>
+                </select>
+              </label>
+              <span>{pendingImports.filter((item) => getPendingCandidateStage(item).tone === "submitted").length} spremno · {filteredPendingImports.length}/{pendingImports.length} prikazano</span>
+            </div>
           </div>
           {pendingImports.length === 0 ? (
             <p className="members-empty-state">
@@ -2484,7 +2490,8 @@ export default function ClanoviPage() {
             </p>
           ) : !selectedPendingCandidateId ? (
             <div className="members-request-list">
-              {pendingImports.map((candidate) => {
+              {filteredPendingImports.length === 0 ? <p className="members-empty-state">Nema zahteva sa izabranim statusom.</p> : null}
+              {filteredPendingImports.map((candidate) => {
                 const stage = getPendingCandidateStage(candidate);
                 return (
                   <button
@@ -2659,21 +2666,21 @@ export default function ClanoviPage() {
                       <button
                         className={activePendingRequestTab === "personal" ? "active" : ""}
                         type="button"
-                        onClick={() => setActivePendingRequestTab("personal")}
+                        onClick={() => void handlePendingTabChange(candidate.id, "personal")}
                       >
                         Lični podaci
                       </button>
                       <button
                         className={activePendingRequestTab === "membership" ? "active" : ""}
                         type="button"
-                        onClick={() => setActivePendingRequestTab("membership")}
+                        onClick={() => void handlePendingTabChange(candidate.id, "membership")}
                       >
                         Članstvo
                       </button>
                       <button
                         className={activePendingRequestTab === "links" ? "active" : ""}
                         type="button"
-                        onClick={() => setActivePendingRequestTab("links")}
+                        onClick={() => void handlePendingTabChange(candidate.id, "links")}
                       >
                         Linkovi
                       </button>
@@ -2735,7 +2742,7 @@ export default function ClanoviPage() {
                               type="button"
                               onClick={() => void handleCreateLocalTestLink(candidate.id, "MEMBER")}
                             >
-                              Test link
+                              Kopiraj link
                             </button>
                           </div>
                           {localTestLinks[`${candidate.id}:MEMBER`] && (
@@ -2764,7 +2771,7 @@ export default function ClanoviPage() {
                               <button
                                 className="button button-secondary"
                                 type="button"
-                                onClick={() => setActivePendingRequestTab("personal")}
+                                onClick={() => void handlePendingTabChange(candidate.id, "personal")}
                               >
                                 {guardianLinked ? "Izmeni roditelja" : "Dodaj roditelja"}
                               </button>
@@ -2792,7 +2799,7 @@ export default function ClanoviPage() {
                                 type="button"
                                 onClick={() => void handleCreateLocalTestLink(candidate.id, "GUARDIAN")}
                               >
-                                Test link
+                                Kopiraj link
                               </button>
                             </div>
                             {localTestLinks[`${candidate.id}:GUARDIAN`] && (

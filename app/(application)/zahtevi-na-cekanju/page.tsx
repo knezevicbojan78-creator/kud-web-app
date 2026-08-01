@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePresidentRequests } from "../../_hooks/usePresidentRequests";
+import { CustomPlanInquiries } from "../../_components/CustomPlanInquiries";
 
 const pendingSearchFields = [
   "societyName",
@@ -125,6 +126,7 @@ export default function ZahteviNaCekanjuPage() {
           </table>
         </section>
       )}
+      <CustomPlanInquiries />
     </>
   );
 }

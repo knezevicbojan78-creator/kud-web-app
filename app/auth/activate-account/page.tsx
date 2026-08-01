@@ -68,7 +68,7 @@ export default function ActivateAccountPage() {
     }
     if (!(result as { has_access?: boolean })?.has_access) {
       await getSupabaseClient().auth.signOut();
-      router.replace("/");
+      router.replace("/prijava");
       return;
     }
     const { data: destination } =
