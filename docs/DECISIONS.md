@@ -342,6 +342,13 @@ Roditelj/staratelj se traži u `people` samo po email-u.
 RAZLOG:
 Email je lookup ključ za pronalaženje postojećeg roditelja/staratelja. Telefon ostaje obavezno kontakt polje, ali se ne koristi kao lookup ključ.
 
+Dopuna 01.08.2026: ovlašćeni korisnik pri povezivanju maloletnog člana može da
+dobije ograničene predloge iz globalnog `people` registra na osnovu dela
+emaila. Pretraga nije ograničena na aktivno društvo, jer roditelj može biti član
+drugog društva ili još uvek ne mora imati nijedno članstvo. Rezultat služi samo
+za pronalaženje postojeće osobe i ne daje roditeljska prava bez sačuvane veze u
+`person_guardians`.
+
 ---
 
 ## 2026-06-24

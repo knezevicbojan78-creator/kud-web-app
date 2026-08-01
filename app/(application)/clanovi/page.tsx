@@ -27,8 +27,10 @@ import {
 } from "../../_lib/memberBulkImport";
 import {
   getInvitationStatusLabel,
+  getMissingPendingInvitationFields,
   getMissingPendingPersonalFields,
   getPendingCandidateStage,
+  isPendingMemberMinor,
   type PendingImportCandidate,
   type PendingMembershipSetup
 } from "../../_lib/pendingMemberImports";
@@ -523,6 +525,9 @@ export default function ClanoviPage() {
   const [pendingGuardianLookups, setPendingGuardianLookups] = useState<
     Record<string, UFMemberGuardianLookupState>
   >({});
+  const [pendingGuardianSuggestions, setPendingGuardianSuggestions] = useState<
+    Record<string, Person[]>
+  >({});
   const [savingPendingId, setSavingPendingId] = useState<string | null>(null);
   const [creatingTestLinkId, setCreatingTestLinkId] = useState<string | null>(null);
   const [localTestLinks, setLocalTestLinks] = useState<Record<string, string>>({});
@@ -648,6 +653,60 @@ export default function ClanoviPage() {
   useEffect(() => {
     void loadPageData();
   }, [loadPageData]);
+
+  const pendingGuardianSearchEmail = editingPendingId
+    ? String(
+        (
+          presidentDrafts[editingPendingId]?.guardian1 as
+            | Record<string, unknown>
+            | undefined
+        )?.email ?? ""
+      ).trim()
+    : "";
+
+  useEffect(() => {
+    const lookupStatus = editingPendingId
+      ? pendingGuardianLookups[editingPendingId]?.status
+      : undefined;
+    if (
+      !editingPendingId ||
+      !society ||
+      pendingGuardianSearchEmail.length < 2 ||
+      lookupStatus === "found"
+    ) {
+      if (editingPendingId) {
+        setPendingGuardianSuggestions((current) => ({
+          ...current,
+          [editingPendingId]: []
+        }));
+      }
+      return;
+    }
+
+    let active = true;
+    const candidateId = editingPendingId;
+    const timer = window.setTimeout(async () => {
+      const { data, error } = await (getSupabaseClient().rpc as any)(
+        "auth_search_guardians_for_member",
+        {
+          p_society_id: society.id,
+          p_query: pendingGuardianSearchEmail,
+          p_limit: 6
+        }
+      );
+
+      if (!active) return;
+      setPendingGuardianSuggestions((current) => ({
+        ...current,
+        [candidateId]: error ? [] : ((data ?? []) as Person[])
+      }));
+    }, 250);
+
+    return () => {
+      active = false;
+      window.clearTimeout(timer);
+    };
+  }, [editingPendingId, pendingGuardianLookups, pendingGuardianSearchEmail, society]);
 
   function handleOpenForm() {
     setActiveView("members");
@@ -1506,7 +1565,7 @@ export default function ClanoviPage() {
       string,
       unknown
     >;
-    const isMinorCandidate = Boolean(candidateDraft?.is_minor_member);
+    const isMinorCandidate = isPendingMemberMinor(candidateDraft);
     const phone = pendingPhones[candidateId] ??
       String(candidateDraft?.phone ?? candidate?.profile.phone ?? "");
     const guardianPhone = String(
@@ -1762,6 +1821,13 @@ export default function ClanoviPage() {
       string,
       unknown
     >;
+    const missingInvitationFields = getMissingPendingInvitationFields(candidateDraft);
+    if (missingInvitationFields.length > 0) {
+      setErrorMessage(
+        `Pre slanja linka unesite: ${missingInvitationFields.join(", ")}.`
+      );
+      return;
+    }
     const guardian = candidateDraft.guardian1 as Record<string, unknown> | undefined;
     const recipientEmail = recipientRole === "GUARDIAN"
       ? String(guardian?.email ?? "").trim()
@@ -1802,7 +1868,7 @@ export default function ClanoviPage() {
 
   async function handleAcceptAndSendInvitations(candidate: PendingImportCandidate) {
     const draft = candidate.draft ?? candidate.profile;
-    const isMinor = Boolean(draft.is_minor_member);
+    const isMinor = isPendingMemberMinor(draft);
     if (!isMinor) {
       await handleSendDataInvitation(candidate.id, "MEMBER");
       return;
@@ -1836,6 +1902,13 @@ export default function ClanoviPage() {
       string,
       unknown
     >;
+    const missingInvitationFields = getMissingPendingInvitationFields(candidateDraft);
+    if (missingInvitationFields.length > 0) {
+      setErrorMessage(
+        `Pre pravljenja test linka unesite: ${missingInvitationFields.join(", ")}.`
+      );
+      return;
+    }
     const guardian = candidateDraft.guardian1 as Record<string, unknown> | undefined;
     const recipientEmail = recipientRole === "GUARDIAN"
       ? String(guardian?.email ?? "").trim()
@@ -1874,11 +1947,25 @@ export default function ClanoviPage() {
   }
 
   function handleOpenPendingEditor(candidate: PendingImportCandidate) {
+    const candidateDraft: Record<string, unknown> = {
+      ...candidate.profile,
+      ...(candidate.draft ?? {})
+    };
+    const savedGuardian = candidateDraft.guardian1 as
+      | UFMemberFormValues["guardian1"]
+      | undefined;
     setPresidentDrafts((drafts) => ({
       ...drafts,
-      [candidate.id]: { ...candidate.profile, ...(candidate.draft ?? {}) }
+      [candidate.id]: candidateDraft
     }));
     setEditingPendingId(candidate.id);
+    setPendingGuardianSuggestions((current) => ({ ...current, [candidate.id]: [] }));
+    setPendingGuardianLookups((current) => ({
+      ...current,
+      [candidate.id]: savedGuardian?.email && isValidEmail(savedGuardian.email)
+        ? { status: "found" }
+        : createIdleGuardianLookup()
+    }));
   }
 
   function handleOpenPendingRequest(candidate: PendingImportCandidate) {
@@ -1891,6 +1978,7 @@ export default function ClanoviPage() {
     setSelectedPendingCandidateId(null);
     setEditingPendingId(null);
     setActivePendingRequestTab("personal");
+    setPendingGuardianSuggestions({});
   }
 
   function handlePendingDraftChange(candidateId: string, field: string, value: unknown) {
@@ -1922,6 +2010,48 @@ export default function ClanoviPage() {
         }
       }
     }));
+    if (field === "email") {
+      setPendingGuardianLookups((lookups) => ({
+        ...lookups,
+        [candidateId]: createIdleGuardianLookup()
+      }));
+    }
+  }
+
+  function handlePendingGuardianSuggestionSelect(
+    candidateId: string,
+    person: Person
+  ) {
+    setPresidentDrafts((drafts) => ({
+      ...drafts,
+      [candidateId]: {
+        ...(drafts[candidateId] ?? {}),
+        guardian1: applyPersonToGuardian(
+          (drafts[candidateId]?.guardian1 as
+            | UFMemberFormValues["guardian1"]
+            | undefined) ?? {
+            first_name: "",
+            last_name: "",
+            email: "",
+            phone: ""
+          },
+          person
+        )
+      }
+    }));
+    setPendingGuardianSuggestions((current) => ({
+      ...current,
+      [candidateId]: []
+    }));
+    setPendingGuardianLookups((lookups) => ({
+      ...lookups,
+      [candidateId]: {
+        status: "found",
+        message: "Roditelj/staratelj je pronađen. Sačuvajte vezu pre slanja poziva.",
+        person,
+        readOnlyFields: getReadOnlyGuardianFields(person)
+      }
+    }));
   }
 
   async function handlePendingGuardianEmailBlur(candidateId: string) {
@@ -1933,10 +2063,7 @@ export default function ClanoviPage() {
     if (!email || !isValidEmail(email)) {
       setPendingGuardianLookups((lookups) => ({
         ...lookups,
-        [candidateId]: {
-          status: "invalid",
-          message: "Unesite ispravnu email adresu roditelja/staratelja."
-        }
+        [candidateId]: createIdleGuardianLookup()
       }));
       return;
     }
@@ -2405,7 +2532,10 @@ export default function ClanoviPage() {
                 .filter((candidate) => candidate.id === selectedPendingCandidateId)
                 .map((candidate) => {
                 const savedDraft = candidate.draft ?? candidate.profile;
-                const isMinorCandidate = Boolean(savedDraft.is_minor_member);
+                const isMinorCandidate = isPendingMemberMinor({
+                  ...savedDraft,
+                  ...(presidentDrafts[candidate.id] ?? {})
+                });
                 const savedGuardian = savedDraft.guardian1 as
                   | Record<string, unknown>
                   | undefined;
@@ -2490,10 +2620,11 @@ export default function ClanoviPage() {
                 const hasRequiredFeeReason =
                   membershipSetup.feeMode === "STANDARD" ||
                   Boolean(membershipSetup.feeReason.trim());
+                const missingPersonalLabels = getMissingPendingPersonalFields(
+                  pendingFormValues as unknown as Record<string, unknown>
+                );
                 const confirmationBlockers = [
-                  ...candidate.missing_fields
-                    .filter((field) => field !== "phone" || !isMinorCandidate)
-                    .map(() => "dopunite lične podatke"),
+                  ...missingPersonalLabels.map((label) => `unesite ${label}`),
                   ...(!hasRequiredPhone
                     ? [isMinorCandidate
                         ? "unesite telefon roditelja/staratelja"
@@ -2681,6 +2812,9 @@ export default function ClanoviPage() {
                         guardianLookups={{
                           guardian1: pendingGuardianLookups[candidate.id]
                         }}
+                        guardianSuggestions={{
+                          guardian1: pendingGuardianSuggestions[candidate.id] ?? []
+                        }}
                         readOnlyMembershipFields={{ status: true }}
                         visibleStep={activePendingRequestTab === "personal" ? 2 : 3}
                         hideStepper
@@ -2768,6 +2902,11 @@ export default function ClanoviPage() {
                             void handlePendingGuardianEmailBlur(candidate.id);
                           }
                         }}
+                        onGuardianSuggestionSelect={(guardian, person) => {
+                          if (guardian === "guardian1") {
+                            handlePendingGuardianSuggestionSelect(candidate.id, person);
+                          }
+                        }}
                         onSubmit={() => void handleSavePendingDraft(candidate.id)}
                         onCancel={handleClosePendingRequest}
                       />
@@ -2776,7 +2915,7 @@ export default function ClanoviPage() {
                   <div className="members-pending-actions">
                     {confirmationBlockers.length > 0 && (
                       <p className="members-confirmation-hint">
-                        Za potvrdu: {confirmationBlockers.join(", ")}.
+                        Za konačnu potvrdu nakon dopune putem linka: {confirmationBlockers.join(", ")}.
                       </p>
                     )}
                     {activePendingRequestTab !== "links" && (

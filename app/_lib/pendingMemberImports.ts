@@ -25,6 +25,26 @@ export type PendingMembershipSetup = {
   sectionIds: string[];
 };
 
+export function isPendingMemberMinor(draft: Record<string, unknown>) {
+  const birthDate = String(draft.birth_date ?? "").trim();
+  if (birthDate) {
+    const parsed = new Date(`${birthDate}T00:00:00`);
+    if (!Number.isNaN(parsed.getTime())) {
+      const today = new Date();
+      let age = today.getFullYear() - parsed.getFullYear();
+      const monthDifference = today.getMonth() - parsed.getMonth();
+      if (
+        monthDifference < 0 ||
+        (monthDifference === 0 && today.getDate() < parsed.getDate())
+      ) {
+        age -= 1;
+      }
+      return age < 18;
+    }
+  }
+  return Boolean(draft.is_minor_member);
+}
+
 export function getInvitationStatusLabel(status: string | null) {
   switch (status) {
     case "INVITED": return "Link poslat";
@@ -39,7 +59,7 @@ export function getInvitationStatusLabel(status: string | null) {
 
 export function getPendingCandidateStage(candidate: PendingImportCandidate) {
   const draft = candidate.draft ?? candidate.profile;
-  const isMinor = Boolean(draft.is_minor_member);
+  const isMinor = isPendingMemberMinor(draft);
   const missingFields = candidate.missing_fields.filter(
     (field) => !isMinor || (field !== "phone" && field !== "email")
   );
@@ -96,7 +116,7 @@ export function getMissingPendingPersonalFields(draft: Record<string, unknown>) 
     if (!String(draft[field] ?? "").trim()) missing.push(label);
   });
 
-  const isMinor = Boolean(draft.is_minor_member);
+  const isMinor = isPendingMemberMinor(draft);
   if (!isMinor && !String(draft.email ?? "").trim()) {
     missing.push("email člana");
   }
@@ -115,6 +135,38 @@ export function getMissingPendingPersonalFields(draft: Record<string, unknown>) 
     guardianRequired.forEach(([field, label]) => {
       if (!String(guardian[field] ?? "").trim()) missing.push(label);
     });
+  }
+
+  return missing;
+}
+
+export function getMissingPendingInvitationFields(
+  draft: Record<string, unknown>
+) {
+  const missing: string[] = [];
+  const memberRequired = [
+    ["first_name", "ime člana"],
+    ["last_name", "prezime člana"]
+  ] as const;
+
+  memberRequired.forEach(([field, label]) => {
+    if (!String(draft[field] ?? "").trim()) missing.push(label);
+  });
+
+  if (isPendingMemberMinor(draft)) {
+    const guardian = (draft.guardian1 ?? {}) as Record<string, unknown>;
+    const guardianRequired = [
+      ["first_name", "ime roditelja/staratelja"],
+      ["last_name", "prezime roditelja/staratelja"],
+      ["email", "email roditelja/staratelja"],
+      ["phone", "telefon roditelja/staratelja"]
+    ] as const;
+    guardianRequired.forEach(([field, label]) => {
+      if (!String(guardian[field] ?? "").trim()) missing.push(label);
+    });
+  } else {
+    if (!String(draft.email ?? "").trim()) missing.push("email člana");
+    if (!String(draft.phone ?? "").trim()) missing.push("telefon člana");
   }
 
   return missing;

@@ -3,8 +3,10 @@ import test from "node:test";
 
 import {
   getInvitationStatusLabel,
+  getMissingPendingInvitationFields,
   getMissingPendingPersonalFields,
-  getPendingCandidateStage
+  getPendingCandidateStage,
+  isPendingMemberMinor
 } from "../../app/_lib/pendingMemberImports.ts";
 
 function candidate(overrides = {}) {
@@ -50,6 +52,34 @@ test("telefon maloletnog člana nije lično blokirajuće polje", () => {
   }));
 
   assert.equal(stage.tone, "submitted");
+});
+
+test("datum rođenja određuje maloletnost i bez sačuvane oznake", () => {
+  assert.equal(isPendingMemberMinor({ birth_date: "2015-04-15" }), true);
+  assert.equal(isPendingMemberMinor({ birth_date: "1990-04-15" }), false);
+});
+
+test("pre slanja linka punoletnom su dovoljni identitet i kontakt", () => {
+  assert.deepEqual(getMissingPendingInvitationFields({
+    first_name: "Ana",
+    last_name: "Anić",
+    email: "ana@example.com",
+    phone: "060123456"
+  }), []);
+});
+
+test("pre slanja linka maloletnom su dovoljni dete i kontakt roditelja", () => {
+  assert.deepEqual(getMissingPendingInvitationFields({
+    first_name: "Mila",
+    last_name: "Milić",
+    birth_date: "2015-04-15",
+    guardian1: {
+      first_name: "Ana",
+      last_name: "Anić",
+      email: "ana@example.com",
+      phone: "060123456"
+    }
+  }), []);
 });
 
 test("maloletnom kandidatu se proveravaju podaci prvog staratelja", () => {

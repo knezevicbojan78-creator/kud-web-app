@@ -129,6 +129,9 @@ export type UFMemberFormProps = {
   guardianLookups?: Partial<
     Record<"guardian1" | "guardian2", UFMemberGuardianLookupState>
   >;
+  guardianSuggestions?: Partial<
+    Record<"guardian1" | "guardian2", Person[]>
+  >;
   hiddenPersonFields?: Partial<Record<UFMemberPersonField, boolean>>;
   readOnlyPersonFields?: Partial<Record<UFMemberPersonField, boolean>>;
   readOnlyMembershipFields?: Partial<Record<UFMemberMembershipField, boolean>>;
@@ -161,6 +164,10 @@ export type UFMemberFormProps = {
   onSectionToggle?: (sectionId: string) => void;
   onMemberEmailBlur?: () => void;
   onGuardianEmailBlur?: (guardian: "guardian1" | "guardian2") => void;
+  onGuardianSuggestionSelect?: (
+    guardian: "guardian1" | "guardian2",
+    person: Person
+  ) => void;
   onIdentifierBlur?: (field: "jmbg" | "passport_number") => void;
   onSubmit: () => void;
   onCancel: () => void;
@@ -460,6 +467,8 @@ type GuardianSectionProps = {
     value: string
   ) => void;
   lookup?: UFMemberGuardianLookupState;
+  suggestions?: Person[];
+  onSuggestionSelect?: (person: Person) => void;
   onEmailBlur?: () => void;
   hideEmail?: boolean;
   readOnlyFields?: Partial<Record<UFMemberGuardianField, boolean>>;
@@ -474,6 +483,8 @@ function GuardianSection({
   labelSuffix = "",
   onGuardianFieldChange,
   lookup,
+  suggestions = [],
+  onSuggestionSelect,
   onEmailBlur,
   hideEmail = false,
   readOnlyFields,
@@ -503,16 +514,34 @@ function GuardianSection({
       </div>
 
       {!hideEmail && (
-        <TextField
-          required
-          label={`Email roditelja / staratelja${labelSuffix}`}
-          type="email"
-          value={values.email}
-          error={getError(errors, `${guardian}.email`)}
-          readOnly={lookup?.readOnlyFields?.email || readOnlyFields?.email}
-          onChange={(value) => onGuardianFieldChange(guardian, "email", value)}
-          onBlur={onEmailBlur}
-        />
+        <div className="guardian-email-lookup">
+          <TextField
+            required
+            label={`Email roditelja / staratelja${labelSuffix}`}
+            type="email"
+            value={values.email}
+            error={getError(errors, `${guardian}.email`)}
+            readOnly={lookup?.readOnlyFields?.email || readOnlyFields?.email}
+            onChange={(value) => onGuardianFieldChange(guardian, "email", value)}
+            onBlur={onEmailBlur}
+          />
+          {suggestions.length > 0 && (
+            <div className="guardian-email-suggestions" role="listbox" aria-label="Predlozi roditelja ili staratelja">
+              {suggestions.map((person) => (
+                <button
+                  key={person.id}
+                  type="button"
+                  role="option"
+                  onMouseDown={(event) => event.preventDefault()}
+                  onClick={() => onSuggestionSelect?.(person)}
+                >
+                  <strong>{person.email}</strong>
+                  <span>{person.first_name} {person.last_name}{person.phone ? ` · ${person.phone}` : ""}</span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
       )}
       {lookup?.message && <p>{lookup.message}</p>}
       <TextField
@@ -562,6 +591,7 @@ export function UF_MEMBER_FORM({
   sectionOptions,
   memberLookup,
   guardianLookups,
+  guardianSuggestions,
   hiddenPersonFields,
   readOnlyPersonFields,
   readOnlyMembershipFields,
@@ -582,6 +612,7 @@ export function UF_MEMBER_FORM({
   onSectionToggle,
   onMemberEmailBlur,
   onGuardianEmailBlur,
+  onGuardianSuggestionSelect,
   onIdentifierBlur,
   onSubmit,
   onCancel
@@ -661,6 +692,13 @@ export function UF_MEMBER_FORM({
     delete localErrors.passport_expiry_date;
   }
   const visibleErrors = mergeErrors(localErrors, errors);
+  if (
+    isPendingApproval &&
+    values.guardian1.email.trim() &&
+    ["idle", "checking"].includes(primaryGuardianLookupStatus)
+  ) {
+    delete visibleErrors["guardian1.email"];
+  }
   const displayedStep = visibleStep ?? activeStep;
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -781,6 +819,8 @@ export function UF_MEMBER_FORM({
           values={values.guardian1}
           errors={visibleErrors}
           lookup={guardianLookups?.guardian1}
+          suggestions={guardianSuggestions?.guardian1}
+          onSuggestionSelect={(person) => onGuardianSuggestionSelect?.("guardian1", person)}
           readOnlyFields={readOnlyGuardianFields?.guardian1}
           hideEmail={isMinorCreateWizard}
           onGuardianFieldChange={onGuardianFieldChange}
@@ -864,6 +904,8 @@ export function UF_MEMBER_FORM({
             values={values.guardian2}
             errors={visibleErrors}
             lookup={guardianLookups?.guardian2}
+            suggestions={guardianSuggestions?.guardian2}
+            onSuggestionSelect={(person) => onGuardianSuggestionSelect?.("guardian2", person)}
             readOnlyFields={readOnlyGuardianFields?.guardian2}
             onGuardianFieldChange={onGuardianFieldChange}
             onEmailBlur={() => onGuardianEmailBlur?.("guardian2")}

@@ -192,6 +192,13 @@
       "status": "applied",
       "applied_on": "2026-07-31",
       "note": "Maloletnom clanu email nije obavezan; kontakt i poziv vode se preko roditelja ili staratelja."
+    },
+    {
+      "file": "migrations/20260801120000_members_v1_guardian_email_suggestions.sql",
+      "status": "applied",
+      "applied_on": "2026-08-01",
+      "verified_by": "members-v1-guardian-email-suggestions-diagnostic.sql",
+      "note": "Predlozi roditelja ili staratelja po delu emaila iz globalnog people registra, dostupni samo ovlascenom korisniku radi povezivanja sa detetom bez obzira na clanstvo roditelja u drustvu."
     }
   ]
 }
