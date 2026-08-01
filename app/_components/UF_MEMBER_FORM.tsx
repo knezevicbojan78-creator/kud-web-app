@@ -146,6 +146,7 @@ export type UFMemberFormProps = {
   isSubmitting?: boolean;
   standardMembershipFeeAmount?: number | null;
   membershipFeeCurrency?: string;
+  membershipFeeReasonRequired?: boolean;
   visibleStep?: 2 | 3;
   hideStepper?: boolean;
   hideActions?: boolean;
@@ -251,7 +252,8 @@ function validateGuardian(
 
 function validateValues(
   mode: UFMemberFormMode,
-  values: UFMemberFormValues
+  values: UFMemberFormValues,
+  membershipFeeReasonRequired = true
 ) {
   const errors: UFMemberFormErrors = {};
   const minor = values.is_minor_member;
@@ -329,6 +331,7 @@ function validateValues(
   }
   if (
     !isPersonCreate &&
+    membershipFeeReasonRequired &&
     (values.membership_fee_mode === "CUSTOM" || values.membership_fee_mode === "EXEMPT") &&
     !values.membership_fee_reason?.trim()
   ) {
@@ -601,6 +604,7 @@ export function UF_MEMBER_FORM({
   isSubmitting = false,
   standardMembershipFeeAmount = null,
   membershipFeeCurrency = "RSD",
+  membershipFeeReasonRequired = true,
   visibleStep,
   hideStepper = false,
   hideActions = false,
@@ -633,7 +637,7 @@ export function UF_MEMBER_FORM({
     allowFallbackFunctionOptions
   );
   const activeSections = getActiveSections(sectionOptions);
-  const rawLocalErrors = validateValues(mode, values);
+  const rawLocalErrors = validateValues(mode, values, membershipFeeReasonRequired);
   const minor = values.is_minor_member;
   const isPresidentOnboarding = mode === "president_onboarding";
   const isPersonCreate = mode === "person_create";

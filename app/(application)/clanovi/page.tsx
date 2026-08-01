@@ -2270,6 +2270,16 @@ export default function ClanoviPage() {
             values={values}
             standardMembershipFeeAmount={society.default_membership_fee_amount ?? null}
             membershipFeeCurrency={society.base_currency ?? "RSD"}
+            membershipFeeReasonRequired={
+              formMode !== "edit" ||
+              !initialMemberFee ||
+              initialMemberFee.mode !== (values.membership_fee_mode ?? "STANDARD") ||
+              initialMemberFee.amount !== (
+                values.membership_fee_mode === "CUSTOM"
+                  ? Number(values.membership_fee_amount)
+                  : null
+              )
+            }
             functionOptions={functionOptions}
             allowFallbackFunctionOptions={false}
             sectionOptions={sectionOptions}
